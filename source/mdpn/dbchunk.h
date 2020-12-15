@@ -146,6 +146,10 @@ public:
 	// операций RAA, выполненное для его проверки (оно же - минимальная глубина поиска)
 	void AddLychrel(const Number& num, unsigned stepC);
 
+	// Удаляет из блока данных все сохранённые палиндромы с шагом ниже minStep.
+	// Возвращает true, если был удалён хотя бы один отложенный палиндром
+	bool RemovePalindromes(unsigned minStep);
+
 private:
 	static constexpr unsigned LATEST_FORMAT_VERSION = 5;
 	// В то время как обычные Assert/Verify используются для контроля логических ошибок в
@@ -280,6 +284,10 @@ public:
 	void AddPalindrome(const Number& num, unsigned step) { GetData(State::FULLDATA)->AddPalindrome(num, step); }
 	// Обновляет статистику по числам Лишрел (см. комментарий в DBChunkData)
 	void AddLychrel(const Number& num, unsigned stepC) { GetData(State::FULLDATA)->AddLychrel(num, stepC); }
+
+	// Удаляет из блока данных все сохранённые палиндромы с шагом ниже minStep и корректирует
+	// статистику. Функция возвращает true, если был удалён хотя бы один отложенный палиндром
+	bool RemovePalindromes(unsigned minStep) { return GetData(State::FULLDATA)->RemovePalindromes(minStep); }
 
 private:
 	// См. аналогичный комментарий в классе DBChunkData

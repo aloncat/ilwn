@@ -644,6 +644,51 @@ void DBChunkData::AddLychrel(const Number& num, unsigned stepC)
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+bool DBChunkData::RemovePalindromes(unsigned minStep)
+{
+	Assert(m_NumCountA && m_pData);
+	EE::Assert(minStep && minStep <= Const::MAX_STEP, "Invalid minStep value");
+
+	size_t removedC = 0;
+	DataItems& numbers = *m_pData;
+	const size_t count = numbers.size();
+	for (size_t i = 0; i < count; ++i)
+	{
+		DataItem& item = numbers[i];
+		if (item.step < minStep)
+			++removedC;
+		else if (removedC)
+			numbers[i - removedC] = item;
+	}
+
+	if (!removedC)
+		return false;
+
+	numbers.resize(count - removedC);
+	m_SavedPalC = numbers.size();
+
+	m_AllSavedPalIntC = 0;
+	m_AllSavedPalNumC.SetZero();
+	m_MinSavedStep = minStep;
+
+	AML_FILLA(m_NumCountA, 0, Const::MAX_STEP + 1);
+	m_HighestStep = 0;
+
+	Number num;
+	for (const auto& item : *m_pData)
+	{
+		num = item.num;
+		m_AllSavedPalNumC += 1 + num.GetKinNumberC();
+
+		++m_NumCountA[item.step];
+		m_HighestStep = (item.step > m_HighestStep) ? item.step : m_HighestStep;
+	}
+
+	m_Chunk.RaiseSaveState(State::DATACHANGED);
+	return true;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
 bool DBChunkData::ReloadHeader(util::File& file)
 {
 	// NB: buffer должен быть null-terminated строкой, чтобы при парсинге заголовка мы не вышли за пределы
