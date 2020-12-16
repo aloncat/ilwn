@@ -206,7 +206,7 @@ struct FileHeaderV5 final : public FileHeaderBase
 	uint64_t savedPalC = 0;		// Количество отложенных палиндромов, сохранённых в блоке данных
 	FixNumber allLychrelC;		// Полное количество чисел Лишрел, найденных в интервале
 	FixNumber allSavedPalC;		// Полное кол-во отложенных палиндромов, сохранённых в блоке данных
-	unsigned CPUTimeSpent = 0;	// Количество времени CPU, потраченного на поиск в интервале
+	unsigned CPUTimeSpent = 0;	// Количество времени CPU в ms, потраченного на поиск в интервале
 	unsigned minSavedStep = 0;	// Минимальный шаг, начиная с которого сохраняются палиндромы
 	unsigned searchDepth = 0;	// Минимальная глубина поиска (проверки кандидатов в числа Лишрел)
 
@@ -282,7 +282,13 @@ bool FileHeaderV5::Load(const char* pData)
 				}
 				break;
 			case 'c':
-				if (!util::StrNInsCmp(p, "cpuspent:", 9))
+				if (!util::StrNInsCmp(p, "cputime:", 8))
+				{
+					if (!Util::AToInt(CPUTimeSpent, p + 8, len - 8))
+						return false;
+				}
+				// В версиях формата ниже 5-й поле "CPUTIME" называлось "CPUSPENT"
+				else if (!util::StrNInsCmp(p, "cpuspent:", 9))
 				{
 					if (!Util::AToInt(CPUTimeSpent, p + 9, len - 9))
 						return false;
@@ -536,11 +542,11 @@ unsigned DBChunkData::GetFileSize() const
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-void DBChunkData::SetCPUTimeSpent(unsigned timeSpent)
+void DBChunkData::SetCPUTimeSpent(unsigned cpuTime)
 {
-	if (timeSpent)
+	if (cpuTime)
 	{
-		m_CPUTimeSpent += timeSpent;
+		m_CPUTimeSpent += cpuTime;
 		m_Chunk.RaiseSaveState(State::HEADERCHANGED);
 	}
 }
@@ -982,7 +988,7 @@ bool DBChunkData::SaveHeader(util::File& file)
 	header += util::Format("SPAL:%llu\n", m_SavedPalC);
 	header += util::Format("ALYCH:%s\n", m_AllLychrelNumC.AsString().c_str());
 	header += util::Format("ASPAL:%s\n", m_AllSavedPalNumC.AsString().c_str());
-	header += util::Format("CPUSPENT:%u\n", m_CPUTimeSpent);
+	header += util::Format("CPUTIME:%u\n", m_CPUTimeSpent);
 	header += util::Format("MINSTEP:%u\n", m_MinSavedStep);
 	header += util::Format("DEPTH:%u\n---\n", m_SearchDepth);
 
@@ -1221,7 +1227,7 @@ void DBChunk::UnloadData(State stateNeeded)
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-bool DBChunk::Save(DataBase& db, unsigned minSavedStep, unsigned timeSpent)
+bool DBChunk::Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime)
 {
 	if (GetSaveState() == State::UNCHANGED)
 		return true;
@@ -1230,7 +1236,7 @@ bool DBChunk::Save(DataBase& db, unsigned minSavedStep, unsigned timeSpent)
 	Assert(m_Flags.Check(Flag::HAS_FILE_PATH));
 
 	m_pData->SetMinSavedStep(minSavedStep);
-	m_pData->SetCPUTimeSpent(timeSpent);
+	m_pData->SetCPUTimeSpent(cpuTime);
 
 	// Если изменились данные или файл имеет старую версию, то перезапишем
 	// весь файл целиком. Иначе можно ограничиться лишь сохранением заголовка

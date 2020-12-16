@@ -123,7 +123,7 @@ public:
 	unsigned GetCDataSize() const { return m_CDataSize; }
 	unsigned GetFileSize() const;
 
-	void SetCPUTimeSpent(unsigned timeSpent);
+	void SetCPUTimeSpent(unsigned cpuTime);
 	void SetMinSavedStep(unsigned minSavedStep);
 
 	const unsigned* GetNumCountA() const { return m_NumCountA; }
@@ -181,7 +181,7 @@ private:
 	Number m_AllLychrelNumC;		// Полное количество чисел Лишрел, найденных в интервале (основное значение)
 	uint64_t m_AllSavedPalIntC = 0;	// Полное кол-во отложенных палиндромов, сохранённых в блоке данных (инкр. часть)
 	Number m_AllSavedPalNumC;		// Полное кол-во отложенных палиндромов, сохранённых в блоке данных (осн. значение)
-	unsigned m_CPUTimeSpent = 0;	// Количество времени CPU, потраченного на поиск чисел в интервале
+	unsigned m_CPUTimeSpent = 0;	// Количество времени CPU в ms, потраченного на поиск чисел в интервале
 	unsigned m_MinSavedStep = 0;	// Минимальный шаг, начиная с которого сохраняются палиндромы
 	unsigned m_SearchDepth = 0;		// Минимальная глубина поиска (проверки кандидатов в числа Лишрел)
 
@@ -245,9 +245,9 @@ public:
 	void UnloadData(State stateNeeded);
 
 	// Сохраняет накопленные изменения в файл. Параметр minSavedStep должен содержать значение шага,
-	// начиная с которого найденные палиндромы сохранялись. Параметр timeSpent должен быть равен
+	// начиная с которого найденные палиндромы сохранялись. Параметр cpuTime должен быть равен
 	// суммарному времени CPU (в ms), которое было затрачено на проверку добавленных данных
-	bool Save(DataBase& db, unsigned minSavedStep, unsigned timeSpent);
+	bool Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime);
 
 	unsigned GetFormatVer() const { return GetData(State::HEADERONLY)->GetFormatVer(); }
 	const FixNumber& GetFirst() const { CheckState(State::DATAUNLOADED); return m_First; }
