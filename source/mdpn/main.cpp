@@ -483,6 +483,122 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
+//   ShrinkDB - удаление палиндромов с низкими шагами из БД для уменьшения её размера
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//----------------------------------------------------------------------------------------------------------------------
+/*static*/ void ShrinkDB()
+{
+	// Шаги, начиная с которых отложенные палиндромы будут сохраняться в БД (для каждого диапазона чисел).
+	// При значении 1 будут сохрнаяться абсолютно все найденные палиндромы. Чем ниже значение, тем больше
+	// размер файлов. В основной БД ограничения начинаются с 13-значных чисел: 10, 15, 35, 40, 40, 50...
+	static const unsigned stepA[Const::MAX_DIGIT_C + 1] = { 0,
+		 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,		//  1 - 10
+		 1,  1, 10, 15, 40, 45, 70, 75, 80, 80,		// 11 - 20
+		80, 80, 80, 80, 80, 80, 80, 80, 80, 80 };	// 21 - 30
+
+	DataBase data;
+	if (data.Init(false, DBChunkState::HEADERONLY))
+	{
+		uint64_t totalPalCountA[Const::MAX_STEP + 1];
+		AML_FILLA(totalPalCountA, 0, Const::MAX_STEP + 1);
+
+		size_t fileC = 0, modifiedC = 0;
+		data.ForEachChunk([&](DBChunk* pChunk) {
+			if (!pChunk->LoadData(data, DBChunkState::FULLDATA))
+			{
+				fileC = 0;
+				aux::Printc("\r#12Error: failed to load database file");
+				return false;
+			}
+
+			const size_t range = pChunk->GetLast().GetLength();
+			if (range > 3 && range <= Const::MAX_DIGIT_C && stepA[range] > 1)
+			{
+				if (pChunk->RemovePalindromes(stepA[range]))
+				{
+					data.SetActiveChunk(pChunk);
+					data.Save(0u, 0, 0);
+					++modifiedC;
+				}
+			}
+
+			Number num;
+			for (const auto& item : pChunk->GetNumbers())
+			{
+				num = item.num;
+				totalPalCountA[item.step] += 1 + num.GetKinNumberC();
+			}
+
+			++fileC;
+			pChunk->UnloadData(DBChunkState::HEADERONLY);
+			aux::Printf("\rFiles resized: %u/%u", modifiedC, fileC);
+			return true;
+		});
+		if (fileC)
+			aux::Print("\n");
+
+		fileC = 0;
+		modifiedC = 0;
+		DBChunk* pActiveChunk = nullptr;
+		std::vector<DBChunk*> removeList;
+		data.ForEachChunk([&](DBChunk* pChunk) {
+			if (!pChunk->LoadData(data, DBChunkState::FULLDATA))
+			{
+				fileC = 0;
+				aux::Printc("\r#12Error: failed to load database file");
+				return false;
+			}
+
+			if (pActiveChunk && pActiveChunk->GetLast() + 1u == pChunk->GetFirst() &&
+				pActiveChunk->GetLast().GetLength() == pChunk->GetFirst().GetLength() &&
+				pActiveChunk->GetDataSize() + pChunk->GetDataSize() <= Const::DATA_SAVE_SIZE)
+			{
+				pActiveChunk->Append(pChunk);
+				data.Save(0u, 0, 0);
+				++modifiedC;
+
+				pChunk->UnloadData(DBChunkState::DATAUNLOADED);
+				removeList.push_back(pChunk);
+			} else
+			{
+				data.SetActiveChunk(pChunk);
+				if (pActiveChunk)
+					pActiveChunk->UnloadData(DBChunkState::HEADERONLY);
+				pActiveChunk = pChunk;
+			}
+
+			++fileC;
+			aux::Printf("\rFiles combined: %u/%u", modifiedC, fileC);
+			return true;
+		});
+		if (fileC)
+			aux::Print("\n");
+
+		fileC = 0;
+		for (DBChunk* pChunk : removeList)
+		{
+			++fileC;
+			data.RemoveChunk(pChunk);
+			aux::Printf("\rFiles removed: %u", fileC);
+		}
+		if (fileC)
+			aux::Print("\n");
+
+		aux::Print("---\n");
+		constexpr unsigned halfSteps = 45;
+		for (unsigned step = 1; step <= halfSteps; ++step)
+		{
+			aux::Printf("Step %2u: %17s   #8|#7   Step %2u: %17s\n", step,
+				SeparateWithCommas(totalPalCountA[step]).c_str(), step + halfSteps,
+				SeparateWithCommas(totalPalCountA[step + halfSteps]).c_str());
+		}
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 //   Главная функция
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
