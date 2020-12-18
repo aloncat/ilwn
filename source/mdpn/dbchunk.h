@@ -149,6 +149,9 @@ public:
 	// Удаляет из блока данных все сохранённые палиндромы с шагом ниже minStep.
 	// Возвращает true, если был удалён хотя бы один отложенный палиндром
 	bool RemovePalindromes(unsigned minStep);
+	// Добавляет данные из указанного файла, объединяя файлы в один. Первое проверенное
+	// число pOther должно быть на 1 больше последнего проверенного числа в этом файле
+	void Append(const DBChunkData* pOther);
 
 private:
 	static constexpr unsigned LATEST_FORMAT_VERSION = 5;
@@ -288,6 +291,9 @@ public:
 	// Удаляет из блока данных все сохранённые палиндромы с шагом ниже minStep и корректирует
 	// статистику. Функция возвращает true, если был удалён хотя бы один отложенный палиндром
 	bool RemovePalindromes(unsigned minStep) { return GetData(State::FULLDATA)->RemovePalindromes(minStep); }
+	// Добавляет данные из указанного файла, объединяя файлы в один. Первое проверенное
+	// число pOther должно быть на 1 больше последнего проверенного числа в этом файле
+	void Append(const DBChunk* pOther);
 
 private:
 	// См. аналогичный комментарий в классе DBChunkData

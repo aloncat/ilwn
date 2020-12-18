@@ -695,6 +695,43 @@ bool DBChunkData::RemovePalindromes(unsigned minStep)
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+void DBChunkData::Append(const DBChunkData* pOther)
+{
+	Assert(m_NumCountA && m_pData);
+	Assert(pOther && pOther->m_NumCountA && pOther->m_pData);
+	// Проверим, что между началом второго файла и концом первого нет разрыва, а так же
+	// что второй файл был проинициализирован и содержит как минимум одно проверенное число
+	EE::Assert(m_Last + 1u == pOther->m_Chunk.First() && pOther->m_Chunk.First() <= pOther->m_Last,
+		"DBChunkData objects can't be combined together");
+
+	m_Last = pOther->m_Last;
+	m_IterationC += pOther->m_IterationC;
+	m_PrimaryLychrelC += pOther->m_PrimaryLychrelC;
+	m_SavedPalC += pOther->m_SavedPalC;
+	m_AllLychrelIntC += pOther->m_AllLychrelIntC;
+	m_AllLychrelNumC += pOther->m_AllLychrelNumC;
+	m_AllSavedPalIntC += pOther->m_AllSavedPalIntC;
+	m_AllSavedPalNumC += pOther->m_AllSavedPalNumC;
+	m_CPUTimeSpent += pOther->m_CPUTimeSpent;
+	m_MinSavedStep = std::min(m_MinSavedStep, pOther->m_MinSavedStep);
+	m_SearchDepth = std::min(m_SearchDepth, pOther->m_SearchDepth);
+	m_HighestStep = std::max(m_HighestStep, pOther->m_HighestStep);
+	m_Chunk.RaiseSaveState(State::HEADERCHANGED);
+
+	if (const size_t count = pOther->m_pData->size())
+	{
+		for (unsigned i = 1; i < Const::MAX_STEP; ++i)
+			m_NumCountA[i] += pOther->m_NumCountA[i];
+
+		m_pData->reserve(m_pData->size() + count);
+		for (const auto& item : *pOther->m_pData)
+			m_pData->push_back(item);
+
+		m_Chunk.RaiseSaveState(State::DATACHANGED);
+	}
+}
+
+//----------------------------------------------------------------------------------------------------------------------
 bool DBChunkData::ReloadHeader(util::File& file)
 {
 	// NB: buffer должен быть null-terminated строкой, чтобы при парсинге заголовка мы не вышли за пределы
@@ -1251,6 +1288,16 @@ bool DBChunk::Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime)
 	bool ok = m_pData->Save(file);
 	file.Close();
 	return ok;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+void DBChunk::Append(const DBChunk* pOther)
+{
+	if (pOther)
+	{
+		const DBChunkData* pOtherData = pOther->GetData(State::FULLDATA);
+		GetData(State::FULLDATA)->Append(pOtherData);
+	}
 }
 
 //----------------------------------------------------------------------------------------------------------------------
