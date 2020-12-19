@@ -258,13 +258,18 @@ SearchModeClasses::WorkThreads::~WorkThreads()
 void SearchModeClasses::WorkThreads::CreateAll(const ThreadFn& threadFn)
 {
 	Assert(!m_TotalThreadC && threadFn && !m_StopThreads);
-	// Рабочих потоков нужно на 1 меньше, чем количество ядер в системе,
-	// так как главный поток практически всегда будет загружен на 100%
-	/*const*/ size_t threadC = std::max(GetLogicalCoreC() - 1, size_t(1));
 
-	// TODO: нужно сделать возможность изменять количество потоков с помощью клавиш клавиатуры
-	// (например, + и - малой клавиатуры). Но пока просто ограничимся половиной потоков
-	threadC = std::max((threadC + 1) / 2 - 1, size_t(1));
+	// TODO: нужно сделать возможность изменять количество потоков с
+	// помощью клавиш клавиатуры (например, + и - малой клавиатуры)
+
+	size_t physicalC, logicalC;
+	GetCoreC(physicalC, logicalC);
+	// Если количество физических и логических ядер процессора одинаково (т.е. CPU без HT), то рабочих
+	// потоков должно быть на 1 меньше, чем ядер, а главный поток полностью загрузит оставшееся ядро.
+	// Если CPU с HT, то обычно логических ядер будет вдвое больше. В таком случае будем использовать
+	// для рабочих потоков все логические ядра, кроме 2, которые займут главный поток и поток БД
+	size_t threadC = (physicalC < logicalC) ? logicalC - 2 : physicalC - 1;
+	threadC = (threadC <= 22) ? threadC : 22;
 
 	for (size_t i = 0; i < threadC; ++i)
 	{
@@ -305,14 +310,6 @@ void SearchModeClasses::WorkThreads::KillAll()
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-size_t SearchModeClasses::WorkThreads::GetLogicalCoreC()
-{
-	SYSTEM_INFO sysInfo;
-	::GetSystemInfo(&sysInfo);
-	return sysInfo.dwNumberOfProcessors ? sysInfo.dwNumberOfProcessors : 1;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
 uint64_t SearchModeClasses::WorkThreads::GetPerfCounter()
 {
 	LARGE_INTEGER t;
@@ -328,6 +325,42 @@ uint64_t SearchModeClasses::WorkThreads::GetPerfCounter(uint64_t& frequency)
 	::QueryPerformanceFrequency(&f);
 	frequency = std::max(f.QuadPart, 1ll);
 	return t.QuadPart;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+void SearchModeClasses::WorkThreads::GetCoreC(size_t& physicalCoreC, size_t& logicalCoreC)
+{
+	SYSTEM_INFO sysInfo;
+	::GetSystemInfo(&sysInfo);
+	logicalCoreC = sysInfo.dwNumberOfProcessors ? sysInfo.dwNumberOfProcessors : 1;
+	physicalCoreC = logicalCoreC;
+
+	DWORD bufferSize = 0;
+	::GetLogicalProcessorInformation(nullptr, &bufferSize);
+	if (GetLastError() == ERROR_INSUFFICIENT_BUFFER && bufferSize)
+	{
+		void* p = new uint8_t[bufferSize];
+		auto pInfo = reinterpret_cast<PSYSTEM_LOGICAL_PROCESSOR_INFORMATION>(p);
+		if (::GetLogicalProcessorInformation(pInfo, &bufferSize))
+		{
+			size_t coreC = 0, logicalC = 0;
+			for (size_t size = 0; size < bufferSize; size += sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION))
+			{
+				if (pInfo->Relationship == RelationProcessorCore)
+				{
+					++coreC;
+					for (auto mask = pInfo->ProcessorMask; mask; mask >>= 1)
+						logicalC += (mask & 1) ? 1 : 0;
+				}
+				++pInfo;
+			}
+			physicalCoreC = coreC ? coreC : 1;
+			logicalCoreC = logicalC ? logicalC : 1;
+			if (logicalCoreC < physicalCoreC)
+				logicalCoreC = physicalCoreC;
+		}
+		delete[] p;
+	}
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -608,6 +641,7 @@ bool SearchMode::SlowSearch(bool createNewDb, const Number& startFrom)
 void SearchMode::DoSearch(const Number& firstNum)
 {
 	Assert(firstNum && firstNum.GetLength() <= Const::MAX_DIGIT_C);
+	m_SiftSetReaderC.store(1u << 31, std::memory_order_relaxed);
 
 	if (m_Data.HasGaps())
 	{
@@ -954,7 +988,7 @@ void SearchMode::ProcessWork(NumberBlock* pWork, unsigned stepLimit)
 {
 	Assert(pWork && stepLimit >= 100);
 
-	m_IsSiftSetBusy.store(true, std::memory_order_seq_cst);
+	m_SiftSetReaderC.fetch_and(~(1 << 31), std::memory_order_acquire);
 	while (m_SiftSetReaderC.load(std::memory_order_acquire))
 		_mm_pause();
 
@@ -965,7 +999,7 @@ void SearchMode::ProcessWork(NumberBlock* pWork, unsigned stepLimit)
 			m_SiftSet.Insert(item.sifting);
 	}
 
-	m_IsSiftSetBusy.store(false, std::memory_order_release);
+	m_SiftSetReaderC.fetch_or(1u << 31, std::memory_order_release);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1031,13 +1065,10 @@ bool SearchMode::DoNextTask(ThreadTime& threadTime, bool waitIfNoTask)
 				if (stepDoneC < item.stepLimit)
 				{
 					bool isSifted = false;
-					if (!m_IsSiftSetBusy.load(std::memory_order_acquire))
-					{
-						m_SiftSetReaderC.fetch_add(1, std::memory_order_seq_cst);
-						if (!m_IsSiftSetBusy.load(std::memory_order_acquire))
-							isSifted = m_SiftSet.Exists(item.sifting);
-						m_SiftSetReaderC.fetch_sub(1, std::memory_order_release);
-					}
+					if (m_SiftSetReaderC.fetch_add(1, std::memory_order_acquire) & (1 << 31))
+						isSifted = m_SiftSet.Exists(item.sifting);
+					m_SiftSetReaderC.fetch_sub(1, std::memory_order_release);
+
 					if (!isSifted)
 					{
 						item.stepDoneC += stepDoneC;

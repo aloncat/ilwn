@@ -204,9 +204,9 @@ private:
 		volatile bool isActive = false;		// true, если поток активен (false, если приостановлен)
 	};
 
-	static size_t GetLogicalCoreC();
 	static uint64_t GetPerfCounter();
 	static uint64_t GetPerfCounter(uint64_t& frequency);
+	static void GetCoreC(size_t& physicalCoreC, size_t& logicalCoreC);
 
 	void DoThread(size_t index, const ThreadFn& threadFn);
 	void CheckThreadLoad(size_t index, ThreadTime& threadTime, bool hadWork);
@@ -276,8 +276,7 @@ private:
 	DBQueue m_DBQueue;							// Очередь заданий сохранения результатов в БД
 
 	NumberSet m_SiftSet;						// Набор отсева чисел Лишрел
-	std::atomic<unsigned> m_SiftSetReaderC = 0;	// Счётчик "читателей" набора m_SiftSet
-	std::atomic<bool> m_IsSiftSetBusy = false;	// Флаг активной записи чисел в набор m_SiftSet
+	std::atomic<uint32_t> m_SiftSetReaderC = 0;	// Счётчик "читателей" набора m_SiftSet; 31-й бит == <можно читать>
 
 	thread::CriticalSection m_DBCS;				// Крит. секция для синхронизации с потоком БД
 	DBChunk* volatile m_pActiveChunk = nullptr;	// Текущий (активный) файл БД
