@@ -988,9 +988,21 @@ void SearchMode::ProcessWork(NumberBlock* pWork, unsigned stepLimit)
 {
 	Assert(pWork && stepLimit >= 100);
 
-	m_SiftSetReaderC.fetch_and(~(1 << 31), std::memory_order_acquire);
-	while (m_SiftSetReaderC.load(std::memory_order_acquire))
+	m_SiftSetReaderC.fetch_and(~(1 << 31), std::memory_order_seq_cst);
+	for (size_t spinC = 0; m_SiftSetReaderC.load(std::memory_order_acquire);)
+	{
 		_mm_pause();
+		if (++spinC == 1000)
+		{
+			// В нормальном режиме (когда CPU не загружен на 100%, а потоки не вынуждены конкурировать)
+			// количество циклов обычно равно 10-25 (при неэффективном отсеве) и 400-450 (при максимально
+			// эффективном отсеве в конце диапазона). Поэтому после 1000 циклов отдаём управление системе
+			// и ждём сигнала (который появится, когда счётчик достигнет 0)
+			std::unique_lock<std::mutex> lock(m_SiftSetMutex);
+			m_SiftSetCV.wait(lock);
+			break;
+		}
+	}
 
 	for (size_t i = 0; i < NumberBlock::SIZE; ++i)
 	{
@@ -999,6 +1011,9 @@ void SearchMode::ProcessWork(NumberBlock* pWork, unsigned stepLimit)
 			m_SiftSet.Insert(item.sifting);
 	}
 
+	// Устанавливаем 31-бит, разрешая чтение. Здесь нет гарантии, что значение счётчика равно 0, так
+	// как рабочий поток мог, прочитав 1 в старшем бите, быть прерван. Он увеличит счётчик на 1, когда
+	// будет возобновлён (например непосредственно перед нашей попыткой установить 31-й бит)
 	m_SiftSetReaderC.fetch_or(1u << 31, std::memory_order_release);
 }
 
@@ -1065,9 +1080,11 @@ bool SearchMode::DoNextTask(ThreadTime& threadTime, bool waitIfNoTask)
 				if (stepDoneC < item.stepLimit)
 				{
 					bool isSifted = false;
-					if (m_SiftSetReaderC.fetch_add(1, std::memory_order_acquire) & (1 << 31))
+					const uint32_t v = m_SiftSetReaderC.load(std::memory_order_relaxed) >> 31;
+					if (v && (m_SiftSetReaderC.fetch_add(v, std::memory_order_acquire) & (1 << 31)))
 						isSifted = m_SiftSet.Exists(item.sifting);
-					m_SiftSetReaderC.fetch_sub(1, std::memory_order_release);
+					if (!m_SiftSetReaderC.fetch_sub(v, std::memory_order_release))
+						m_SiftSetCV.notify_one();
 
 					if (!isSifted)
 					{

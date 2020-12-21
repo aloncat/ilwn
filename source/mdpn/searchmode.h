@@ -277,6 +277,8 @@ private:
 
 	NumberSet m_SiftSet;						// Набор отсева чисел Лишрел
 	std::atomic<uint32_t> m_SiftSetReaderC = 0;	// Счётчик "читателей" набора m_SiftSet; 31-й бит == <можно читать>
+	std::condition_variable m_SiftSetCV;		// CV пробуждения главного потока при ожидании им записи в m_SiftSet
+	std::mutex m_SiftSetMutex;					// Мьютекс для m_SiftSetCV
 
 	thread::CriticalSection m_DBCS;				// Крит. секция для синхронизации с потоком БД
 	DBChunk* volatile m_pActiveChunk = nullptr;	// Текущий (активный) файл БД
