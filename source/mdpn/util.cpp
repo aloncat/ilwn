@@ -133,7 +133,7 @@ bool DecompressFile(util::File& src, util::File& dst)
 	int res = Z_OK;
 	do {
 		size_t bytesRead;
-		if (!src.Read(pSrcBuffer, BUFFER_SIZE, bytesRead) || !bytesRead)
+		if (!src.Read(pSrcBuffer, BUFFER_SIZE, bytesRead))
 			break;
 		stream.next_in = pSrcBuffer;
 		stream.avail_in = static_cast<unsigned>(bytesRead);
@@ -150,7 +150,7 @@ bool DecompressFile(util::File& src, util::File& dst)
 				res = Z_DATA_ERROR;
 				break;
 			}
-		} while (!stream.avail_out);
+		} while (!stream.avail_out && stream.avail_in);
 	} while (res == Z_OK);
 
 	delete[] pDstBuffer;
