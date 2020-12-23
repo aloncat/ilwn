@@ -255,12 +255,74 @@ SearchModeClasses::WorkThreads::~WorkThreads()
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+void SearchModeClasses::WorkThreads::AddRemove(int count)
+{
+	if (count > 0)
+	{
+		Assert(m_ThreadFn && m_MaxThreadC);
+
+		size_t newC = m_TotalThreadC + count;
+		newC = std::min(newC, m_MaxThreadC);
+
+		if (newC > m_TotalThreadC)
+		{
+			thread::CriticalSection::Lock lock(m_CS);
+			for (size_t i = m_TotalThreadC; i < newC; ++i)
+			{
+				m_ThreadTimeA[i] = 0;
+				ThreadInfo& info = m_ThreadA[i];
+
+				info.isActive = false;
+				info.isStopping = false;
+				info.threadObj = std::thread([=]() { DoThread(i); });
+				++m_TotalThreadC;
+			}
+		}
+	}
+	else if (count < 0)
+	{
+		size_t toStopC = -count;
+		if (toStopC > m_TotalThreadC)
+			toStopC = m_TotalThreadC;
+
+		if (toStopC)
+		{
+			thread::CriticalSection::Lock lock(m_CS);
+			for (size_t i = 0; i < toStopC; ++i)
+			{
+				ThreadInfo& info = m_ThreadA[m_TotalThreadC - i - 1];
+				info.isStopping = true;
+			}
+			for (size_t i = 0; i < toStopC; ++i)
+			{
+				ThreadInfo& info = m_ThreadA[--m_TotalThreadC];
+				if (info.threadObj.joinable())
+				{
+					// Для избежания дедлока в ситуациях, когда рабочий поток был переключен диспетчером ОС,
+					// например, между проверкой им фалага info.isStopping и установкой info.isActive или
+					// между установкой этого же флага и вызовом SuspendThread, мы будем ждать завершения
+					// потока в цикле, периодически проверяя по тайм-ауту, не был ли он приостановлен
+					while (void* pOSHandle = info.threadObj.native_handle())
+					{
+						if (!info.isActive)
+							::ResumeThread(pOSHandle);
+						if (::WaitForSingleObject(pOSHandle, 1) != WAIT_TIMEOUT)
+							break;
+					}
+					// Окончательно завершаем поток
+					info.threadObj.join();
+				}
+			}
+		}
+	}
+}
+
+//----------------------------------------------------------------------------------------------------------------------
 void SearchModeClasses::WorkThreads::CreateAll(const ThreadFn& threadFn)
 {
-	Assert(!m_TotalThreadC && threadFn && !m_StopThreads);
-
-	// TODO: нужно сделать возможность изменять количество потоков с
-	// помощью клавиш клавиатуры (например, + и - малой клавиатуры)
+	// Функция CreateAll должна вызываться в самом начале работы. Поэтому
+	// пользовательская функция потоков и их количество должны быть не заданы
+	Assert(!m_ThreadFn && !m_TotalThreadC && threadFn);
 
 	size_t physicalC, logicalC;
 	GetCoreC(physicalC, logicalC);
@@ -268,45 +330,18 @@ void SearchModeClasses::WorkThreads::CreateAll(const ThreadFn& threadFn)
 	// потоков должно быть на 1 меньше, чем ядер, а главный поток полностью загрузит оставшееся ядро.
 	// Если CPU с HT, то обычно логических ядер будет вдвое больше. В таком случае будем использовать
 	// для рабочих потоков все логические ядра, кроме 2, которые займут главный поток и поток БД
-	size_t threadC = (physicalC < logicalC) ? logicalC - 2 : physicalC - 1;
-	threadC = (threadC <= 22) ? threadC : 22;
+	const size_t threadC = (physicalC < logicalC) ? logicalC - 2 : physicalC - 1;
+	m_MaxThreadC = (threadC < MAX_THREAD_C) ? threadC : MAX_THREAD_C;
 
-	for (size_t i = 0; i < threadC; ++i)
-	{
-		++m_TotalThreadC;
-		m_ThreadTimeA[i] = 0;
-		ThreadInfo& info = m_ThreadA[i];
-
-		info.isActive = false;
-		info.threadObj = std::thread([=]() { DoThread(i, threadFn); });
-	}
+	m_ThreadFn = threadFn;
+	AddRemove(static_cast<int>(m_MaxThreadC));
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 void SearchModeClasses::WorkThreads::KillAll()
 {
-	m_StopThreads = true;
-	for (size_t i = 0; i < MAX_THREAD_C; ++i)
-	{
-		auto& info = m_ThreadA[i];
-		if (info.threadObj.joinable())
-		{
-			// Для избежания дедлока в ситуациях, когда рабочий поток был переключен диспетчером ОС,
-			// например, между проверкой им фалага m_StopThreads и установкой флага info.isActive или
-			// между установкой этого же флага и вызовом SuspendThread, мы будем ждать завершения
-			// потока в цикле, периодически проверяя по тайм-ауту, не был ли он приостановлен
-			while (void* pOSHandle = info.threadObj.native_handle())
-			{
-				if (!info.isActive)
-					::ResumeThread(pOSHandle);
-				if (::WaitForSingleObject(pOSHandle, 1) != WAIT_TIMEOUT)
-					break;
-			}
-			// Окончательно завершаем поток
-			info.threadObj.join();
-		}
-	}
-	m_TotalThreadC = 0;
+	AddRemove(-static_cast<int>(MAX_THREAD_C));
+	m_ThreadFn = nullptr;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -337,10 +372,10 @@ void SearchModeClasses::WorkThreads::GetCoreC(size_t& physicalCoreC, size_t& log
 
 	DWORD bufferSize = 0;
 	::GetLogicalProcessorInformation(nullptr, &bufferSize);
-	if (GetLastError() == ERROR_INSUFFICIENT_BUFFER && bufferSize)
+	if (::GetLastError() == ERROR_INSUFFICIENT_BUFFER && bufferSize)
 	{
 		void* p = new uint8_t[bufferSize];
-		auto pInfo = reinterpret_cast<PSYSTEM_LOGICAL_PROCESSOR_INFORMATION>(p);
+		auto pInfo = static_cast<PSYSTEM_LOGICAL_PROCESSOR_INFORMATION>(p);
 		if (::GetLogicalProcessorInformation(pInfo, &bufferSize))
 		{
 			size_t coreC = 0, logicalC = 0;
@@ -364,7 +399,7 @@ void SearchModeClasses::WorkThreads::GetCoreC(size_t& physicalCoreC, size_t& log
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-void SearchModeClasses::WorkThreads::DoThread(size_t index, const ThreadFn& threadFn)
+void SearchModeClasses::WorkThreads::DoThread(size_t index)
 {
 	ThreadInfo& info = m_ThreadA[index];
 	info.isActive = true;
@@ -378,9 +413,9 @@ void SearchModeClasses::WorkThreads::DoThread(size_t index, const ThreadFn& thre
 	info.lastCPULoadCounter = GetPerfCounter();
 
 	ThreadTime threadTime, timer;
-	while (!m_StopThreads && !m_Owner.IsCancelled())
+	while (!info.isStopping && !m_Owner.IsCancelled())
 	{
-		bool hadWork = threadFn && threadFn(timer);
+		bool hadWork = m_ThreadFn && m_ThreadFn(timer);
 		CheckThreadLoad(index, threadTime, hadWork);
 	}
 
@@ -399,10 +434,13 @@ void SearchModeClasses::WorkThreads::CheckThreadLoad(size_t index, ThreadTime& t
 		// каждом интервале (независимо от наличия у нашего потока работы в последнем цикле)
 		// проверять, не требуется ли нам разбудить другие приостановленные потоки
 		const uint32_t tick = ::GetTickCount();
-		if (tick - info.lastCPULoadTick >= 500)
+		if (tick - info.lastCPULoadTick >= 500 && m_CS.TryEnter())
 		{
 			info.lastCPULoadTick = tick;
-			if (AreThreadsOverloaded() && !m_StopThreads)
+			// Критическая секция захвачена (если бы нам не удалось её захватить, то мы бы пропустили
+			// проверку). Мы не должны выполнять проверку во время уничтожения/создания потоков в AddRemove
+			thread::CriticalSection::Lock lock(m_CS, false);
+			if (AreThreadsOverloaded())
 				WakeOneThread();
 		}
 	}
@@ -433,7 +471,7 @@ void SearchModeClasses::WorkThreads::CheckThreadLoad(size_t index, ThreadTime& t
 			if (cpuLoad < loGainA[activeThreadC])
 			{
 				++info.lowLoadCounter;
-				if (info.lowLoadCounter >= 8 && !m_StopThreads)
+				if (info.lowLoadCounter >= 8 && !info.isStopping)
 				{
 					--m_ActiveC;
 					info.isActive = false;
@@ -487,11 +525,9 @@ void SearchModeClasses::WorkThreads::WakeOneThread()
 		for (size_t i = 1; i < m_TotalThreadC; ++i)
 		{
 			ThreadInfo& info = m_ThreadA[i];
-
-			if (!info.isActive)
+			if (!info.isActive && !info.isStopping)
 			{
-				void* pOSHandle = info.threadObj.native_handle();
-				if (!m_StopThreads && pOSHandle)
+				if (void* pOSHandle = info.threadObj.native_handle())
 					::ResumeThread(pOSHandle);
 				break;
 			}
@@ -735,7 +771,7 @@ void SearchMode::DoSearch(const Number& firstNum)
 		while (NumberBlock* pDBWork = m_DBQueue.PopWork())
 		{
 			--pendingDBTaskC;
-			m_IsCancelled = !ProcessDBWork(pDBWork);
+			m_IsCancelled = !ProcessDBWork(pDBWork) || !UpdateProgress(pDBWork->lastNum);
 			m_NumBlocks.push_back(pDBWork);
 			if (m_IsCancelled)
 				break;
@@ -882,7 +918,7 @@ void SearchMode::UpdateStepLimit(unsigned& stepLimit, const Number& number)
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-bool SearchMode::PrintProgress(uint32_t tick, const Number& last)
+void SearchMode::PrintProgress(uint32_t tick, const Number& lastNum)
 {
 	m_Events->PublishAll();
 
@@ -908,15 +944,49 @@ bool SearchMode::PrintProgress(uint32_t tick, const Number& last)
 	lock.Leave();
 
 	aux::Printf("#8\r[%u] #15#%s#7 [%s], %u/%s, %.3f%% done...     \b\b\b\b\b",
-		m_WorkThreads.GetThreadC() + 1, SeparateWithCommas(last).c_str(), FormatSpeed(speed).c_str(), numberC,
-		FormatSize(dataSize, true).c_str(), GetRangeProgress(last.GetLength(), m_Progress.progress));
+		m_WorkThreads.GetThreadC() + 1, SeparateWithCommas(lastNum).c_str(), FormatSpeed(speed).c_str(), numberC,
+		FormatSize(dataSize, true).c_str(), GetRangeProgress(lastNum.GetLength(), m_Progress.progress));
 
-	if (util::SystemConsole::Instance().IsCtrlCPressed(true))
-	{
+	if (util::SystemConsole::Instance().IsCtrlCPressed(false))
 		aux::Printc("\b\b\b, #12stopping...");
-		return true;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+bool SearchMode::UpdateProgress(const Number& lastNum)
+{
+	bool forcePrintProgress = false;
+	if (m_PublishEvents.exchange(false, std::memory_order_acquire))
+	{
+		// Принудительно выведем прогресс, только если в очереди есть события, выводимые на экран
+		forcePrintProgress = m_Events->HasEvents(true);
+		m_Events->PublishAll();
 	}
-	return false;
+
+	const uint32_t tick = ::GetTickCount();
+	if (tick - m_Progress.lastTick >= 500 || forcePrintProgress)
+	{
+		PrintProgress(tick, lastNum);
+
+		auto& console = util::SystemConsole::Instance();
+		if (console.IsCtrlCPressed(true))
+			return false;
+
+		int count = 0;
+		util::Console::KeyEvent event;
+		while (console.GetInputEvent(event))
+		{
+			// Клавиши - и + на малой клавиатуре
+			if (event.isKeyDown && (event.key == VK_SUBTRACT || event.key == VK_ADD))
+				count += (event.key == VK_ADD) ? 1 : -1;
+			// Комбинации клавиш CTRL+[ (уменьшить) и CTRL+] (увеличить)
+			else if (event.isKeyDown && event.isCtrlDown && (event.key == VK_OEM_4 || event.key == VK_OEM_6))
+				count += (event.key == VK_OEM_6) ? 1 : -1;
+		}
+		if (count && !m_IsCancelled)
+			m_WorkThreads.AddRemove(count);
+	}
+
+	return true;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1023,6 +1093,7 @@ bool SearchMode::ProcessDBWork(NumberBlock* pWork)
 	Assert(pWork);
 
 	size_t counter = 0;
+	bool hasErrors = false;
 	for (size_t i = 0; i < NumberBlock::SIZE; ++i)
 	{
 		const NumberItem& item = pWork->numA[i];
@@ -1032,28 +1103,14 @@ bool SearchMode::ProcessDBWork(NumberBlock* pWork)
 			++counter;
 			if (item.IsPalindrome() && item.GetStepDoneC() > Const::MAX_STEP)
 			{
-				m_Progress.counter += counter;
-				m_Progress.progress += counter;
-				return false;
+				hasErrors = true;
+				break;
 			}
 		}
 	}
 	m_Progress.counter += counter;
 	m_Progress.progress += counter;
-
-	bool forcePrintProgress = false;
-	if (m_PublishEvents.exchange(false, std::memory_order_acquire))
-	{
-		// Принудительно выведем прогресс, только если в очереди есть события, выводимые на экран
-		forcePrintProgress = m_Events->HasEvents(true);
-		m_Events->PublishAll();
-	}
-
-	const uint32_t tick = ::GetTickCount();
-	if (tick - m_Progress.lastTick >= 500 || forcePrintProgress)
-		return !PrintProgress(tick, pWork->lastNum);
-
-	return true;
+	return !hasErrors;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

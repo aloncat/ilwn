@@ -89,7 +89,7 @@ class SearchModeClasses::Queue
 	AML_NONCOPYABLE(Queue)
 
 protected:
-	static constexpr size_t DEFAULT_SPIN_C = 50;
+	static constexpr size_t DEFAULT_SPIN_C = 100;
 
 	class MutexLock : public std::unique_lock<std::mutex> {
 	public:
@@ -188,13 +188,17 @@ public:
 	// Возвращает количество активных в данный момент потоков
 	size_t GetActiveC() const { return m_ActiveC.load(std::memory_order_relaxed); }
 
+	// Изменяет количество рабочих потоков. Параметр count задаёт число новых потоков,
+	// которые необходимо создать (+), или число потоков, которые нужно остановить (-)
+	void AddRemove(int count);
+
 	void CreateAll(const ThreadFn& threadFn);
 	void KillAll();
 
 private:
 	// Максимально возможное количество рабочих потоков. Теоритически может быть любым значением,
 	// реальное количество потоков будет ограничено количеством логических процессоров в системе
-	static constexpr size_t MAX_THREAD_C = 9;
+	static constexpr size_t MAX_THREAD_C = 22;
 
 	struct ThreadInfo {
 		std::thread threadObj;				// Объект потока
@@ -202,23 +206,27 @@ private:
 		uint32_t lastCPULoadTick = 0;		// Тик последней оценки загруженности потока
 		uint64_t lastCPULoadCounter = 0;	// Значение счётчика последней оценки загруженности
 		volatile bool isActive = false;		// true, если поток активен (false, если приостановлен)
+		volatile bool isStopping = false;	// true, если поток должен завершить работу
 	};
 
 	static uint64_t GetPerfCounter();
 	static uint64_t GetPerfCounter(uint64_t& frequency);
 	static void GetCoreC(size_t& physicalCoreC, size_t& logicalCoreC);
 
-	void DoThread(size_t index, const ThreadFn& threadFn);
+	void DoThread(size_t index);
 	void CheckThreadLoad(size_t index, ThreadTime& threadTime, bool hadWork);
 	bool AreThreadsOverloaded();
 	void WakeOneThread();
 
 	SearchMode& m_Owner;
-	size_t m_TotalThreadC = 0;				// Количество созданных рабочих потоков
+	thread::CriticalSection m_CS;
+
+	ThreadFn m_ThreadFn;					// Пользовательская функция рабочих потоков
+	size_t m_MaxThreadC = 0;				// Максимально возможное количество рабочих потоков
+	volatile size_t m_TotalThreadC = 0;		// Количество созданных (актуальных) рабочих потоков
 	ThreadInfo m_ThreadA[MAX_THREAD_C];		// Рабочие потоки (актуальные от [0] до [m_TotalThreadC - 1])
 	uint64_t m_ThreadTimeA[MAX_THREAD_C];	// Значения времени CPU потоков в последней оценке загруженности
 	std::atomic<size_t> m_ActiveC = 0;		// Количество активных рабочих потоков в данных момент
-	volatile bool m_StopThreads = false;	// если true, то потоки должны прекратить работу и завершиться
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -255,7 +263,8 @@ private:
 
 	bool OnRangeCompleted();
 	void UpdateStepLimit(unsigned& stepLimit, const Number& number);
-	bool PrintProgress(uint32_t tick, const Number& last);
+	void PrintProgress(uint32_t tick, const Number& lastNum);
+	bool UpdateProgress(const Number& lastNum);
 	void CreateNewChunk(const Number& first);
 	void SaveResults();
 
