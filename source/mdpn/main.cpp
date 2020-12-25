@@ -494,9 +494,9 @@ public:
 	// При значении 1 будут сохрнаяться абсолютно все найденные палиндромы. Чем ниже значение, тем больше
 	// размер файлов. В основной БД ограничения начинаются с 13-значных чисел: 10, 15, 35, 40, 40, 50...
 	static const unsigned stepA[Const::MAX_DIGIT_C + 1] = { 0,
-		 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,		//  1 - 10
-		 1,  1, 10, 15, 40, 45, 70, 75, 80, 80,		// 11 - 20
-		80, 80, 80, 80, 80, 80, 80, 80, 80, 80 };	// 21 - 30
+		  1,   1,   1,   1,   1,   1,   1,   1,   1,   1,		//  1 - 10
+		  1,   1,  10,  15,  40,  45,  70,  75,  95, 100,		// 11 - 20
+		115, 120, 120, 120, 120, 120, 120, 120, 120, 120 };		// 21 - 30
 
 	DataBase data;
 	if (data.Init(false, DBChunkState::HEADERONLY))
@@ -541,6 +541,8 @@ public:
 
 		fileC = 0;
 		modifiedC = 0;
+		bool isSaved = true;
+		unsigned dataSize = 0;
 		DBChunk* pActiveChunk = nullptr;
 		std::vector<DBChunk*> removeList;
 		data.ForEachChunk([&](DBChunk* pChunk) {
@@ -553,17 +555,32 @@ public:
 
 			if (pActiveChunk && pActiveChunk->GetLast() + 1u == pChunk->GetFirst() &&
 				pActiveChunk->GetLast().GetLength() == pChunk->GetFirst().GetLength() &&
-				pActiveChunk->GetDataSize() + pChunk->GetDataSize() <= Const::DATA_SAVE_SIZE)
+				dataSize + pChunk->GetDataSize() <= Const::DATA_SAVE_SIZE)
 			{
+				isSaved = false;
 				pActiveChunk->Append(pChunk);
-				data.Save(0u, 0, 0);
+				dataSize += pChunk->GetDataSize();
+				if (dataSize > Const::DATA_SAVE_SIZE - Const::DATA_SAVE_SIZE / 8 ||
+					dataSize + 2 * pChunk->GetDataSize() > Const::DATA_SAVE_SIZE)
+				{
+					data.Save(0u, 0, 0);
+					dataSize = pActiveChunk->GetDataSize();
+					isSaved = true;
+				}
 				++modifiedC;
 
 				pChunk->UnloadData(DBChunkState::DATAUNLOADED);
 				removeList.push_back(pChunk);
 			} else
 			{
+				if (!isSaved)
+				{
+					data.Save(0u, 0, 0);
+					isSaved = true;
+				}
 				data.SetActiveChunk(pChunk);
+				dataSize = pChunk->GetDataSize();
+
 				if (pActiveChunk)
 					pActiveChunk->UnloadData(DBChunkState::HEADERONLY);
 				pActiveChunk = pChunk;
@@ -573,6 +590,8 @@ public:
 			aux::Printf("\rFiles combined: %u/%u", modifiedC, fileC);
 			return true;
 		});
+		if (fileC && !isSaved)
+			data.Save(0u, 0, 0);
 		if (fileC)
 			aux::Print("\n");
 
@@ -587,10 +606,10 @@ public:
 			aux::Print("\n");
 
 		aux::Print("---\n");
-		constexpr unsigned halfSteps = 45;
+		constexpr unsigned halfSteps = 60;
 		for (unsigned step = 1; step <= halfSteps; ++step)
 		{
-			aux::Printf("Step %2u: %17s   #8|#7   Step %2u: %17s\n", step,
+			aux::Printf("Step %3u: %18s   #8|#7   Step %3u: %18s\n", step,
 				SeparateWithCommas(totalPalCountA[step]).c_str(), step + halfSteps,
 				SeparateWithCommas(totalPalCountA[step + halfSteps]).c_str());
 		}
