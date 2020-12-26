@@ -504,6 +504,7 @@ public:
 		uint64_t totalPalCountA[Const::MAX_STEP + 1];
 		AML_FILLA(totalPalCountA, 0, Const::MAX_STEP + 1);
 
+		uint32_t lastTick = 0;
 		size_t fileC = 0, modifiedC = 0;
 		data.ForEachChunk([&](DBChunk* pChunk) {
 			if (!pChunk->LoadData(data, DBChunkState::FULLDATA))
@@ -533,13 +534,19 @@ public:
 
 			++fileC;
 			pChunk->UnloadData(DBChunkState::HEADERONLY);
-			aux::Printf("\rFiles resized: %u/%u", modifiedC, fileC);
+
+			uint32_t tick = ::GetTickCount();
+			if (tick - lastTick >= 250)
+			{
+				aux::Printf("\rFiles resized: %u/%u", modifiedC, fileC);
+				lastTick = tick;
+			}
 			return true;
 		});
-		if (fileC)
-			aux::Print("\n");
+		aux::Printf("\rFiles resized: %u/%u\n", modifiedC, fileC);
 
 		fileC = 0;
+		lastTick = 0;
 		modifiedC = 0;
 		bool isSaved = true;
 		unsigned dataSize = 0;
@@ -587,23 +594,32 @@ public:
 			}
 
 			++fileC;
-			aux::Printf("\rFiles combined: %u/%u", modifiedC, fileC);
+			uint32_t tick = ::GetTickCount();
+			if (tick - lastTick >= 250)
+			{
+				aux::Printf("\rFiles combined: %u/%u", modifiedC, fileC);
+				lastTick = tick;
+			}
 			return true;
 		});
 		if (fileC && !isSaved)
 			data.Save(0u, 0, 0);
-		if (fileC)
-			aux::Print("\n");
+		aux::Printf("\rFiles combined: %u/%u\n", modifiedC, fileC);
 
 		fileC = 0;
+		lastTick = 0;
 		for (DBChunk* pChunk : removeList)
 		{
 			++fileC;
 			data.RemoveChunk(pChunk);
-			aux::Printf("\rFiles removed: %u", fileC);
+			uint32_t tick = ::GetTickCount();
+			if (tick - lastTick >= 250)
+			{
+				aux::Printf("\rFiles removed: %u", fileC);
+				lastTick = tick;
+			}
 		}
-		if (fileC)
-			aux::Print("\n");
+		aux::Printf("\rFiles removed: %u\n", fileC);
 
 		aux::Print("---\n");
 		constexpr unsigned halfSteps = 60;
