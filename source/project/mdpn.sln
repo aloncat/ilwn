@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.1321
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "palindrome", "mdpn\palindrome.vcxproj", "{D473AF9A-E580-4525-8AD0-45A6450CE8C7}"
 EndProject
@@ -63,5 +63,8 @@ Global
 		{23E364B3-83F5-43C4-BA0A-C0347276BDCD} = {AFB6E2D9-ED1A-4F0E-A25E-38B09F36CE18}
 		{1D9FC286-E1F4-4523-B762-2910233E6C23} = {AFB6E2D9-ED1A-4F0E-A25E-38B09F36CE18}
 		{23850536-5205-4760-A4B1-65DB23FDFA51} = {E2B9D9E2-4A7C-4F46-B7E0-57E8E33FF40F}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {426F4BEA-E3C8-4FE2-87E9-A37F5D54C345}
 	EndGlobalSection
 EndGlobal
