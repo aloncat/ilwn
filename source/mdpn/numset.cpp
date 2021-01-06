@@ -1,4 +1,4 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"
 #include "numset.h"
 
@@ -7,16 +7,14 @@
 
 #include <string.h>
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//   NumberSet
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 //----------------------------------------------------------------------------------------------------------------------
 NumberSet::NumberSet()
 	: m_HBits(HASH_BITS - 3)
 {
+	// В целях увеличения скорости работы функции Purge за выбор части отвечают биты 12-14. Ещё 3
+	// бита нужны для роста таблицы. Таким образом, длина хеша должна быть не менее 12+3+3=18 бит
+	static_assert(HASH_BITS >= 18, "HASH_BITS must be >= 18");
+
 	// Выделяем память под весь массив без инициализации элементов
 	m_TableA = AllocateMem(size_t(1) << HASH_BITS);
 	// Инициализируем 1/8 часть элементов массива
@@ -72,10 +70,10 @@ void NumberSet::Clear(bool freeMem)
 //----------------------------------------------------------------------------------------------------------------------
 bool NumberSet::Exists(const Number& num) const
 {
-	if (num.IsZero())
+	const Item* p = &m_TableA[GetHash(num)];
+	if (p->num.IsZero())
 		return false;
 
-	const Item* p = &m_TableA[GetHash(num)];
 	for (; p->num != num; p = GetItem(p->next))
 	{
 		if (p->next == Item::LAST)
@@ -87,10 +85,10 @@ bool NumberSet::Exists(const Number& num) const
 //----------------------------------------------------------------------------------------------------------------------
 bool NumberSet::Exists(const FixNumber& num) const
 {
-	if (num.IsZero())
+	const Item* p = &m_TableA[GetHash(num)];
+	if (p->num.IsZero())
 		return false;
 
-	const Item* p = &m_TableA[GetHash(num)];
 	for (; p->num != num; p = GetItem(p->next))
 	{
 		if (p->next == Item::LAST)
@@ -105,7 +103,7 @@ bool NumberSet::Insert(const FixNumber& num)
 	if (num.IsZero())
 		return true;
 
-	// Ограничение на общий объем - не более CLEAR_GAIN блоков
+	// Ограничение на общий объём - не более CLEAR_GAIN блоков
 	if (m_CCount >= 8 * CLEAR_GAIN * CHUNK_SIZE)
 	{
 		size_t eighth = 0;
@@ -135,7 +133,7 @@ bool NumberSet::Insert(const FixNumber& num)
 		return true;
 	}
 
-	const size_t eighth = hash & 7;
+	const size_t eighth = (hash >> 12) & 7;
 	if (m_Purge & (1 << eighth))
 		Purge(eighth);
 
@@ -170,38 +168,36 @@ void NumberSet::RaiseTable()
 	{
 		// Если число в таблице равно 0, то значит
 		// цепи элементов нет, пропускаем этот хеш
-		Item& it = m_TableA[i];
-		if (it.num.IsZero())
+		Item* pTail1 = &m_TableA[i];
+		if (pTail1->num.IsZero())
 			continue;
 
-		size_t hash = GetHash(it.num);
-		if (hash != i)
+		Item* pTail2 = pTail1 + count;
+		if (GetHash(pTail1->num) != i)
 		{
-			m_TableA[hash].num = it.num;
-			it.num.SetZero();
+			pTail2->num = pTail1->num;
+			pTail1->num.SetZero();
 		}
-		uint32_t current = it.next;
-		it.next = Item::LAST;
+		uint32_t current = pTail1->next;
+		pTail1->next = Item::LAST;
 
 		while (current != Item::LAST)
 		{
-			Item* o = GetItem(current);
-			Item* p = &m_TableA[GetHash(o->num)];
-			if (p->num.IsZero())
+			Item* p = GetItem(current);
+			Item*& pTail = (GetHash(p->num) == i) ? pTail1 : pTail2;
+			if (pTail->num.IsZero())
 			{
 				++m_TCount;
 				++m_RCount;
-				++m_RCountA[i & 7];
-				p->num = o->num;
-				current = o->next;
+				++m_RCountA[(i >> 12) & 7];
+				pTail->num = p->num;
 			} else
 			{
-				while (p->next != Item::LAST)
-					p = GetItem(p->next);
-				p->next = current;
-				current = o->next;
-				o->next = Item::LAST;
+				pTail->next = current;
+				pTail = p;
 			}
+			current = p->next;
+			p->next = Item::LAST;
 		}
 	}
 }
@@ -224,19 +220,21 @@ void NumberSet::Purge(size_t eighth)
 	// Теперь обходим все элементы хеш-таблицы, соответствующие сокращаемой части eighth. Если элемент
 	// конечный, то мы ничего не меняем. Если он ссылается на число из первого блока, то копируем это
 	// число из блока в элемент таблицы. Затем корректируем в элементе ссылку на следующий элемент
-	Item* pTab = &m_TableA[eighth];
-	size_t count = size_t(1) << (m_HBits - 3);
-	for (size_t i = 0; i < count; ++i, pTab += 8)
+	for (size_t i = 0; i < size_t(1) << (m_HBits - 15); ++i)
 	{
-		uint32_t next = pTab->next;
-		if (next < last)
+		Item* tabA = &m_TableA[(8 * i + eighth) << 12];
+		for (size_t j = 0; j < 1 << 12; ++j)
 		{
-			Item* p = &pChunk[next & (CHUNK_SIZE - 1)];
-			pTab->num = p->num;
-			next = p->next;
+			uint32_t next = tabA[j].next;
+			if (next < last)
+			{
+				Item* p = &pChunk[next & (CHUNK_SIZE - 1)];
+				tabA[j].num = p->num;
+				next = p->next;
+			}
+			uint32_t n = next - CHUNK_SIZE;
+			tabA[j].next = (next == Item::LAST) ? next : n;
 		}
-		uint32_t n = next - CHUNK_SIZE;
-		pTab->next = (next == Item::LAST) ? next : n;
 	}
 	// Теперь корректируем ссылки в остальных блоках
 	size_t totalC = m_NextA[eighth];
@@ -262,13 +260,10 @@ void NumberSet::Purge(size_t eighth)
 	m_RCount -= m_RCountA[eighth];
 	m_RCountA[eighth] = 0;
 
-	// Если часть использовала норма+1 блоков или меньше, то помещаем удалённый блок за
-	// последним используемым. Если блоков было больше, то просто освобождаем память
+	// Просто освобождаем память из-под удалённого блока
 	Item** chunkA = &m_ChunkA[eighth * EIGHTH_CHUNK_C];
-	if (chunkA[CLEAR_GAIN + 1])
-		FreeMem(chunkA[0]);
-	else
-		chunkA[CLEAR_GAIN + 1] = chunkA[0];
+	FreeMem(chunkA[0]);
+
 	// Сдвигаем все оставшиеся блоки к началу
 	for (size_t i = 1; i < EIGHTH_CHUNK_C; ++i)
 		chunkA[i - 1] = chunkA[i];
