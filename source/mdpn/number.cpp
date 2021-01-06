@@ -653,8 +653,10 @@ AML_NOINLINE void Number::OnError(const char* pMsg)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #if AML_LITTLE_ENDIAN
+	#define FXNUM_ESHIFT(V, C) ((V) >> (C))
 	#define FXNUM_PACKW(V) static_cast<uint8_t>((V) | ((V) >> 4))
 #else
+	#define FXNUM_ESHIFT(V, C) ((V) << (C))
 	#define FXNUM_PACKW(V) static_cast<uint8_t>(((V) << 4) | ((V) >> 8))
 #endif
 
@@ -735,43 +737,53 @@ FixNumber& FixNumber::operator =(const char* pNum)
 //----------------------------------------------------------------------------------------------------------------------
 bool FixNumber::operator ==(const FixNumber& rhs) const
 {
-	const uint8_t* pL = m_DigitA;
-	const uint8_t* pR = rhs.m_DigitA;
-	const size_t len = (m_Length + 3) / 2;
-	for (size_t i = 0; i < len / 4; ++i)
+	auto pL = reinterpret_cast<const size_t*>(m_DigitA);
+	auto pR = reinterpret_cast<const size_t*>(rhs.m_DigitA);
+	for (size_t len = (m_Length + 3) / 2;; len -= sizeof(size_t))
 	{
-		if (*reinterpret_cast<const uint32_t*>(pL) != *reinterpret_cast<const uint32_t*>(pR))
-			return false;
-		pL += 4;
-		pR += 4;
-	}
-	for (size_t i = 0; i < (len & 3); ++i)
-	{
+		if (len <= sizeof(size_t))
+		{
+			if (OBJ_SIZE & (sizeof(size_t) - 1))
+			{
+				// Этот блок будет использован только в 64-битной конфигурации, когда размер
+				// FixNumber не кратен 8 байтам (проверка оставшихся 1-4 байт массива цифр)
+				const uint32_t mask = FXNUM_ESHIFT(~0u, 8 * (4 - len));
+				auto pL4 = reinterpret_cast<const uint32_t*>(pL);
+				auto pR4 = reinterpret_cast<const uint32_t*>(pR);
+				return !((*pL4 ^ *pR4) & mask);
+			}
+			const size_t mask = FXNUM_ESHIFT(~size_t(0), 8 * (sizeof(size_t) - len));
+			return !((*pL ^ *pR) & mask);
+		}
 		if (*pL++ != *pR++)
 			return false;
 	}
-	return true;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 bool FixNumber::operator !=(const FixNumber& rhs) const
 {
-	const uint8_t* pL = m_DigitA;
-	const uint8_t* pR = rhs.m_DigitA;
-	const size_t len = (m_Length + 3) / 2;
-	for (size_t i = 0; i < len / 4; ++i)
+	auto pL = reinterpret_cast<const size_t*>(m_DigitA);
+	auto pR = reinterpret_cast<const size_t*>(rhs.m_DigitA);
+	for (size_t len = (m_Length + 3) / 2;; len -= sizeof(size_t))
 	{
-		if (*reinterpret_cast<const uint32_t*>(pL) != *reinterpret_cast<const uint32_t*>(pR))
-			return true;
-		pL += 4;
-		pR += 4;
-	}
-	for (size_t i = 0; i < (len & 3); ++i)
-	{
+		if (len <= sizeof(size_t))
+		{
+			if (OBJ_SIZE & (sizeof(size_t) - 1))
+			{
+				// Этот блок будет использован только в 64-битной конфигурации, когда размер
+				// FixNumber не кратен 8 байтам (проверка оставшихся 1-4 байт массива цифр)
+				const uint32_t mask = FXNUM_ESHIFT(~0u, 8 * (4 - len));
+				auto pL4 = reinterpret_cast<const uint32_t*>(pL);
+				auto pR4 = reinterpret_cast<const uint32_t*>(pR);
+				return (*pL4 ^ *pR4) & mask;
+			}
+			const size_t mask = FXNUM_ESHIFT(~size_t(0), 8 * (sizeof(size_t) - len));
+			return (*pL ^ *pR) & mask;
+		}
 		if (*pL++ != *pR++)
 			return true;
 	}
-	return false;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

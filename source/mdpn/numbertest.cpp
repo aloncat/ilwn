@@ -664,18 +664,14 @@ bool TestFixNumber::TestComparison()
 {
 	// Тестируем операторы сравнения
 
-	auto baseFn = [](const FixNumber& n, const Number& m, unsigned i, unsigned j) {
-		return (n == m) == (i == j) && (m == n) == (i == j) &&
-			(n != m) == (i != j) && (m != n) == (i != j);
+	auto baseFn = [](const FixNumber& n, const Number& m, int k) {
+		return (n == m) == (k == 0) && (m == n) == (k == 0) &&
+			(n != m) == (k != 0) && (m != n) == (k != 0);
 	};
-	auto fixFn = [](const FixNumber& n, const FixNumber& m, unsigned i, unsigned j) {
-		return
-			(n == m) == (i == j) &&
-			(n != m) == (i != j) &&
-			(n < m) == (i < j) &&
-			(n <= m) == (i <= j) &&
-			(n > m) == (i > j) &&
-			(n >= m) == (i >= j);
+	auto fixFn = [](const FixNumber& n, const FixNumber& m, int k) {
+		return (n == m) == (k == 0) && (n != m) == (k != 0) &&
+			(n < m) == (k < 0) && (n <= m) == (k <= 0) &&
+			(n > m) == (k > 0) && (n >= m) == (k >= 0);
 	};
 
 	for (unsigned i = 0; i <= 150; ++i)
@@ -685,7 +681,8 @@ bool TestFixNumber::TestComparison()
 		for (unsigned j = 0; j <= 150; ++j)
 		{
 			FixNumber m = num = j;
-			if (!baseFn(n, num, i, j) || !fixFn(n, m, i, j))
+			int diff = (i == j) ? 0 : (i < j) ? -1 : 1;
+			if (!baseFn(n, num, diff) || !fixFn(n, m, diff))
 				return OnError(3);
 		}
 	}
@@ -696,9 +693,27 @@ bool TestFixNumber::TestComparison()
 		unsigned i = Rand();
 		unsigned j = (k & 7) ? Rand() : i;
 		FixNumber fn = n = i, fm = m = j;
-		if (!baseFn(fn, m, i, j) || !fixFn(fn, fm, i, j))
+		int diff = (i == j) ? 0 : (i < j) ? -1 : 1;
+		if (!baseFn(fn, m, diff) || !fixFn(fn, fm, diff))
 			return OnError(4);
 	}
+
+	unsigned counter = 0;
+	auto fn = [&](char* p, size_t) {
+		m = n;
+		n.Set(p);
+		if (!(counter++ & 7))
+			m = n;
+		FixNumber fn = n, fm = m;
+		int diff = (n == m) ? 0 : (n < m) ? -1 : 1;
+		if (!baseFn(fn, m, diff) || !fixFn(fn, fm, diff))
+			return false;
+		fm = m = Rand();
+		diff = (n == m) ? 0 : (n < m) ? -1 : 1;
+		return baseFn(fn, m, diff) && fixFn(fn, fm, diff) && fixFn(fm, fn, -diff);
+	};
+	if (!ForRandomNumbers(3, 30, 100, fn))
+		return OnError(5);
 
 	return true;
 }
@@ -713,7 +728,7 @@ bool TestFixNumber::TestGetHash()
 	{
 		FixNumber f = num = n;
 		if (f.GetHash() != GetHash(num))
-			return OnError(5);
+			return OnError(6);
 	}
 
 	auto fn = [&](char* p, size_t)
@@ -723,7 +738,7 @@ bool TestFixNumber::TestGetHash()
 		return f.GetHash() == GetHash(num);
 	};
 	if (!ForRandomNumbers(4, 23, 100, fn))
-		return OnError(6);
+		return OnError(7);
 
 	return true;
 }
