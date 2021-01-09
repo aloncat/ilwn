@@ -1,2 +1,2 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"

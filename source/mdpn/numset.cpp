@@ -220,7 +220,8 @@ void NumberSet::Purge(size_t eighth)
 	// Теперь обходим все элементы хеш-таблицы, соответствующие сокращаемой части eighth. Если элемент
 	// конечный, то мы ничего не меняем. Если он ссылается на число из первого блока, то копируем это
 	// число из блока в элемент таблицы. Затем корректируем в элементе ссылку на следующий элемент
-	for (size_t i = 0; i < size_t(1) << (m_HBits - 15); ++i)
+	const size_t itemC = size_t(1) << (m_HBits - 15);
+	for (size_t i = 0; i < itemC; ++i)
 	{
 		Item* tabA = &m_TableA[(8 * i + eighth) << 12];
 		for (size_t j = 0; j < 1 << 12; ++j)
@@ -260,13 +261,12 @@ void NumberSet::Purge(size_t eighth)
 	m_RCount -= m_RCountA[eighth];
 	m_RCountA[eighth] = 0;
 
-	// Просто освобождаем память из-под удалённого блока
+	// Освобождаем память из-под удалённого блока
 	Item** chunkA = &m_ChunkA[eighth * EIGHTH_CHUNK_C];
 	FreeMem(chunkA[0]);
 
 	// Сдвигаем все оставшиеся блоки к началу
-	for (size_t i = 1; i < EIGHTH_CHUNK_C; ++i)
-		chunkA[i - 1] = chunkA[i];
+	memmove(chunkA, &chunkA[1], sizeof(void*) * (EIGHTH_CHUNK_C - 1));
 	chunkA[EIGHTH_CHUNK_C - 1] = nullptr;
 }
 

@@ -16,6 +16,9 @@
     <Filter Include="num">
       <UniqueIdentifier>{b05225a9-d5a9-402b-ad09-1dbaf1e941ba}</UniqueIdentifier>
     </Filter>
+    <Filter Include="platform">
+      <UniqueIdentifier>{3b03faa1-6a37-4a9d-a9b7-c76312e97134}</UniqueIdentifier>
+    </Filter>
     <Filter Include="test">
       <UniqueIdentifier>{ef3aaddb-fe7f-4ab7-bc87-8e3d0ddeb471}</UniqueIdentifier>
     </Filter>
@@ -97,7 +100,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\mdpn\prefix.cpp" />
+    <ClCompile Include="..\..\mdpn\prefix.cpp">
+      <Filter>platform</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\mdpn\arch.cpp">
       <Filter>arch</Filter>
     </ClCompile>
