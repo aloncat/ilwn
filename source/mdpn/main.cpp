@@ -7,6 +7,7 @@
 #include "dbchunk.h"
 #include "dbmode.h"
 #include "eventmgr.h"
+#include "largemempages.h"
 #include "log.h"
 #include "mode.h"
 #include "number.h"
@@ -650,6 +651,8 @@ static int Main(int argC, const wchar_t* argA[])
 		aux::Printc("#12Error: #7failed to pass one or more crucial checks\n");
 		return 1;
 	}
+
+	LargeMemPages::Init();
 
 	auto mode = Mode::Create(argC, argA);
 

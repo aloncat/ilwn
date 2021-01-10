@@ -98,6 +98,9 @@
     <ClInclude Include="..\..\mdpn\searchmode.h">
       <Filter>main\mode</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\mdpn\largemempages.h">
+      <Filter>util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\mdpn\prefix.cpp">
@@ -174,6 +177,9 @@
     </ClCompile>
     <ClCompile Include="..\..\mdpn\searchmode.cpp">
       <Filter>main\mode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\largemempages.cpp">
+      <Filter>util</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

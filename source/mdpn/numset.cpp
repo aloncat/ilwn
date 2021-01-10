@@ -2,18 +2,28 @@
 #include "pch.h"
 #include "numset.h"
 
+#include "largemempages.h"
+
 #include <core/exception.h>
 #include <core/winapi.h>
 
 #include <string.h>
 
 //----------------------------------------------------------------------------------------------------------------------
-NumberSet::NumberSet()
+NumberSet::NumberSet(bool useLargePages)
 	: m_HBits(HASH_BITS - 3)
 {
+	static_assert(CLEAR_GAIN >= 2 && CLEAR_GAIN < EIGHTH_CHUNK_C, "Incorrect CLEAR_GAIN value");
 	// В целях увеличения скорости работы функции Purge за выбор части отвечают биты 12-14. Ещё 3
 	// бита нужны для роста таблицы. Таким образом, длина хеша должна быть не менее 12+3+3=18 бит
-	static_assert(HASH_BITS >= 18, "HASH_BITS must be >= 18");
+	static_assert(HASH_BITS >= 18 && HASH_BITS <= 30, "HASH_BITS must be >= 18");
+
+	if (useLargePages)
+	{
+		const size_t pageSize = LargeMemPages::GetLargePageSize();
+		m_LPageSize = LargeMemPages::IsEnabled() ? pageSize : 0;
+		m_HBits = m_LPageSize ? HASH_BITS : HASH_BITS - 3;
+	}
 
 	// Выделяем память под весь массив без инициализации элементов
 	m_TableA = AllocateMem(size_t(1) << HASH_BITS);
@@ -49,7 +59,7 @@ void NumberSet::Clear(bool freeMem)
 		for (size_t i = freeMem ? 0 : CLEAR_GAIN; i < EIGHTH_CHUNK_C; ++i)
 			FreeMem(eighthChunkA[i]);
 	}
-	if (freeMem)
+	if (freeMem && !m_LPageSize)
 	{
 		FreeMem(m_TableA);
 		m_HBits = HASH_BITS - 3;
@@ -103,7 +113,7 @@ bool NumberSet::Insert(const FixNumber& num)
 	if (num.IsZero())
 		return true;
 
-	// Ограничение на общий объём - не более CLEAR_GAIN блоков
+	// Ограничение на суммарное количество элементов - не более, чем 8 * CLEAR_GAIN полных блоков
 	if (m_CCount >= 8 * CLEAR_GAIN * CHUNK_SIZE)
 	{
 		size_t eighth = 0;
@@ -261,13 +271,25 @@ void NumberSet::Purge(size_t eighth)
 	m_RCount -= m_RCountA[eighth];
 	m_RCountA[eighth] = 0;
 
-	// Освобождаем память из-под удалённого блока
+	// Если часть использовала CLEAR_GAIN + 1 блоков или меньше, то помещаем удалённый
+	// блок за последним используемым. Если блоков было больше, то освобождаем память
 	Item** chunkA = &m_ChunkA[eighth * EIGHTH_CHUNK_C];
+	if (CLEAR_GAIN + 1 < EIGHTH_CHUNK_C && chunkA[CLEAR_GAIN + 1])
 	FreeMem(chunkA[0]);
 
+	Item* pSpareBlock = chunkA[0];
 	// Сдвигаем все оставшиеся блоки к началу
-	memmove(chunkA, &chunkA[1], sizeof(void*) * (EIGHTH_CHUNK_C - 1));
-	chunkA[EIGHTH_CHUNK_C - 1] = nullptr;
+	for (size_t i = 1; i < EIGHTH_CHUNK_C; ++i)
+	{
+		chunkA[i - 1] = chunkA[i];
+		if (!chunkA[i])
+		{
+			chunkA[i - 1] = pSpareBlock;
+			pSpareBlock = nullptr;
+			break;
+		}
+	}
+	chunkA[EIGHTH_CHUNK_C - 1] = pSpareBlock;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -299,6 +321,13 @@ template<class T> inline unsigned NumberSet::GetHash(const T& num) const
 AML_NOINLINE NumberSet::Item* NumberSet::AllocateMem(size_t itemC)
 {
 	const size_t sizeInBytes = sizeof(Item) * itemC;
+	// Для выделения памяти большими страницами размер sizeInBytes должен
+	// быть кратен размеру большой страницы, которая обычно равна 2048KiB
+	if (m_LPageSize && !(sizeInBytes & (m_LPageSize - 1)))
+	{
+		if (void* p = ::VirtualAlloc(nullptr, sizeInBytes, MEM_COMMIT | MEM_RESERVE | MEM_LARGE_PAGES, PAGE_READWRITE))
+			return reinterpret_cast<Item*>(p);
+	}
 	if (void* p = ::VirtualAlloc(nullptr, sizeInBytes, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE))
 		return reinterpret_cast<Item*>(p);
 

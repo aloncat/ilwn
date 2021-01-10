@@ -18,12 +18,14 @@ class NumberSet
 	AML_NONCOPYABLE(NumberSet)
 
 public:
-	NumberSet();
+	NumberSet(bool useLargePages = false);
 	~NumberSet();
 
 	void Clear(bool freeMem = true);
 	// Возвращает количество задействованных элементов набора
 	size_t GetSize() const { return m_TCount + m_CCount - m_RCount; }
+	// Возвращает true, если большие страницы памяти используются
+	bool IsLargePageEnabled() const { return m_LPageSize != 0; }
 
 	// Возвращает true, если число num содержится в наборе
 	bool Exists(const Number& num) const;
@@ -78,9 +80,10 @@ protected:
 	Item** m_ChunkA = nullptr;	// Массив блоков по CHUNK_SIZE распределяемых элементов
 	size_t m_NextA[8];			// Текущие индексы новых элементов каждой из частей
 	size_t m_TCount = 0;		// Количество задействованных элементов в m_TableA
-	size_t m_CCount = 0;		// Количество задействованных элементов m_ChunkA
+	size_t m_CCount = 0;		// Суммарное количество задействованных элементов m_ChunkA
 	size_t m_RCount = 0;		// Суммарное кол-во элементов, перенесённых из блоков в m_TableA
 	size_t m_RCountA[8];		// Кол-во эл-в, перенесённых из блоков в m_TableA для каждой из частей
 	unsigned m_HBits = 0;		// Количество используемых бит хеша в данный момент
 	unsigned m_Purge = 0;		// Части (мл. 8 бит), достигшие крит. размера
+	size_t m_LPageSize = 0;		// Размер большой страницы памяти (0, если используются обычные 4K страницы)
 };

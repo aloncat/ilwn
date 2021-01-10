@@ -194,6 +194,7 @@
     <ClInclude Include="..\..\mdpn\dbprogress.h" />
     <ClInclude Include="..\..\mdpn\dbstruct.h" />
     <ClInclude Include="..\..\mdpn\eventmgr.h" />
+    <ClInclude Include="..\..\mdpn\largemempages.h" />
     <ClInclude Include="..\..\mdpn\log.h" />
     <ClInclude Include="..\..\mdpn\mode.h" />
     <ClInclude Include="..\..\mdpn\number.h" />
@@ -219,6 +220,7 @@
     <ClCompile Include="..\..\mdpn\dbprogress.cpp" />
     <ClCompile Include="..\..\mdpn\dbstruct.cpp" />
     <ClCompile Include="..\..\mdpn\eventmgr.cpp" />
+    <ClCompile Include="..\..\mdpn\largemempages.cpp" />
     <ClCompile Include="..\..\mdpn\log.cpp" />
     <ClCompile Include="..\..\mdpn\main.cpp" />
     <ClCompile Include="..\..\mdpn\mode.cpp" />

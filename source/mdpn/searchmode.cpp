@@ -545,6 +545,7 @@ void SearchModeClasses::WorkThreads::WakeOneThread()
 SearchMode::SearchMode()
 	: m_WorkThreads(this)
 	, m_Tasks(m_WorkThreads)
+	, m_SiftSet(true)
 	, m_DBCS(300)
 {
 }
@@ -683,6 +684,11 @@ void SearchMode::DoSearch(const Number& firstNum)
 	{
 		EventManager::PublishEvent(util::Format("#12WARNING: #10#%u#3-digit range"
 			" has one or more unsearched gaps!", firstNum.GetLength()));
+	}
+
+	if (!m_SiftSet.IsLargePageEnabled())
+	{
+		EventManager::PublishEvent("#12WARNING: #3Large page support is not enabled!");
 	}
 
 	unsigned stepLimit = m_Steps->GetSearchLimit(firstNum);
