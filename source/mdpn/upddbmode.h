@@ -57,7 +57,9 @@ private:
 
 	void DoSearch(const Number& target, KnownInfo known);
 
+	bool RemoveChunk(DBChunk* pChunk);
 	void CreateNewChunk(const Number& first);
+	bool ConcatChunks(DBChunk* pPrev, DBChunk* pLast);
 	bool LoadChunkData(DBChunk* pChunk, DBChunkState dataState);
 	void SaveActiveChunk(const Number& last, ThreadTime& threadTime);
 	void SaveActiveChunk();
@@ -69,18 +71,18 @@ private:
 	bool CheckIfCancelled();
 
 	NumberSet m_LychThreads;
-	DBChunk* m_pActiveChunk = nullptr;
+	DBChunk* m_pActiveChunk = nullptr;	// Текущий (активный) блок
+	DBChunk* m_pPrevChunk = nullptr;	// Блок, расположенный перед текущим
 
-	Progress m_Progress;			// Параметры для отслеживания прогресса проверки чисел
-	RangeProgress m_RangeProgressA;	// Количество проверенных чисел в каждом из диапазонов
-	uint32_t m_LastSaveTick = 0;	// Тик последнего сохранения данных в файл БД
-	size_t m_SavedFileC = 0;		// Общее количество сохранённых файлов
+	Progress m_Progress;				// Параметры для отслеживания прогресса проверки чисел
+	RangeProgress m_RangeProgressA;		// Количество проверенных чисел в каждом из диапазонов
+	size_t m_SavedFileC = 0;			// Общее количество сохранённых файлов
 
-	Number m_Last;					// Последнее проверенное число
-	unsigned m_CPUTime = 0;			// Затраченное на проверку время CPU (в ms)
+	Number m_Last;						// Последнее проверенное число
+	unsigned m_CPUTime = 0;				// Затраченное на проверку время CPU (в ms)
 
-	bool m_IsExecuted = false;		// true, если функция Run была вызвана
-	bool m_IsCancelled = false;		// true, если пользователь отменил операцию
-	bool m_DontFillGaps = false;	// true, если не нужно проверять пропущенные интервалы
-	bool m_From1stKnown = false;	// true, если нужно начать с первого проверенного числа в БД
+	bool m_IsExecuted = false;			// true, если функция Run была вызвана
+	bool m_IsCancelled = false;			// true, если пользователь отменил операцию
+	bool m_DontFillGaps = false;		// true, если не нужно проверять пропущенные интервалы
+	bool m_From1stKnown = false;		// true, если нужно начать с первого проверенного числа в БД
 };

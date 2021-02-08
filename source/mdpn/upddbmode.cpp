@@ -12,6 +12,7 @@
 
 #include <core/auxutil.h>
 #include <core/console.h>
+#include <core/exception.h>
 #include <core/strutil.h>
 #include <core/util.h>
 #include <core/winapi.h>
@@ -136,13 +137,8 @@ bool UpdateDBMode::RemoveOverlaps()
 					return false;
 			}
 
-			std::wstring filePath = pChunk->GetFilePath();
-			if (!m_Data.RemoveChunk(pChunk))
-			{
-				EventManager::PublishEvent(util::Format("#12Error: #7failed to remove file %s, #12aborting...",
-					util::ToAnsi(filePath).c_str()));
+			if (!RemoveChunk(pChunk))
 				return false;
-			}
 		}
 
 		EventManager::PublishEvent(util::Format("  > Successfully removed %u file(s)", toRemove.size()));
@@ -253,6 +249,7 @@ float UpdateDBMode::UpdateChunks(const std::vector<DBChunk*>& chunks)
 			SaveActiveChunk();
 			last = pChunk->GetLast();
 			pChunk->UnloadData(DBChunkState::DATAUNLOADED);
+			m_pPrevChunk = pChunk;
 			continue;
 		}
 
@@ -271,11 +268,8 @@ float UpdateDBMode::UpdateChunks(const std::vector<DBChunk*>& chunks)
 		if (m_IsCancelled)
 			break;
 
-		std::wstring filePath = pChunk->GetFilePath();
-		if (!m_Data.RemoveChunk(pChunk))
+		if (!RemoveChunk(pChunk))
 		{
-			EventManager::PublishEvent(util::Format("#12Error: #7failed to remove file %s, #12aborting...",
-				util::ToAnsi(filePath).c_str()));
 			errorFlag = true;
 			break;
 		}
@@ -353,6 +347,7 @@ void UpdateDBMode::DoSearch(const Number& target, KnownInfo known)
 				PrintProgress(::GetTickCount(), last);
 				SaveActiveChunk(last, threadTime);
 				CreateNewChunk(lastNum);
+				m_pPrevChunk = nullptr;
 				testedC = 0;
 			}
 			lastNumLength = lastNum.GetLength();
@@ -427,9 +422,8 @@ void UpdateDBMode::DoSearch(const Number& target, KnownInfo known)
 				break;
 			}
 
-			const bool isEnoughData = GetDataSize(m_pActiveChunk) >= Const::DATA_SAVE_SIZE ||
-				m_pActiveChunk->GetNumbers().size() >= Const::DATA_SAVE_NUMC;
-			if (isEnoughData || tick - m_LastSaveTick >= Const::DATA_SAVE_TIME)
+			if (GetDataSize(m_pActiveChunk) >= Const::DATA_SAVE_SIZE ||
+				m_pActiveChunk->GetNumbers().size() >= Const::DATA_SAVE_NUMC)
 			{
 				if (m_Events->HasEvents())
 				{
@@ -456,6 +450,18 @@ void UpdateDBMode::DoSearch(const Number& target, KnownInfo known)
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+bool UpdateDBMode::RemoveChunk(DBChunk* pChunk)
+{
+	if (m_Data.RemoveChunk(pChunk))
+		return true;
+
+	std::wstring filePath = pChunk->GetFilePath();
+	EventManager::PublishEvent(util::Format("#12Error: #7failed to remove file %s, #12aborting...",
+		util::ToAnsi(filePath).c_str()));
+	return false;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
 void UpdateDBMode::CreateNewChunk(const Number& first)
 {
 	Assert(!m_pActiveChunk && first);
@@ -465,9 +471,54 @@ void UpdateDBMode::CreateNewChunk(const Number& first)
 
 	m_Data.SetActiveChunk(m_pActiveChunk);
 
-	m_LastSaveTick = ::GetTickCount();
 	m_Last = first - 1u;
 	m_CPUTime = 0;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+bool UpdateDBMode::ConcatChunks(DBChunk* pPrev, DBChunk* pLast)
+{
+	bool ok = true;
+	m_pPrevChunk = nullptr;
+
+	if (pLast)
+	{
+		if (pPrev && pPrev->LoadData(m_Data, DBChunkState::HEADERONLY))
+		{
+			if (pPrev->GetLast() + 1u == pLast->GetFirst() &&
+				pPrev->GetLast().GetLength() == pLast->GetFirst().GetLength() &&
+				pLast->LoadData(m_Data, DBChunkState::HEADERONLY))
+			{
+				const size_t totalSize = pPrev->GetDataSize() + pLast->GetDataSize();
+				if (totalSize <= Const::DATA_SAVE_SIZE || (totalSize < 5 * Const::DATA_SAVE_SIZE / 4 &&
+					pLast->GetDataSize() < Const::DATA_SAVE_SIZE / 2))
+				{
+					ok = false;
+					if (LoadChunkData(pPrev, DBChunkState::FULLDATA) && LoadChunkData(pLast, DBChunkState::FULLDATA))
+					{
+						m_Data.SetActiveChunk(pPrev);
+						pPrev->Append(pLast);
+						m_Data.Save(0u, 0, 0);
+						m_pPrevChunk = pPrev;
+
+						const size_t numberC = pPrev->GetNumbers().size();
+						const size_t dataSize = GetDataSize(pPrev, pPrev->GetDataSize());
+						EventManager::PublishEvent(util::Format("Results combined [%u/%.0fKiB]",
+							numberC, (1.f / 1024) * dataSize), true);
+
+						ok = RemoveChunk(pLast);
+						pLast = nullptr;
+					}
+				}
+				if (pLast)
+					pLast->UnloadData(DBChunkState::DATAUNLOADED);
+			}
+			pPrev->UnloadData(DBChunkState::DATAUNLOADED);
+		}
+		if (!m_pPrevChunk && ok)
+			m_pPrevChunk = pLast;
+	}
+	return ok;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -503,7 +554,6 @@ void UpdateDBMode::SaveActiveChunk()
 		Assert(m_Steps && first && first <= m_Last);
 
 		m_Data.Save(m_Last, m_Steps->GetMinSaveable(m_Last), m_CPUTime);
-		m_LastSaveTick = ::GetTickCount();
 		++m_SavedFileC;
 
 		const size_t numberC = m_pActiveChunk->GetNumbers().size();
@@ -512,9 +562,12 @@ void UpdateDBMode::SaveActiveChunk()
 			numberC, (1.f / 1024) * dataSize), true);
 
 		m_pActiveChunk->UnloadData(DBChunkState::DATAUNLOADED);
-		m_pActiveChunk = nullptr;
 		m_Last.SetZero();
 		m_CPUTime = 0;
+
+		if (!ConcatChunks(m_pPrevChunk, m_pActiveChunk))
+			throw util::ERuntime("Failed to concatenate database files");
+		m_pActiveChunk = nullptr;
 	}
 }
 
