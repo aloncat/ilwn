@@ -388,6 +388,7 @@ static bool AnalyseDBChunks(DataBase& data, size_t totalChunkC)
 		last = pChunk->GetLast();
 		curRange = last.GetLength();
 		result = AnalyseDBChunk(data, rangeA[curRange], palindromeA, pChunk);
+		pChunk->UnloadData(DBChunkState::DATAUNLOADED);
 		return result;
 	});
 
