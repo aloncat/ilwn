@@ -1,11 +1,10 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"
 #include "stephlp.h"
 
 #include <core/auxutil.h>
 
-#include <algorithm>
-
+bool StepHelper::s_RangeWarningShown = false;
 uint8_t StepHelper::s_MaxLengthA[Const::MAX_STEP + 1];
 uint8_t StepHelper::s_FoundRangeA[Const::MAX_STEP + 1];
 
@@ -13,7 +12,7 @@ uint8_t StepHelper::s_FoundRangeA[Const::MAX_STEP + 1];
 StepHelper::StepHelper(size_t startRange)
 	: m_StartRange(startRange ? startRange : 1)
 {
-	static bool isInitialized = Init();
+	static bool isInitialized = (Init(), true);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -23,10 +22,10 @@ unsigned StepHelper::GetSearchLimit(size_t digitC) const
 
 	// Выведем предупреждение о необходимости обновления параметров класса
 	// при попытке работы с диапазонами, старше доверенных (> KNOWN_DIGIT_C)
-	if (digitC > KNOWN_DIGIT_C && !m_RangeWarningShown)
+	if (digitC > KNOWN_DIGIT_C && !s_RangeWarningShown)
 	{
-		m_RangeWarningShown = true;
-		aux::Printf("#12WARNING: #7StepHelper class needs to be updated"
+		s_RangeWarningShown = true;
+		aux::Printf("\r#12WARNING: #7StepHelper class needs to be updated"
 			" to process #15#%u#7-digit numbers\n", digitC);
 	}
 
@@ -70,11 +69,10 @@ unsigned StepHelper::GetHighest(const Number& num)
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-bool StepHelper::Init()
+void StepHelper::Init()
 {
 	InitMaxLengths();
 	InitFoundRanges();
-	return true;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

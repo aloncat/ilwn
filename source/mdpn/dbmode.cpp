@@ -6,8 +6,6 @@
 #include <core/filesystem.h>
 #include <core/strutil.h>
 
-#include <algorithm>
-
 //----------------------------------------------------------------------------------------------------------------------
 size_t DBMode::GetDataSize(const DBChunk* pChunk, size_t realSize)
 {

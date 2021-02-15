@@ -1,4 +1,4 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"
 #include "upddbmode.h"
 
@@ -16,10 +16,6 @@
 #include <core/strutil.h>
 #include <core/util.h>
 #include <core/winapi.h>
-
-#include <algorithm>
-#include <memory>
-#include <string>
 
 //----------------------------------------------------------------------------------------------------------------------
 UpdateDBMode::UpdateDBMode()
@@ -69,7 +65,10 @@ bool UpdateDBMode::UpdateDataBase()
 	m_Progress.startTime = ::GetTickCount();
 	if (!m_Data.Init(false, DBChunkState::HEADERONLY))
 	{
-		aux::Print("Database not found, exiting...\n");
+		if (!CheckIfCancelled())
+		{
+			aux::Print("Database not found, exiting...\n");
+		}
 		return false;
 	}
 
@@ -81,14 +80,15 @@ bool UpdateDBMode::UpdateDataBase()
 	float timeInWork = 0;
 	if (RemoveOverlaps())
 	{
-		size_t startRange = 0, totalChunkC = 0;
-		m_Data.ForEachChunk([&](DBChunk* p) { startRange = p->GetFirst().GetLength(); return false; });
-		m_Data.ForEachChunk([&](DBChunk*) { ++totalChunkC; return true; });
-
+		size_t startRange = 0;
+		m_Data.ForEachChunk([&](DBChunk* p) {
+			startRange = p->GetFirst().GetLength();
+			return false;
+		});
 		m_Steps = std::make_unique<StepHelper>(startRange);
 		m_Events = std::make_unique<EventManager>(m_Data);
 
-		timeInWork += UpdateAllChunks(totalChunkC);
+		timeInWork += UpdateAllChunks(m_Data.GetChunkC());
 	}
 
 	SystemLog::Instance().Close();
@@ -524,13 +524,14 @@ bool UpdateDBMode::ConcatChunks(DBChunk* pPrev, DBChunk* pLast)
 //----------------------------------------------------------------------------------------------------------------------
 bool UpdateDBMode::LoadChunkData(DBChunk* pChunk, DBChunkState dataState)
 {
-	Assert(pChunk);
+	if (Verify(pChunk))
+	{
+		if (pChunk->LoadData(m_Data, dataState))
+			return true;
 
-	if (pChunk->LoadData(m_Data, dataState))
-		return true;
-
-	EventManager::PublishEvent(util::Format("#12Error: #7failed to load database file %s, #12aborting...",
-		util::ToAnsi(pChunk->GetFilePath()).c_str()));
+		EventManager::PublishEvent(util::Format("#12Error: #7failed to load database file %s, #12aborting...",
+			util::ToAnsi(pChunk->GetFilePath()).c_str()));
+	}
 	return false;
 }
 

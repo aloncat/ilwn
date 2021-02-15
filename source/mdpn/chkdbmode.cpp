@@ -507,9 +507,6 @@ bool CheckDBMode::CheckDataBase()
 
 	EventManager::PublishEvent("Database loaded, now loading database index...");
 
-	size_t totalChunkC = 0;
-	m_Data.ForEachChunk([&](DBChunk*) { ++totalChunkC; return true; });
-
 	if (!m_Index.Load() && util::FileSystem::FileExists(m_Data.GetBasePath() + L"index"))
 	{
 		EventManager::PublishEvent("#12ERROR: failed to load database index");
@@ -518,7 +515,7 @@ bool CheckDBMode::CheckDataBase()
 	}
 
 	EventManager::PublishEvent("Database index loaded, now checking files...");
-	const float timeInWork = CheckDBChunks(totalChunkC);
+	const float timeInWork = CheckDBChunks(m_Data.GetChunkC());
 
 	if (m_IsIndexChanged)
 		m_Index.Save();

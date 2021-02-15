@@ -7,8 +7,6 @@
 #include <core/exception.h>
 #include <core/winapi.h>
 
-#include <string.h>
-
 //----------------------------------------------------------------------------------------------------------------------
 NumberSet::NumberSet(bool useLargePages)
 	: m_HBits(HASH_BITS - 3)

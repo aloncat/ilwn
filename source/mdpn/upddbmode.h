@@ -1,4 +1,4 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #pragma once
 
 #include "assert.h"
@@ -7,10 +7,6 @@
 #include "dbmode.h"
 #include "number.h"
 #include "numset.h"
-
-#include <core/platform.h>
-
-#include <vector>
 
 class ThreadTime;
 

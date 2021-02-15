@@ -1,10 +1,9 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #pragma once
 
 #include "const.h"
 #include "number.h"
 
-#include <core/platform.h>
 #include <core/util.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22,7 +21,7 @@ public:
 	// Инициализирует класс. Параметр startRange задаёт диапазон, с которого начат поиск. Например, при
 	// запуске программы с пустой БД и при продолжении поиска с этой же базой startRange будет равен 1.
 	// При запуске с отдельной БД для поиска в диапазоне 21-значных чисел startRange будет равен 21
-	StepHelper(size_t startRange);
+	explicit StepHelper(size_t startRange);
 
 	// Возвращает true, если палиндром длины digitC для шага step должен быть сохранён в БД
 	bool IsSaveable(size_t digitC, unsigned step) const
@@ -49,12 +48,12 @@ public:
 	static unsigned GetHighest(const Number& num);
 
 private:
-	static bool Init();
+	static void Init();
 	static void InitMaxLengths();
 	static void InitFoundRanges();
 
 	const size_t m_StartRange = 1;
-	mutable bool m_RangeWarningShown = false;
+	static bool s_RangeWarningShown;
 
 	static uint8_t s_MaxLengthA[Const::MAX_STEP + 1];
 	static uint8_t s_FoundRangeA[Const::MAX_STEP + 1];

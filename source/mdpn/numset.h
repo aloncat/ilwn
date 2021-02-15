@@ -3,7 +3,6 @@
 
 #include "number.h"
 
-#include <core/platform.h>
 #include <core/util.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18,7 +17,7 @@ class NumberSet
 	AML_NONCOPYABLE(NumberSet)
 
 public:
-	NumberSet(bool useLargePages = false);
+	explicit NumberSet(bool useLargePages = false);
 	~NumberSet();
 
 	void Clear(bool freeMem = true);
@@ -41,7 +40,7 @@ public:
 	bool Insert(const FixNumber& num);
 
 protected:
-	static constexpr size_t HASH_BITS = 24;			// Кол-во бит хеша, определяет размер набора (24 -> 1200 MiB)
+	static constexpr size_t HASH_BITS = 25;			// Кол-во бит хеша, определяет размер набора (25 -> 2400 MiB)
 	static constexpr size_t EIGHTH_CHUNK_C = 16;	// Кол-во блоков по CHUNK_SIZE элементов для одной части
 
 	// Количество блоков в расчёте на одну часть, при котором происходит удаление элементов. Значение должно
