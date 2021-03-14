@@ -48,8 +48,8 @@ private:
 	bool UpdateDataBase();
 	bool RemoveOverlaps();
 
-	float UpdateAllChunks(size_t totalChunkC);
-	float UpdateChunks(const std::vector<DBChunk*>& chunks);
+	float UpdateAllChunks();
+	float UpdateChunks(const std::vector<std::pair<DBChunk*, bool>>& chunks);
 
 	void DoSearch(const Number& target, KnownInfo known);
 

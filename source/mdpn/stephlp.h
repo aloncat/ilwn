@@ -51,10 +51,12 @@ private:
 	static void Init();
 	static void InitMaxLengths();
 	static void InitFoundRanges();
+	static void InitMinSaveables();
 
 	const size_t m_StartRange = 1;
 	static bool s_RangeWarningShown;
 
 	static uint8_t s_MaxLengthA[Const::MAX_STEP + 1];
 	static uint8_t s_FoundRangeA[Const::MAX_STEP + 1];
+	static uint16_t s_MinSaveableA[Const::MAX_DIGIT_C + 1];
 };

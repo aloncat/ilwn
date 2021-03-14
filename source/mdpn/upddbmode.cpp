@@ -39,7 +39,7 @@ bool UpdateDBMode::Run()
 				// непроверенных (пропущенных) интервалов чисел
 				if (!util::StrInsCmp(m_Params[1], "--skipgaps"))
 					m_DontFillGaps = true;
-				// Параметр "--skipgaps" отключает только проверку пропущенного
+				// Параметр "--fromknown" отключает только проверку пропущенного
 				// интервала перед первым существующим файлом базы данных
 				else if (!util::StrInsCmp(m_Params[1], "--fromknown"))
 					m_From1stKnown = true;
@@ -63,6 +63,8 @@ bool UpdateDBMode::Run()
 bool UpdateDBMode::UpdateDataBase()
 {
 	m_Progress.startTime = ::GetTickCount();
+	// Так как база данных может содержать очень большое количество файлов,
+	// то загружаем её в состоянии HEADERONLY с целью сэкономить память
 	if (!m_Data.Init(false, DBChunkState::HEADERONLY))
 	{
 		if (!CheckIfCancelled())
@@ -88,7 +90,7 @@ bool UpdateDBMode::UpdateDataBase()
 		m_Steps = std::make_unique<StepHelper>(startRange);
 		m_Events = std::make_unique<EventManager>(m_Data);
 
-		timeInWork += UpdateAllChunks(m_Data.GetChunkC());
+		timeInWork += UpdateAllChunks();
 	}
 
 	SystemLog::Instance().Close();
@@ -148,9 +150,11 @@ bool UpdateDBMode::RemoveOverlaps()
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-float UpdateDBMode::UpdateAllChunks(size_t totalChunkC)
+float UpdateDBMode::UpdateAllChunks()
 {
-	std::vector<DBChunk*> chunkList;
+	const size_t totalChunkC = m_Data.GetChunkC();
+
+	std::vector<std::pair<DBChunk*, bool>> chunkList;
 	chunkList.reserve(totalChunkC);
 
 	Number first, last;
@@ -178,8 +182,9 @@ float UpdateDBMode::UpdateAllChunks(size_t totalChunkC)
 			hasGaps = true;
 		last = pChunk->GetLast();
 
-		chunkList.push_back(pChunk);
-		if (NeedsUpdate(pChunk))
+		const bool needsUpdate = NeedsUpdate(pChunk);
+		chunkList.emplace_back(pChunk, needsUpdate);
+		if (needsUpdate)
 			++toUpdateC;
 		else
 		{
@@ -188,6 +193,7 @@ float UpdateDBMode::UpdateAllChunks(size_t totalChunkC)
 				m_RangeProgressA[range] += pChunk->GetIterationC();
 		}
 
+		pChunk->UnloadData(DBChunkState::HEADERONLY);
 		return true;
 	});
 
@@ -208,21 +214,23 @@ float UpdateDBMode::UpdateAllChunks(size_t totalChunkC)
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-float UpdateDBMode::UpdateChunks(const std::vector<DBChunk*>& chunks)
+float UpdateDBMode::UpdateChunks(const std::vector<std::pair<DBChunk*, bool>>& chunks)
 {
 	Number first, last;
 	if (m_From1stKnown && !chunks.empty())
 	{
-		last = chunks.front()->GetFirst();
+		DBChunk* pChunk = chunks.front().first;
+		last = pChunk->GetFirst();
 		--last;
 	}
 
 	size_t removedFileC = 0;
 	bool errorFlag = false;
 
-	for (DBChunk* pChunk : chunks)
+	for (auto& item : chunks)
 	{
-		const bool needsUpdate = NeedsUpdate(pChunk);
+		DBChunk* pChunk = item.first;
+		const bool needsUpdate = item.second;
 		if (needsUpdate && !LoadChunkData(pChunk, DBChunkState::FULLDATA))
 		{
 			errorFlag = true;
@@ -579,7 +587,7 @@ bool UpdateDBMode::NeedsUpdate(const DBChunk* pChunk) const
 
 	const size_t digitC = pChunk->GetFirst().GetLength();
 	return pChunk->HasOldFormat() || !pChunk->GetMinSavedStep() ||
-		(GetMinSavedStep(pChunk) != m_Steps->GetMinSaveable(digitC));
+		(GetMinSavedStep(pChunk) > m_Steps->GetMinSaveable(digitC));
 }
 
 //----------------------------------------------------------------------------------------------------------------------

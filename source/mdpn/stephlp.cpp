@@ -7,6 +7,7 @@
 bool StepHelper::s_RangeWarningShown = false;
 uint8_t StepHelper::s_MaxLengthA[Const::MAX_STEP + 1];
 uint8_t StepHelper::s_FoundRangeA[Const::MAX_STEP + 1];
+uint16_t StepHelper::s_MinSaveableA[Const::MAX_DIGIT_C + 1];
 
 //----------------------------------------------------------------------------------------------------------------------
 StepHelper::StepHelper(size_t startRange)
@@ -50,11 +51,8 @@ unsigned StepHelper::GetSearchLimit(size_t digitC) const
 //----------------------------------------------------------------------------------------------------------------------
 unsigned StepHelper::GetMinSaveable(size_t digitC) const
 {
-	unsigned step = 1;
 	digitC = std::min(digitC, Const::MAX_DIGIT_C);
-	while (step < Const::MAX_STEP && digitC > s_MaxLengthA[step])
-		++step;
-	return step;
+	return s_MinSaveableA[digitC];
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -73,6 +71,7 @@ void StepHelper::Init()
 {
 	InitMaxLengths();
 	InitFoundRanges();
+	InitMinSaveables();
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -151,4 +150,16 @@ void StepHelper::InitFoundRanges()
 	// Ненайденные шаги (обновятся при обнаружении нового
 	// шага в диапазоне 22-, 23-значных чисел или старше)
 	R(~0u) << 237 << R(241, 245) << R(247, 248) << R(262, Const::MAX_STEP);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+void StepHelper::InitMinSaveables()
+{
+	unsigned step = 1;
+	for (size_t digitC = 0; digitC <= Const::MAX_DIGIT_C; ++digitC)
+	{
+		while (step < Const::MAX_STEP && digitC > s_MaxLengthA[step])
+			++step;
+		s_MinSaveableA[digitC] = step & 0xffff;
+	}
 }
