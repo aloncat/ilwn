@@ -1,4 +1,4 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"
 #include "searchmode.h"
 
@@ -14,9 +14,7 @@
 #include <core/strutil.h>
 #include <core/winapi.h>
 
-#include <algorithm>
 #include <intrin.h>
-#include <string>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

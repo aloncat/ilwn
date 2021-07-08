@@ -1,4 +1,4 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"
 #include "log.h"
 
@@ -9,10 +9,6 @@
 #include <core/filesystem.h>
 #include <core/strutil.h>
 #include <core/winapi.h>
-
-#include <stdlib.h>
-#include <string.h>
-#include <wchar.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

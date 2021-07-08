@@ -1,4 +1,4 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"
 #include "chkdbmode.h"
 
@@ -14,9 +14,6 @@
 #include <core/strutil.h>
 #include <core/util.h>
 #include <core/winapi.h>
-
-#include <stdio.h>
-#include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

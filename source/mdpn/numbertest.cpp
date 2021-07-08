@@ -1,21 +1,17 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"
 #include "numbertest.h"
 
 #include "ttime.h"
 #include "util.h"
 
-#include <core/auxutil.h>
 #include <core/array.h>
+#include <core/auxutil.h>
 #include <core/exception.h>
 #include <core/fasthash.h>
 #include <core/strutil.h>
 #include <core/util.h>
 #include <core/winapi.h>
-
-#include <algorithm>
-#include <stdio.h>
-#include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

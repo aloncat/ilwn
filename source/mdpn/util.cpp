@@ -1,22 +1,18 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"
 #include "util.h"
 
 #include "const.h"
 #include "number.h"
 
-#include <core/auxutil.h>
 #include <core/array.h>
+#include <core/auxutil.h>
 #include <core/exception.h>
 #include <core/file.h>
 #include <core/strutil.h>
 #include <core/util.h>
 #include <core/winapi.h>
 #include <zlib/zlib.h>
-
-#include <exception>
-#include <stdio.h>
-#include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

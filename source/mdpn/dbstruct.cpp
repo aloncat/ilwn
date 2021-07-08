@@ -1,4 +1,4 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"
 #include "dbstruct.h"
 
@@ -9,9 +9,6 @@
 #include <core/filesystem.h>
 #include <core/platform.h>
 #include <core/strutil.h>
-
-#include <algorithm>
-#include <string.h>
 
 //----------------------------------------------------------------------------------------------------------------------
 DBStructure::DBStructure(DataBase& db)

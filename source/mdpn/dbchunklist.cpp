@@ -1,12 +1,10 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"
 #include "dbchunklist.h"
 
 #include "dbchunk.h"
 
 #include <core/toggle.h>
-
-#include <algorithm>
 
 //----------------------------------------------------------------------------------------------------------------------
 DBChunkList::DBChunkList()

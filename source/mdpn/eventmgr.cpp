@@ -1,4 +1,4 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"
 #include "eventmgr.h"
 
@@ -11,8 +11,6 @@
 #include <core/datetime.h>
 #include <core/platform.h>
 #include <core/strutil.h>
-
-#include <algorithm>
 
 //----------------------------------------------------------------------------------------------------------------------
 EventManager::EventManager(const DataBase& data)

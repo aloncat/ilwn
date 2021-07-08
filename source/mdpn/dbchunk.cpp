@@ -1,4 +1,4 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"
 #include "dbchunk.h"
 
@@ -12,9 +12,6 @@
 #include <core/exception.h>
 #include <core/file.h>
 #include <core/strutil.h>
-
-#include <algorithm>
-#include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

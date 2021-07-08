@@ -1,12 +1,12 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"
 
 #include "const.h"
 #include "number.h"
 #include "util.h"
 
-#include <core/auxutil.h>
 #include <core/array.h>
+#include <core/auxutil.h>
 #include <core/file.h>
 #include <core/filesystem.h>
 #include <core/strutil.h>

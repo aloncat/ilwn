@@ -1,4 +1,4 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"
 #include "dbprogress.h"
 
@@ -7,9 +7,6 @@
 #include <core/strutil.h>
 #include <core/util.h>
 #include <core/winapi.h>
-
-#include <algorithm>
-#include <memory>
 
 //----------------------------------------------------------------------------------------------------------------------
 class DBProgress::Shower final

@@ -1,4 +1,4 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"
 #include "arch.h"
 
@@ -9,9 +9,6 @@
 #include <core/console.h>
 #include <core/strutil.h>
 #include <core/winapi.h>
-
-#include <algorithm>
-#include <string>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

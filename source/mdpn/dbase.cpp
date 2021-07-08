@@ -1,4 +1,4 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"
 #include "dbase.h"
 
@@ -6,8 +6,6 @@
 #include <core/filesystem.h>
 #include <core/strutil.h>
 #include <core/toggle.h>
-
-#include <algorithm>
 
 //----------------------------------------------------------------------------------------------------------------------
 DataBase::DataBase()

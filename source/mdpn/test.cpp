@@ -1,4 +1,4 @@
-﻿//⬪MDPN⬪
+﻿//∙MDPN
 #include "pch.h"
 #include "test.h"
 
@@ -8,10 +8,6 @@
 #include <core/strutil.h>
 
 #include <intrin.h>
-#include <memory>
-#include <set>
-#include <stdio.h>
-#include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
