@@ -13,10 +13,11 @@ numbers. Thus, the MDPN project is all about searching for the most delayed
 palindromes. The P196 project is trying to check whether the number 196 (the
 very first Lychrel number) as well as some other numbers will ever become a
 palindrome as a result of repeated RAA (Reverse-And-Add) operation on it.
-Other projects are enumerating Lychrel seed numbers as well as all primes.
+Other projects are enumerating Lychrel seed numbers and primes.
 
 Directory structure:
 --------------------
+  script	Various auxiliary scripts
   www		iLWN website sources
 
 

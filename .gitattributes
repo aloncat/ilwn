@@ -1,5 +1,7 @@
 * text=auto
 
+*.bat text eol=crlf
+
 www/**/*.css text eol=lf
 www/**/*.html text eol=lf
 www/**/*.txt text eol=lf
