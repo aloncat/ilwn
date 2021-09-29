@@ -1,0 +1,4 @@
+user-agent: *
+disallow:
+
+sitemap: https://dmaslov.me/sitemap.txt

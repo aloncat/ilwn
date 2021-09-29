@@ -1,1 +1,5 @@
 * text=auto
+
+www/**/*.css text eol=lf
+www/**/*.html text eol=lf
+www/**/*.txt text eol=lf

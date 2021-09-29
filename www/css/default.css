@@ -1,0 +1,166 @@
+body {
+	margin: 75px 0 4px;
+	font-family: Verdana, Arial, sans-serif;
+	font-size: 87.5%; /* Equals to 14px */
+	background: white;
+	color: black;
+}
+
+/* Custom classes */
+
+.column {
+	margin: 0 auto;
+	padding: 0 15px;
+	max-width: 800px;
+	text-align: justify;
+}
+
+.newstag {
+	margin: 0 2px;
+	padding: 0 6px;
+	font-weight: bold;
+	background: #e0e0e0;
+	color: #666;
+	border-radius: 6px;
+}
+.tag-mdpn {
+	background: #d8e8ff;
+	color: black;
+}
+.tag-p196 {
+	background: #ffe8c8;
+	color: black;
+}
+
+/* Built-in classes */
+
+a:link {
+	text-decoration: none;
+	color: #3366ff;
+}
+a:visited {
+	text-decoration: none;
+	color: #4880ff;
+}
+a:hover {
+	text-decoration: underline;
+}
+a.navmenu {
+	text-decoration: none;
+}
+a.footer {
+	color: #727272;
+}
+
+hr {
+	margin: 0;
+	border: 0;
+	height: 1px;
+	background: #ccc;
+}
+
+table.navmenu {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 5px;
+	position: fixed;
+	top: 0;
+	background: #303030;
+}
+table.nospacing {
+	border-collapse: separate;
+	border-spacing: 0;
+}
+
+td {
+	padding: 2px;
+	font-family: Verdana, Arial, sans-serif;
+	font-size: 100%;
+	color: black;
+}
+td.footer {
+	padding: 0;
+	font-size: 92.9%;
+	color: #727272;
+}
+
+h3 {
+	margin: 0 auto 8px;
+	padding: 3px 15px;
+	max-width: 768px;
+	font-family: Tahoma, Arial, sans-serif;
+	text-align: center;
+	background: #e8e8e8;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+}
+
+div.navlogo {
+	padding: 2px 0;
+	font-family: Tahoma, Arial, sans-serif;
+	font-size: 142.9%;
+	font-weight: bold;
+	text-align: center;
+}
+div.navmenu {
+	padding: 4px 16px;
+	font-weight: bold;
+	background: #303030;
+	color: white;
+	border-radius: 8px;
+}
+div.navmenu:hover {
+	background: white;
+	color: #303030;
+}
+div.homesvg {
+	padding: 0 12px;
+	border-radius: 10px;
+}
+div.homesvg svg path {
+	fill: white;
+	fill-opacity: 1.0;
+}
+div.homesvg:hover svg path {
+	fill: #303030;
+}
+div.statusblock {
+	padding: 4px 7px;
+	background: #fafafa;
+	border: 1px solid #ddd;
+	border-radius: 5px;
+}
+div.statushead {
+	font-size: 92.9%;
+	text-align: center;
+}
+div.statustext {
+	font-size: 85.7%;
+	text-align: left;
+}
+
+ul {
+	margin: 9px 0 0;
+	padding: 0 18px 0 28px;
+}
+ul.news {
+	font-size: 85.7%;
+	text-align: left;
+}
+li {
+	padding-bottom: 3px;
+}
+ul li::marker {
+	font-size: 98%;
+	color: #666;
+}
+
+/* Adaptive design */
+
+@media screen and (max-width: 830px) {
+	h3 {
+		max-width: 100%;
+		border-width: 1px 0;
+		border-radius: 0;
+	}
+}
