@@ -23,7 +23,15 @@ body {
 	font-size: 92.86%; /* 13.0px */
 	line-height: 1.462; /* 19.0px */
 }
+.tiny {
+	font-size: 85.71%; /* 12.0px */
+	line-height: 1.417; /* 17.0px */
+}
 
+.newsdate {
+	font-style: italic;
+	color: #484848;
+}
 .newstag {
 	margin: 0 2px;
 	padding: 0 6px;
@@ -97,6 +105,18 @@ td.footer {
 	color: #727272;
 }
 
+h1 {
+	margin: 36px auto 36px;
+	padding: 4px 20px 6px;
+	width: max-content;
+	font-family: Tahoma, Arial, sans-serif;
+	font-size: 128.57%; /* 18.0px */
+	line-height: 1.389; /* 25.0px */
+	text-align: center;
+	background: #e8e8e8;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+}
 h2, h3 {
 	font-family: Tahoma, Arial, sans-serif;
 	font-size: 114.29%; /* 16.0px */
@@ -167,6 +187,11 @@ div.statustext {
 	font-size: 85.71%; /* 12.0px */
 	line-height: 1.417; /* 17.0px */
 	text-align: left;
+}
+div.newshead {
+	padding-bottom: 2px;
+	font-weight: bold;
+	border-bottom: 1px solid #aaa;
 }
 
 p {
