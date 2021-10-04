@@ -628,6 +628,366 @@ public:
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   P196
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include "ttime.h"
+#include <core/crc32.h>
+
+//--------------------------------------------------------------------------------------------------------------------------------
+struct P196Progress
+{
+	uint64_t lychrel = 0;		// Проверяемое число Лишрел
+	uint64_t timeSpent = 0;		// Сумма затраченного времени CPU в ms
+	uint64_t iterationC = 0;	// Выполненное количество итераций
+	std::string number;			// Результирующее число
+};
+
+//--------------------------------------------------------------------------------------------------------------------------------
+static bool P196ProblemLoad(P196Progress& data, const std::wstring& filePath)
+{
+	util::MemoryFile f;
+	if (!filePath.empty() && f.LoadFrom(filePath))
+	{
+		bool result = false;
+		const auto fileSize = f.GetSize();
+		if (fileSize > 0)
+		{
+			char buffer[128];
+			size_t bytesRead = 0;
+			if (f.Read(buffer, 128, bytesRead) && bytesRead > 0)
+			{
+				std::string text(buffer, bytesRead);
+				auto lines = util::Split(text, ":\n");
+				if (lines.size() >= 8 && lines.size() <= 12 && lines[0] == "NUM" && lines[2] == "CPUTIME" &&
+					lines[4] == "ITERATION" && lines[6] == "LENGTH")
+				{
+					data.lychrel = _atoi64(lines[1].c_str());
+					data.timeSpent = _atoi64(lines[3].c_str());
+					data.iterationC = _atoi64(lines[5].c_str());
+					const size_t numLength = atoi(lines[7].c_str());
+
+					if (data.lychrel >= 196 && data.timeSpent > 0 && data.iterationC > 0)
+					{
+						size_t start = text.find("---\n") + 4;
+						if (start > 4 && numLength > 0 && static_cast<long long>(start + numLength) == fileSize)
+						{
+							char* numBuf = new char[numLength];
+							if (f.SetPosition(start) && f.Read(numBuf, numLength))
+							{
+								data.number.assign(numBuf, numLength);
+								auto hash = hash::GetCRC32(data.number.c_str(), data.number.size());
+								result = util::Format("%08X", hash) == lines[9];
+							}
+							delete[] numBuf;
+						}
+					}
+					else if (data.lychrel >= 196 && data.timeSpent == 0 && data.iterationC == 0)
+					{
+						data.number = util::Format("%llu", data.lychrel);
+						result = data.number.size() == numLength;
+					}
+				}
+			}
+		}
+
+		return result;
+	}
+
+	// 196, с начала
+	data.lychrel = 196;
+	data.timeSpent = 0;
+	data.iterationC = 0;
+	data.number = util::Format("%llu", data.lychrel);
+	return true;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+static void P196ProblemSave(const P196Progress& data, bool saveAsLatest)
+{
+	util::DateTime dt;
+	dt.Update();
+
+	util::MemoryFile f;
+	f.Open();
+
+	const auto hash = hash::GetCRC32(data.number.c_str(), data.number.size());
+	std::string s = util::Format("NUM:%llu\nCPUTIME:%llu\nITERATION:%llu\nLENGTH:%u\nHASH:%08X\n---\n",
+		data.lychrel, data.timeSpent, data.iterationC, data.number.size(), hash);
+	f.Write(s.c_str(), s.size());
+
+	f.Write(data.number.c_str(), data.number.size());
+
+	std::wstring filePath = util::Format(L"%02u%02u%02u-%02u%02u%02u.txt",
+		dt.year % 100, dt.month, dt.day, dt.hour, dt.minute, dt.second);
+	if (saveAsLatest || data.iterationC % 1000000)
+		filePath = L"latest.txt";
+
+	f.SaveTo(filePath);
+	f.Close();
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+static void P196Problem(P196Progress& data)
+{
+	BigNumber num;
+	num.Reserve(80000000); // Резервируем 80 миллионов знаков
+
+	num.Set(data.number);
+	uint64_t lastIt = data.iterationC;
+
+	ThreadTime timer;
+	uint32_t lastTick = ::GetTickCount();
+	uint32_t saveTick = lastTick;
+
+	for (;;)
+	{
+		unsigned stepDoneC = 0;
+		if (num.RAATillPalindrome(100, stepDoneC))
+		{
+			data.iterationC += stepDoneC;
+			aux::Printf("\rPalindrome found! Iteration=%llu\n", data.iterationC);
+			break;
+		}
+		data.iterationC += stepDoneC;
+
+		if (util::SystemConsole::Instance().IsCtrlCPressed())
+		{
+			aux::Printf(", #12cancelled...\n");
+			break;
+		}
+
+		const uint32_t tick = ::GetTickCount();
+
+		if (tick - lastTick >= 1000)
+		{
+			const size_t len = num.GetLength();
+			const float elapsed = 0.001f * (tick - lastTick);
+			const float speed = (data.iterationC - lastIt) / elapsed;
+
+			aux::Printf("\rIteration #15#%s#7, length #15#%s#7, speed %s", SeparateWithCommas(data.iterationC).c_str(),
+				SeparateWithCommas(len).c_str(), FormatSpeed(speed).c_str());
+
+			lastIt = data.iterationC;
+			lastTick = tick;
+		}
+
+		if (tick - saveTick >= 900 * 1000 || data.iterationC % 1000000 == 0)
+		{
+			data.timeSpent += timer.GetElapsed(true) / 1000;
+			data.number = num.AsString();
+			P196ProblemSave(data, false);
+			saveTick = tick;
+		}
+	}
+
+	data.timeSpent += timer.GetElapsed(true) / 1000;
+	data.number = num.AsString();
+	P196ProblemSave(data, true);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+/*static*/ int P196ProblemMain()
+{
+	const std::string buildVer = GetAppVersion();
+	aux::Printf("Most Delayed Palindromic Number project. Built on %s\n", buildVer.c_str());
+	aux::Print("For more information, please visit us at https://dmaslov.me\n");
+
+	if (!TestFacility::CheckRequirements(false))
+	{
+		aux::Printc("#12Error: #7failed to pass one or more crucial checks\n");
+		return 1;
+	}
+
+	P196Progress data;
+	const std::wstring filePath = L"latest.txt";
+	if (!filePath.empty() && P196ProblemLoad(data, filePath))
+	{
+		aux::Printf("Performing computation for Lychrel number %s...\n",
+			SeparateWithCommas(data.lychrel).c_str());
+
+		::SetThreadPriority(::GetCurrentThread(), THREAD_PRIORITY_LOWEST);
+		P196Problem(data);
+	}
+
+	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   All Lychrels
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//--------------------------------------------------------------------------------------------------------------------------------
+static bool CheckSeed(BigNumber& num)
+{
+	// Здесь мы проверяем кандидата в числа Лишрел - число num. Предварительно, мы уже выполнили отсев и этот
+	// кандидат не отсеялся. Поэтому мы сделаем 2 вещи: 1) выполним над ним довольное большое количество операций
+	// RAA (десятки, сотни тысяч или даже несколько миллионов) и убедимся, что оно не становится палиндромом;
+	// 2) когда мы выйдем из функции, число будет проверено на отсутствие в полном наборе всех базовых чисел
+
+	constexpr unsigned targetLength = 10000;
+
+	const BigNumber initialNum = num;
+	unsigned stepDoneC = 0;
+
+	uint32_t lastTick = ::GetTickCount();
+	bool hasOutput = false;
+
+	while (true)
+	{
+		unsigned doneC;
+		if (targetLength - num.GetLength() < 500)
+		{
+			return !num.RAATillLength(targetLength, doneC);
+		}
+
+		if (num.RAATillPalindrome(500, doneC))
+			return false;
+		stepDoneC += doneC;
+
+		const uint32_t tick = ::GetTickCount();
+		if (tick - lastTick >= 250)
+		{
+			hasOutput = true;
+			aux::Printf("\r  Testing %s, iteration %s...", SeparateWithCommas(initialNum).c_str(),
+				SeparateWithCommas(stepDoneC).c_str());
+			lastTick = tick;
+		}
+
+		if (util::SystemConsole::Instance().IsCtrlCPressed())
+		{
+			if (hasOutput)
+			{
+				aux::Printc(", #12stopping...\n");
+			}
+			break;
+		}
+	}
+
+	// TODO: нужно контролировать получение палиндрома. Если внутри этой функции будет получен палиндром с шагом,
+	// вышеминимального шага проверки MDPN (для диапазона или файла .pal), то это будет ого-го какой прецедент!
+
+	return false;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+static void AllLychrels()
+{
+	util::BinaryFile log;
+	log.Open(L"log.txt", util::FILE_CREATE_ALWAYS | util::FILE_OPEN_READWRITE);
+
+	BigNumber lastNum, current;
+	constexpr unsigned maxDepth = 300;		// Глубина проверки чисел
+	constexpr unsigned siftLength = 30;		// Длина числа в наборе отсева
+
+	std::set<FixNumber> siftSet;
+	std::set<BigNumber> seeds;
+	unsigned seedCount = 0;
+
+	BigNumber bigNum;
+	bigNum.Reserve(2000000);
+
+	uint64_t testedC = 0;
+	uint32_t lastTick = ::GetTickCount();
+
+	while (true)
+	{
+		++lastNum;
+		lastNum.SkipRAADups();
+
+		unsigned doneC;
+		current = lastNum;
+		if (!current.RAATillLength(siftLength, doneC))
+		{
+			const FixNumber val = current;
+			if (siftSet.find(val) == siftSet.end())
+			{
+				if (!current.RAATillPalindrome(maxDepth - doneC, doneC))
+				{
+					siftSet.insert(val);
+
+					aux::Printf("\rFound Lychrel candidate: #14#%s\n",
+						SeparateWithCommas(lastNum).c_str());
+
+					bigNum = lastNum;
+					// Теперь конкретно проверяем кандидата
+					if (CheckSeed(bigNum) && seeds.find(bigNum) == seeds.end())
+					{
+						++seedCount;
+						// NB: этот способ требует огромного количества памяти (особенно при большой глубине проверки).
+						// Лучше завести map, где ключом будет хеш числа, а значением - исходное число Лишрел. При этом,
+						// если хеши совпали, будет необходимо сравнить реальные результаты. Но нет смысла прокручивать
+						// исходное число на полную глубину: можно делать частями для обоих чисел, например, по 500 итераций
+						// и сравнивать числа каждый раз. Если это реальное совпадение, то проверка завершится очень рано.
+						// Если хеши совпали ложно, то при таком способе придётся крутить на полную глубину оба числа
+						// (что, конечно, долго). Поэтому хеш лучше брать 64-битным или больше (например, SHA-256)
+						seeds.insert(bigNum);
+
+						auto s = util::Format("Seed #%u: %s\n", seedCount,
+							SeparateWithCommas(lastNum).c_str());
+						log.Write(s.c_str(), s.size());
+
+						aux::Printf("\r  #10Found Lychrel seed number (#15###%u#10): #14#%s\n",
+							seedCount, SeparateWithCommas(lastNum).c_str());
+					} else
+					{
+						if (util::SystemConsole::Instance().IsCtrlCPressed())
+							break;
+
+						aux::Printf("\r  #7Candidate evaluated to a kin number, skipped\n");
+					}
+				}
+			}
+		}
+
+		if ((++testedC & 0x3ff) == 0)
+		{
+			const uint32_t tick = ::GetTickCount();
+			if (tick - lastTick >= 500)
+			{
+				const uint32_t elapsed = tick - lastTick;
+				const float speed = (elapsed > 50) ? 1000.f * testedC / elapsed : 0.f;
+				aux::Printf("\r%s [%s]... \b", SeparateWithCommas(lastNum).c_str(),
+					FormatSpeed(speed).c_str());
+				lastTick = tick;
+				testedC = 0;
+			}
+
+			if (util::SystemConsole::Instance().IsCtrlCPressed())
+			{
+				aux::Printc(", #12stopping...\n");
+				break;
+			}
+		}
+	}
+
+	log.Close();
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+int AllLychrelsMain()
+{
+	const std::string buildVer = GetAppVersion();
+	aux::Printf("Most Delayed Palindromic Number project. Built on %s\n", buildVer.c_str());
+	aux::Print("For more information, please visit us at https://dmaslov.me\n");
+
+	if (!TestFacility::CheckRequirements(false))
+	{
+		aux::Printc("#12Error: #7failed to pass one or more crucial checks\n");
+		return 1;
+	}
+
+	::SetThreadPriority(::GetCurrentThread(), THREAD_PRIORITY_LOWEST);
+	AllLychrels();
+
+	return 0;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   Главная функция
@@ -635,7 +995,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //----------------------------------------------------------------------------------------------------------------------
-static int Main(int argC, const wchar_t* argA[])
+/*static*/ int Main(int argC, const wchar_t* argA[])
 {
 	const std::string buildVer = GetAppVersion();
 	aux::Printf("Most Delayed Palindromic Number project. Built on %s\n", buildVer.c_str());
@@ -668,5 +1028,8 @@ static int Main(int argC, const wchar_t* argA[])
 //----------------------------------------------------------------------------------------------------------------------
 int wmain(int argC, const wchar_t* argA[])
 {
+	//return GuardedCall(P196ProblemMain, 1);
+	//return GuardedCall(AllLychrelsMain, 1);
+
 	return GuardedCall(std::bind(Main, argC, argA), 1);
 }
