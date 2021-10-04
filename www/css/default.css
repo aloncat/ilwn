@@ -23,8 +23,12 @@ body {
 	margin: 8px auto 14px;
 	text-align: justify;
 }
+.e-link {
+	padding: 0 0 3px 12px;
+	border-left: 4px solid #3d7;
+}
 .o-link {
-	padding: 0 0 3px 15px;
+	padding: 0 0 3px 12px;
 	border-left: 4px solid #6af;
 }
 .small {
