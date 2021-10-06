@@ -1,0 +1,175 @@
+﻿<!DOCTYPE html>
+<html lang="ru"><head>
+  <title>Оборудование - iLWN - Дмитрий Маслов</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="/css/default.css">
+</head>
+<body>
+
+<table class="navmenu">
+  <tr>
+	<td style="width: 220px">
+	  <div class="navlogo">
+		<a class="navmenu" href="https://dmaslov.me" style="color: #ccc">Dmitry Maslov</a>
+	  </div>
+	</td>
+	<td style="width: 2px; min-width: 2px; background: #606060; padding: 0"></td>
+	<td style="width: 15px; min-width: 12px; padding: 0"></td>
+	<td style="width: 15px">
+	  <a class="navmenu" href="https://dmaslov.me"><div class="navmenu homesvg">
+		<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="25px" height="23px" viewBox="0 18 547.6 503.7" style="margin-top: 1px">
+		  <path d="M540.76,254.788L294.506,38.216 c-11.475-10.098-30.064-10.098-41.386,0L6.943,254.788 c-11.475,10.098-8.415,18.284,6.885,18.284 h75.964 v221.773 c0,12.087,9.945,22.108,22.108,22.108 h92.947V371.067 c0-12.087,9.945-22.108,22.109-22.108 h93.865 c12.239,0,22.108,9.792,22.108,22.108 v145.886 h92.947 c12.24,0,22.108-9.945,22.108-22.108 v-221.85 h75.965 C549.021,272.995,552.081,264.886,540.76,254.788z" />
+		</svg>
+	  </div></a>
+	</td>
+	<td style="width: 15px"><a class="navmenu" href="/blog/"><div class="navmenu">Blog</div></a></td>
+	<td style="width: 15px"><a class="navmenu" href="/mdpn/"><div class="navmenu">MDPN</div></a></td>
+	<td style="width: 15px"><a class="navmenu" href="/p196/"><div class="navmenu">P196</div></a></td>
+	<td style="min-width: 10px"></td>
+  </tr>
+</table>
+
+<h1>Используемое в проекте оборудование</h1>
+
+<p class="column text">
+  В настоящий момент все версии программ проектов <a href="/mdpn/">MDPN</a> и <a href="/p196/">P196</a> (а также нового проекта по поиску всех базовых чисел Лишрел ALSN) работают локально. Какие-то из них многопоточные (т.&nbsp;е. могут задействовать для работы все или несколько ядер центрального процессора), другие &mdash; работают только в 1 потоке. Никакие из программ в данный момент не поддерживают распределённые вычисления. Также, в данный момент не используются вычисления на графических ускорителях (CUDA, OpenCL).
+</p>
+
+<p class="column text">
+  Ниже перечислено оборудование, которое используется проектом для вычислений или иной работы. Какая-то часть оборудования используется исключительно для нужд проекта, работая в режиме 24/7. Другая часть используется частично, лишь в то время, когда устройства включены и не используются для иных целей.
+</p>
+
+<script type="text/javascript">
+  function toggleHwItem(id) {
+	document.getElementById("hw-ctrl-" + id).style.display = "none";
+	document.getElementById("hw-details-" + id).style.display = "block";
+  }
+</script>
+
+<div class="column text">
+
+  <!-- Hardware item 1 -->
+  <div class="cpu-item">
+	<div>
+	  <b>Intel Core i5-10400F</b> / <b>40&nbsp;Gb DDR4-2667</b> //
+	  <span style="color: #666"><i><b>6 CPU ядер</b></i></span>
+	</div>
+	<div class="hw-text">
+	  Режим работы: 24/7. Мой основной ПК, который я использую для работы и других повседневных задач. На нём я пишу код, брожу по интернету и иногда играю в игры. Задачи проекта iLWN на нём работают в фоне практически без перерывов.
+	  <span id="hw-ctrl-1" class="hw-ctrl" onclick="toggleHwItem(1)"><i>[Показать подробности]</i></span>
+	</div>
+	<div id="hw-details-1" style="display: none">
+	  <div class="hw-text small" style="margin-left: 25px; color: #484848">
+		<b>Подробная конфигурация:</b>
+		<div class="hw-spec"><b>Chipset:</b> Intel B460 (Comet Lake)</div>
+		<div class="hw-spec"><b>RAM:</b> 40Gb, DDR4 PC4-21300, 2667MHz, dual channel mode, timings: 16-18-18-39</div>
+		<div class="hw-spec"><b>CPU:</b> Intel Core i5-10400F @ 2.90GHz / 6 cores, 12 threads / 12Mb L3 Cache / TDP 65W</div>
+		<div class="hw-spec"><b>GPU:</b> GeForce GTX 1060 3Gb / GP106-300 (Pascal) / GDDR5 / 192 bits / 1152 CUDA cores</div>
+		<div class="hw-spec"><b>OS:</b> Windows 10 Professional, 64-bit</div>
+	  </div>
+	  <div class="hw-text">
+		Самый новый из всех компьютеров проекта, был собран в декабре 2020 года. Его процессор Intel Core i5 относится к 10-му поколению, основан на архитектуре Comet Lake (Q2&apos;20). Типичная частота при полной нагрузке (12 потоков) равна 4.0GHz (максимальная 4.3GHz).
+	  </div>
+	</div>
+  </div>
+
+  <!-- Hardware item 2 -->
+  <div class="cpu-item">
+	<div>
+	  <b>Intel Core i5-8500B</b> / <b>8&nbsp;Gb DDR4-2667</b> //
+	  <span style="color: #666"><i><b>3 CPU ядра</b></i></span>
+	</div>
+	<div class="hw-text">
+	  Режим работы: 24/7. Mac-mini с установленной на нём ОС Windows 10. Сейчас я практически не использую MacOS, поэтому эта единица занимается только задачами проекта iLWN.
+	  <span id="hw-ctrl-2" class="hw-ctrl" onclick="toggleHwItem(2)"><i>[Показать подробности]</i></span>
+	</div>
+	<div id="hw-details-2" style="display: none">
+	  <div class="hw-text small" style="margin-left: 25px; color: #484848">
+		<b>Подробная конфигурация:</b>
+		<div class="hw-spec"><b>Chipset:</b> Intel CM246 (Coffee Lake)</div>
+		<div class="hw-spec"><b>RAM:</b> 8Gb, DDR4 PC4-21300, 2667MHz, dual channel mode, timings: 19-19-19-43</div>
+		<div class="hw-spec"><b>CPU:</b> Intel Core i5-8500B @ 3.00GHz / 6 cores, 6 threads / 9Mb L3 Cache / TDP 65W</div>
+		<div class="hw-spec"><b>GPU:</b> Intel UHD Graphics 630 (integrated)</div>
+		<div class="hw-spec"><b>OS:</b> Windows 10 Home, 64-bit</div>
+	  </div>
+	  <div class="hw-text">
+		Mac-mini, модель 2018 года, с процессором Intel Core i5 8-го поколения, основанном на архитектуре Coffee Lake (Q2&apos;18). Из-за особенностей системы охлаждения при полной нагрузке на 6 ядер издаёт очень громкий шум. Поэтому задачи выполняются не более, чем в 3 потока. При такой нагрузке типичная частота равна 4.0GHz (максимальная 4.1GHz).
+	  </div>
+	</div>
+  </div>
+
+  <!-- Hardware item 3 -->
+  <div class="cpu-item">
+	<div>
+	  <b>Intel Core i3-4350</b> / <b>8&nbsp;Gb DDR3-1333</b> //
+	  <span style="color: #666"><i><b>2 CPU ядра</b></i></span>
+	</div>
+	<div class="hw-text">
+	  Режим работы: 24/7. Эта единица занимается исключительно задачами проекта iLWN. В силу аппаратных ограничений на ней выполняются лишь часть из доступных задач проекта.
+	  <span id="hw-ctrl-3" class="hw-ctrl" onclick="toggleHwItem(3)"><i>[Показать подробности]</i></span>
+	</div>
+	<div id="hw-details-3" style="display: none">
+	  <div class="hw-text small" style="margin-left: 25px; color: #484848">
+		<b>Подробная конфигурация:</b>
+		<div class="hw-spec"><b>Chipset:</b> Intel H81 (Haswell)</div>
+		<div class="hw-spec"><b>RAM:</b> 8Gb, DDR3 PC3-10600, 1333MHz, dual channel mode, timings: 9-9-9-24</div>
+		<div class="hw-spec"><b>CPU:</b> Intel Core i3-4350 @ 3.60GHz / 2 cores, 4 threads / 4Mb L3 Cache / TDP 54W</div>
+		<div class="hw-spec"><b>GPU:</b> Intel HD Graphics 4600 (integrated)</div>
+		<div class="hw-spec"><b>OS:</b> Windows 10 Home, 64-bit</div>
+	  </div>
+	  <div class="hw-text">
+		Старый резервный ПК, собранный ещё в 2015 году, самый слабый из всех. Его процессор относится к 4-му поколению Intel Core, основан на архитектуре Haswell (Q2&apos;14). Имеет на борту 8&nbsp;Гб медленной оперативной памяти DDR3, из-за чего намного менее эффективен в некоторых задачах, требовательных к пропускной способности подсистемы памяти.
+	  </div>
+	</div>
+  </div>
+
+
+  <!-- Hardware item 4 -->
+  <div class="cpu-item">
+	<div>
+	  <b>Intel Core i7-2600K</b> / <b>16&nbsp;Gb DDR3-1600</b> //
+	  <span style="color: #666"><i><b>4 CPU ядра</b></i></span>
+	</div>
+	<div class="hw-text">
+	  Режим работы: частично. Второй ПК в доме. Используется другими членами семьи, часто для видеоигр, поэтому задачи проекта iLWN выполняется на нём всего по несколько часов, преимущественно в рабочие дни (менее 15% времени).
+	  <span id="hw-ctrl-4" class="hw-ctrl" onclick="toggleHwItem(4)"><i>[Показать подробности]</i></span>
+	</div>
+	<div id="hw-details-4" style="display: none">
+	  <div class="hw-text small" style="margin-left: 25px; color: #484848">
+		<b>Подробная конфигурация:</b>
+		<div class="hw-spec"><b>Chipset:</b> Intel Z68 (Sandy Bridge)</div>
+		<div class="hw-spec"><b>RAM:</b> 16Gb, DDR3 PC3-12800, 1600MHz, dual channel mode, timings: 9-10-9-26</div>
+		<div class="hw-spec"><b>CPU:</b> Intel Core i7-2600K @ 3.40GHz / 4 cores, 8 threads / 8Mb L3 Cache / TDP 95W</div>
+		<div class="hw-spec"><b>GPU:</b> GeForce GTX 1060 3Gb / GP106-300 (Pascal) / GDDR5 / 192 bits / 1152 CUDA cores</div>
+		<div class="hw-spec"><b>GPU:</b> Intel HD Graphics 3000 (integrated)</div>
+		<div class="hw-spec"><b>OS:</b> Windows 10 Home, 64-bit</div>
+	  </div>
+	  <div class="hw-text">
+		Мой старый основной ПК. Был собран осенью 2011 года. Его процессор относится ко второму поколению Intel Core, основан на архитектуре Sandy Bridge (Q1&apos;11). Имеет на борту 16&nbsp;Гб оперативной памяти DDR3. Несмотря на 4 полноценных ядра и присутствие технологии HT, значительно менее эффективен в задачах, требовательных к пропускной способности памяти. Типичная частота при полной нагрузке (8 потоков) составляет в среднем 3.47GHz (максимальная 3.8GHz).
+	  </div>
+	</div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="column">
+  <hr style="margin: 40px 0 5px; background: #aaa">
+  <table class="nospacing" style="width: 100%">
+	<tr style="vertical-align: top">
+	  <td class="footer" style="text-align: left">Copyright &copy; 2019-2021 Dmitry&nbsp;Maslov</td>
+	  <td style="width: 25px; min-width: 25px"></td>
+	  <td class="footer" style="text-align: right">
+		<a href="/map.html">Карта сайта</a>
+		<span style="padding: 0 8px">&middot;</span>
+		<a href="/contacts.html">Контакты</a>
+		<span style="padding: 0 8px">&middot;</span>
+		<a class="footer" href="/" title="Русский (RU)"><b>RU</b></a>
+	  </td>
+	</tr>
+  </table>
+</div>
+
+</body>
+</html>
