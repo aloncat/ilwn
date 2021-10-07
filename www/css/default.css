@@ -23,6 +23,7 @@ body {
 	margin: 8px auto 14px;
 	text-align: justify;
 }
+
 .e-link {
 	padding: 0 0 3px 12px;
 	border-left: 4px solid #3c7;
@@ -31,6 +32,7 @@ body {
 	padding: 0 0 3px 12px;
 	border-left: 4px solid #6af;
 }
+
 .cpu-item {
 	margin-bottom: 10px;
 	padding: 5px 12px 3px;
@@ -55,6 +57,12 @@ body {
 	margin-left: 20px;
 	text-align: left;
 	color: #484848;
+}
+
+.big {
+	font-family: Tahoma, Arial, sans-serif;
+	font-size: 128.57%; /* 18.0px */
+	line-height: 1.389; /* 25.0px */
 }
 .small {
 	font-size: 92.86%; /* 13.0px */
@@ -93,6 +101,14 @@ body {
 	margin: 10px auto 5px;
 	text-align: center;
 	color: #b8b8b8;
+}
+
+.patron {
+	text-align: center;
+	font-style: italic;
+}
+.aka {
+	color: #484848;
 }
 
 /* Built-in classes */
