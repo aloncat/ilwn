@@ -1,0 +1,13 @@
+/* Built-in classes */
+
+h1 {
+	padding: 0 15px;
+	width: auto;
+	background: unset;
+	border: none;
+}
+
+div.tags {
+	margin: -30px auto 25px;
+	text-align: center;
+}

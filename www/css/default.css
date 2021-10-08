@@ -59,6 +59,25 @@ body {
 	color: #484848;
 }
 
+.blogpost-head {
+	padding: 0 6px 3px;
+	border: 1px solid #f0f4fc;
+	border-left: 4px solid #6af;
+	background: #f6f9ff;
+}
+.blogpost-title {
+	font-size: 107.14%; /* 15.0px */
+	line-height: 1.333; /* 20.0px */
+}
+.blogpost-date {
+	font-style: italic;
+	color: #808080;
+}
+.blogpost-tag {
+	margin: 0 6px;
+	color: #08f;
+}
+
 .big {
 	font-family: Tahoma, Arial, sans-serif;
 	font-size: 128.57%; /* 18.0px */
@@ -97,7 +116,7 @@ body {
 	background: #ffa8ff;
 	color: black;
 }
-.newsdivider {
+.divider {
 	margin: 10px auto 5px;
 	text-align: center;
 	color: #b8b8b8;
@@ -109,6 +128,19 @@ body {
 }
 .aka {
 	color: #484848;
+}
+
+.blognav .date {
+	padding: 4px 9px;
+	font-weight: bold;
+	background: #f0f0f0; /* Unselected color */
+	color: #c8c8c8; /* Inactive color */
+	border-radius: 12px;
+	transition: background 0.12s, color 0.12s;
+}
+.blognav .date:hover {
+	background: #d4d4d4;
+	color: #acacac;
 }
 
 /* Built-in classes */
@@ -218,7 +250,7 @@ div.navmenu {
 	background: #303030;
 	color: white;
 	border-radius: 8px;
-	transition: background 0.1s, color 0.1s;
+	transition: background 0.12s, color 0.12s;
 }
 div.navmenu:hover {
 	background: white;
@@ -231,7 +263,7 @@ div.homesvg {
 div.homesvg svg path {
 	fill: white;
 	fill-opacity: 1.0;
-	transition: fill 0.1s;
+	transition: fill 0.12s;
 }
 div.homesvg:hover svg path {
 	fill: #303030;
@@ -256,6 +288,10 @@ div.newshead {
 	padding-bottom: 2px;
 	font-weight: bold;
 	border-bottom: 1px solid #aaa;
+}
+div.blognav {
+	margin: 0 auto;
+	text-align: center;
 }
 
 p {

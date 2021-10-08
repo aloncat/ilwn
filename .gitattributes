@@ -4,4 +4,5 @@
 
 www/**/*.css text eol=lf
 www/**/*.html text eol=lf
+www/**/*.js text eol=lf
 www/**/*.txt text eol=lf
