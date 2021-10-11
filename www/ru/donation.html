@@ -11,28 +11,8 @@
 </head>
 <body>
 
-<table class="navmenu">
-  <tr>
-	<td style="width: 220px">
-	  <div class="navlogo">
-		<a class="navmenu" href="https://dmaslov.me" style="color: #ccc">Dmitry Maslov</a>
-	  </div>
-	</td>
-	<td style="width: 2px; min-width: 2px; background: #606060; padding: 0"></td>
-	<td style="width: 15px; min-width: 12px; padding: 0"></td>
-	<td style="width: 15px">
-	  <a class="navmenu" href="https://dmaslov.me"><div class="navmenu homesvg">
-		<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="25px" height="23px" viewBox="0 18 547.6 503.7" style="margin-top: 1px">
-		  <path d="M540.76,254.788L294.506,38.216 c-11.475-10.098-30.064-10.098-41.386,0L6.943,254.788 c-11.475,10.098-8.415,18.284,6.885,18.284 h75.964 v221.773 c0,12.087,9.945,22.108,22.108,22.108 h92.947V371.067 c0-12.087,9.945-22.108,22.109-22.108 h93.865 c12.239,0,22.108,9.792,22.108,22.108 v145.886 h92.947 c12.24,0,22.108-9.945,22.108-22.108 v-221.85 h75.965 C549.021,272.995,552.081,264.886,540.76,254.788z" />
-		</svg>
-	  </div></a>
-	</td>
-	<td style="width: 15px"><a class="navmenu" href="/blog/"><div class="navmenu">Блог</div></a></td>
-	<td style="width: 15px"><a class="navmenu" href="/mdpn/"><div class="navmenu">MDPN</div></a></td>
-	<td style="width: 15px"><a class="navmenu" href="/p196/"><div class="navmenu">P196</div></a></td>
-	<td style="min-width: 10px"></td>
-  </tr>
-</table>
+<!-- Navigation bar -->
+<script type="text/javascript" src="/pageheader.js"></script>
 
 <h3>Чем занимается проект и его автор</h3>
 
@@ -41,7 +21,7 @@
 </p>
 
 <p class="column text">
-  Так, проектом MDPN была собрана огромная база данных (более 220&nbsp;Гб), которая позволила лучше изучить статистические особенности этих чисел. Более того, эти данные теперь используется другими проектами. Например, при поиске базовых чисел Лишрел (проект <b>ALSN</b>). Однако из-за размера я не могу разместить полную БД на внешнем сервере (основная причина в том, что это довольно дорого). Поэтому в публичном доступе находится сильно сокращённая база данных, содержащая только старшие отложенные палиндромы. А базы данных других проектов пока вовсе недоступны.
+  Так, проектом MDPN была собрана огромная база данных (более 220&nbsp;Гб), которая позволила лучше изучить статистические особенности этих чисел. Более того, эти данные теперь используются другими проектами. Например, при поиске базовых чисел Лишрел (проект <b>ALSN</b>). Однако из-за размера я не могу разместить полную БД на внешнем сервере (основная причина в том, что это довольно дорого). Поэтому в публичном доступе находится сильно сокращённая база данных, содержащая только старшие отложенные палиндромы. А базы данных других проектов пока вовсе недоступны.
 </p>
 
 <p class="column text">
@@ -67,22 +47,7 @@
 </div>
 
 <!-- Footer -->
-<div class="column">
-  <hr style="margin: 40px 0 5px; background: #aaa">
-  <table class="nospacing" style="width: 100%">
-	<tr style="vertical-align: top">
-	  <td class="footer" style="text-align: left">Copyright &copy; 2019-2021 Dmitry&nbsp;Maslov</td>
-	  <td style="width: 25px; min-width: 25px"></td>
-	  <td class="footer" style="text-align: right">
-		<a href="/map.html">Карта сайта</a>
-		<span style="padding: 0 8px">&middot;</span>
-		<a href="/contacts.html">Контакты</a>
-		<span style="padding: 0 8px">&middot;</span>
-		<a class="footer" href="/ru/donation.html" title="Русский (RU)"><b>RU</b></a>
-	  </td>
-	</tr>
-  </table>
-</div>
+<script type="text/javascript">insertFooter("ru", "/ru/donation.html")</script>
 
 </body>
 </html>

@@ -1,3 +1,25 @@
+/* Custom classes */
+
+.navlinks-top {
+	margin: 0 auto 25px;
+	color: #b8b8b8; /* Inactive link color */
+}
+
+.navlinks-bottom {
+	margin: 25px auto;
+	text-align: center;
+	color: #b8b8b8; /* Inactive link color */
+}
+
+.postlink {
+	cursor: pointer;
+	text-decoration: none;
+	color: #36f;
+}
+.postlink:hover {
+	text-decoration: underline;
+}
+
 /* Built-in classes */
 
 h1 {
@@ -7,7 +29,12 @@ h1 {
 	border: none;
 }
 
-div.tags {
-	margin: -30px auto 25px;
+div.posttags {
+	margin: -30px auto 8px;
 	text-align: center;
+}
+div.postdate {
+	font-style: italic;
+	text-align: center;
+	color: #808080;
 }

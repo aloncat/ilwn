@@ -1,4 +1,6 @@
-﻿var currentYear = 0;
+﻿/* Blog main page */
+
+var currentYear = 0;
 var currentMonth = 0;
 var currentLanguage = "en";
 
@@ -72,4 +74,34 @@ function initNavigation(lang)
 {
 	toggleYear(2021, lang);
 	toggleMonth(9, lang);
+}
+
+/* Post pages */
+
+function initPostLink(elementId, postLink)
+{
+	let navElement = document.getElementById(elementId);
+
+	navElement.classList.add("postlink");
+	navElement.onclick = function() {
+		window.location.href = postLink;
+	};
+}
+
+function initPrevPostLinks(prev)
+{
+	if (prev && prev != "")
+	{
+		initPostLink("link-prev-top", prev);
+		initPostLink("link-prev-bottom", prev);
+	}
+}
+
+function initNextPostLinks(next)
+{
+	if (next && next != "")
+	{
+		initPostLink("link-next-top", next);
+		initPostLink("link-next-bottom", next);
+	}
 }
