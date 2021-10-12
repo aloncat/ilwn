@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="ru"><head>
-  <title>Оборудование - iLWN - Дмитрий Маслов</title>
+  <title>Оборудование - iLWN</title>
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
   <meta name="description" content="Оборудование, используемое для вычислений
 	в проекте iLWN, и его подробные технические характеристики">
@@ -31,110 +31,121 @@
   }
 </script>
 
-<div class="column text">
-
-  <!-- Hardware item 1 -->
-  <div class="cpu-item">
+<!-- H/W item -->
+<div class="column">
+  <div class="hwitem hwitem-gpu">
 	<div>
 	  <b>Intel Core i5-10400F</b> / <b>40&nbsp;Gb DDR4-2667</b> //
-	  <span style="color: #666"><i><b>6 CPU ядер</b></i></span>
+	  <span class="cores">6 CPU ядер</span>
 	</div>
-	<div class="hw-text">
+	<div class="text">
 	  Режим работы: 24/7. Мой основной ПК, который я использую для работы и других повседневных задач. На нём я пишу код, брожу по интернету и иногда играю в игры. Задачи проекта iLWN на нём работают в фоне практически без перерывов.
-	  <span id="hw-ctrl-1" class="hw-ctrl" onclick="toggleHwItem(1)"><i>[Показать подробности]</i></span>
+	  <a id="hw-ctrl-1" class="ctrl" onclick="toggleHwItem(1)">[Показать подробности]</a>
 	</div>
 	<div id="hw-details-1" style="display: none">
-	  <div class="hw-text small" style="margin-left: 25px; color: #484848">
+	  <div class="details small">
 		<b>Подробная конфигурация:</b>
-		<div class="hw-spec"><b>Chipset:</b> Intel B460 (Comet Lake)</div>
-		<div class="hw-spec"><b>RAM:</b> 40Gb, DDR4 PC4-21300, 2667MHz, dual channel mode, timings: 16-18-18-39</div>
-		<div class="hw-spec"><b>CPU:</b> Intel Core i5-10400F @ 2.90GHz / 6 cores, 12 threads / 12Mb L3 Cache / TDP 65W</div>
-		<div class="hw-spec"><b>GPU:</b> GeForce GTX 1060 3Gb / GP106-300 (Pascal) / GDDR5 / 192 bits / 1152 CUDA cores</div>
-		<div class="hw-spec"><b>OS:</b> Windows 10 Professional, 64-bit</div>
+		<div class="details">
+		  <b>Chipset:</b> Intel B460 (Comet Lake)<br>
+		  <b>RAM:</b> 40Gb, DDR4 PC4-21300, 2667MHz, dual channel mode, timings: 16-18-18-39<br>
+		  <b>CPU:</b> Intel Core i5-10400F @ 2.90GHz / 6 cores, 12 threads / 12Mb L3 Cache / TDP 65W<br>
+		  <b>GPU:</b> GeForce GTX 1060 3Gb / GP106-300 (Pascal) / GDDR5 / 192 bits / 1152 CUDA cores<br>
+		  <b>OS:</b> Windows 10 Professional, 64-bit<br>
+		</div>
 	  </div>
-	  <div class="hw-text">
-		Самый новый из всех компьютеров проекта, был собран в декабре 2020 года. Его процессор Intel Core i5 относится к 10-му поколению, основан на архитектуре Comet Lake (Q2&apos;20). Типичная частота при полной нагрузке (12 потоков) равна 4.0GHz (максимальная 4.3GHz).
+	  <div class="text">
+		Самый новый и самый производительный из всех компьютеров, участвующих в проекте. Был собран в декабре 2020 года. Его процессор Intel Core i5 относится к 10-му поколению (Comet Lake, Q2&apos;20) и основан на усовершенствованной архитектуре Skylake. Типичная частота при полной нагрузке (12 потоков) равна 4.0GHz (максимальная частота Turbo Boost 4.3GHz).
 	  </div>
 	</div>
   </div>
+</div>
 
-  <!-- Hardware item 2 -->
-  <div class="cpu-item">
+<!-- H/W item -->
+<div class="column">
+  <div class="hwitem hwitem-cpu">
 	<div>
 	  <b>Intel Core i5-8500B</b> / <b>8&nbsp;Gb DDR4-2667</b> //
-	  <span style="color: #666"><i><b>3 CPU ядра</b></i></span>
+	  <span class="cores">3 CPU ядра</span>
 	</div>
-	<div class="hw-text">
-	  Режим работы: 24/7. Mac-mini с установленной на нём ОС Windows 10. Сейчас я практически не использую MacOS, поэтому эта единица занимается только задачами проекта iLWN.
-	  <span id="hw-ctrl-2" class="hw-ctrl" onclick="toggleHwItem(2)"><i>[Показать подробности]</i></span>
+	<div class="text">
+	  Режим работы: 24/7. Mac-mini с установленной на нём ОС Windows 10. Сейчас я практически не использую MacOS, поэтому этот компьютер занимается только задачами проекта iLWN.
+	  <a id="hw-ctrl-2" class="ctrl" onclick="toggleHwItem(2)">[Показать подробности]</a>
 	</div>
 	<div id="hw-details-2" style="display: none">
-	  <div class="hw-text small" style="margin-left: 25px; color: #484848">
+	  <div class="details small">
 		<b>Подробная конфигурация:</b>
-		<div class="hw-spec"><b>Chipset:</b> Intel CM246 (Coffee Lake)</div>
-		<div class="hw-spec"><b>RAM:</b> 8Gb, DDR4 PC4-21300, 2667MHz, dual channel mode, timings: 19-19-19-43</div>
-		<div class="hw-spec"><b>CPU:</b> Intel Core i5-8500B @ 3.00GHz / 6 cores, 6 threads / 9Mb L3 Cache / TDP 65W</div>
-		<div class="hw-spec"><b>GPU:</b> Intel UHD Graphics 630 (integrated)</div>
-		<div class="hw-spec"><b>OS:</b> Windows 10 Home, 64-bit</div>
+		<div class="details">
+		  <b>Chipset:</b> Intel CM246 (Coffee Lake)<br>
+		  <b>RAM:</b> 8Gb, DDR4 PC4-21300, 2667MHz, dual channel mode, timings: 19-19-19-43<br>
+		  <b>CPU:</b> Intel Core i5-8500B @ 3.00GHz / 6 cores, 6 threads / 9Mb L3 Cache / TDP 65W<br>
+		  <b>GPU:</b> Intel UHD Graphics 630 (integrated)<br>
+		  <b>OS:</b> Windows 10 Home, 64-bit<br>
+		</div>
 	  </div>
-	  <div class="hw-text">
-		Mac-mini, модель 2018 года, с процессором Intel Core i5 8-го поколения, основанном на архитектуре Coffee Lake (Q2&apos;18). Из-за особенностей системы охлаждения при полной нагрузке на 6 ядер издаёт очень громкий шум. Поэтому задачи выполняются не более, чем в 3 потока. При такой нагрузке типичная частота равна 4.0GHz (максимальная 4.1GHz).
+	  <div class="text">
+		Mac-mini, модель 2018 года, с процессором Intel Core i5 8-го поколения (Coffee Lake, Q2&apos;18), основанном на архитектуре Skylake. Из-за особенностей системы охлаждения при полной нагрузке на 6 ядер издаёт очень громкий шум. Поэтому задачи выполняются не более, чем в 3 потока. При такой нагрузке типичная частота равна 4.0GHz (максимальная частота Turbo Boost 4.1GHz).
 	  </div>
 	</div>
   </div>
+</div>
 
-  <!-- Hardware item 3 -->
-  <div class="cpu-item">
+<!-- H/W item -->
+<div class="column">
+  <div class="hwitem hwitem-cpu">
 	<div>
 	  <b>Intel Core i3-4350</b> / <b>8&nbsp;Gb DDR3-1333</b> //
-	  <span style="color: #666"><i><b>2 CPU ядра</b></i></span>
+	  <span class="cores">2 CPU ядра</span>
 	</div>
-	<div class="hw-text">
-	  Режим работы: 24/7. Эта единица занимается исключительно задачами проекта iLWN. В силу аппаратных ограничений на ней выполняются лишь часть из доступных задач проекта.
-	  <span id="hw-ctrl-3" class="hw-ctrl" onclick="toggleHwItem(3)"><i>[Показать подробности]</i></span>
+	<div class="text">
+	  Режим работы: 24/7. Этот компьютер занимается исключительно задачами проекта iLWN. В силу аппаратных ограничений на нём выполняется лишь часть из доступных задач проекта.
+	  <a id="hw-ctrl-3" class="ctrl" onclick="toggleHwItem(3)">[Показать подробности]</a>
 	</div>
 	<div id="hw-details-3" style="display: none">
-	  <div class="hw-text small" style="margin-left: 25px; color: #484848">
+	  <div class="details small">
 		<b>Подробная конфигурация:</b>
-		<div class="hw-spec"><b>Chipset:</b> Intel H81 (Haswell)</div>
-		<div class="hw-spec"><b>RAM:</b> 8Gb, DDR3 PC3-10600, 1333MHz, dual channel mode, timings: 9-9-9-24</div>
-		<div class="hw-spec"><b>CPU:</b> Intel Core i3-4350 @ 3.60GHz / 2 cores, 4 threads / 4Mb L3 Cache / TDP 54W</div>
-		<div class="hw-spec"><b>GPU:</b> Intel HD Graphics 4600 (integrated)</div>
-		<div class="hw-spec"><b>OS:</b> Windows 10 Home, 64-bit</div>
+		<div class="details">
+		  <b>Chipset:</b> Intel H81 (Haswell)<br>
+		  <b>RAM:</b> 8Gb, DDR3 PC3-10600, 1333MHz, dual channel mode, timings: 9-9-9-24<br>
+		  <b>CPU:</b> Intel Core i3-4350 @ 3.60GHz / 2 cores, 4 threads / 4Mb L3 Cache / TDP 54W<br>
+		  <b>GPU:</b> Intel HD Graphics 4600 (integrated)<br>
+		  <b>OS:</b> Windows 10 Home, 64-bit<br>
+		</div>
 	  </div>
-	  <div class="hw-text">
-		Старый резервный ПК, собранный ещё в 2015 году, самый слабый из всех. Его процессор относится к 4-му поколению Intel Core, основан на архитектуре Haswell (Q2&apos;14). Имеет на борту 8&nbsp;Гб медленной оперативной памяти DDR3, из-за чего намного менее эффективен в некоторых задачах, требовательных к пропускной способности подсистемы памяти.
+	  <div class="text">
+		Старый резервный ПК, собранный ещё в 2015 году, самый слабый из всех. Его процессор относится к 4-му поколению Intel Core (Haswell, Q2&apos;14) и основан на одноимённой архитектуре. Имеет на борту 8&nbsp;Гб медленной оперативной памяти DDR3, из-за чего намного менее эффективен в некоторых задачах, требовательных к пропускной способности подсистемы памяти.
 	  </div>
 	</div>
   </div>
+</div>
 
-
-  <!-- Hardware item 4 -->
-  <div class="cpu-item">
+<!-- H/W item -->
+<div class="column">
+  <div class="hwitem hwitem-gpu">
 	<div>
 	  <b>Intel Core i7-2600K</b> / <b>16&nbsp;Gb DDR3-1600</b> //
-	  <span style="color: #666"><i><b>4 CPU ядра</b></i></span>
+	  <span class="cores">4 CPU ядра</span>
 	</div>
-	<div class="hw-text">
-	  Режим работы: частично. Второй ПК в доме. Используется другими членами семьи, часто для видеоигр, поэтому задачи проекта iLWN выполняется на нём всего по несколько часов, преимущественно в рабочие дни (менее 15% времени).
-	  <span id="hw-ctrl-4" class="hw-ctrl" onclick="toggleHwItem(4)"><i>[Показать подробности]</i></span>
+	<div class="text">
+	  Режим работы: частично. Второй ПК в доме. Используется другими членами семьи, часто для видеоигр, поэтому задачи проекта iLWN выполняются на нём всего по несколько часов, преимущественно в рабочие дни (менее 15% времени).
+	  <a id="hw-ctrl-4" class="ctrl" onclick="toggleHwItem(4)">[Показать подробности]</a>
 	</div>
 	<div id="hw-details-4" style="display: none">
-	  <div class="hw-text small" style="margin-left: 25px; color: #484848">
+	  <div class="details small">
 		<b>Подробная конфигурация:</b>
-		<div class="hw-spec"><b>Chipset:</b> Intel Z68 (Sandy Bridge)</div>
-		<div class="hw-spec"><b>RAM:</b> 16Gb, DDR3 PC3-12800, 1600MHz, dual channel mode, timings: 9-10-9-26</div>
-		<div class="hw-spec"><b>CPU:</b> Intel Core i7-2600K @ 3.40GHz / 4 cores, 8 threads / 8Mb L3 Cache / TDP 95W</div>
-		<div class="hw-spec"><b>GPU:</b> GeForce GTX 1060 3Gb / GP106-300 (Pascal) / GDDR5 / 192 bits / 1152 CUDA cores</div>
-		<div class="hw-spec"><b>GPU:</b> Intel HD Graphics 3000 (integrated)</div>
-		<div class="hw-spec"><b>OS:</b> Windows 10 Home, 64-bit</div>
+		<div class="details">
+		  <b>Chipset:</b> Intel Z68 (Sandy Bridge)<br>
+		  <b>RAM:</b> 16Gb, DDR3 PC3-12800, 1600MHz, dual channel mode, timings: 9-10-9-26<br>
+		  <b>CPU:</b> Intel Core i7-2600K @ 3.40GHz / 4 cores, 8 threads / 8Mb L3 Cache / TDP 95W<br>
+		  <b>GPU:</b> GeForce GTX 1060 3Gb / GP106-300 (Pascal) / GDDR5 / 192 bits / 1152 CUDA cores<br>
+		  <b>GPU:</b> Intel HD Graphics 3000 (integrated)<br>
+		  <b>OS:</b> Windows 10 Home, 64-bit<br>
+		</div>
 	  </div>
-	  <div class="hw-text">
-		Мой старый основной ПК. Был собран осенью 2011 года. Его процессор относится ко второму поколению Intel Core, основан на архитектуре Sandy Bridge (Q1&apos;11). Имеет на борту 16&nbsp;Гб оперативной памяти DDR3. Несмотря на 4 полноценных ядра и присутствие технологии HT, значительно менее эффективен в задачах, требовательных к пропускной способности памяти. Типичная частота при полной нагрузке (8 потоков) составляет в среднем 3.47GHz (максимальная 3.8GHz).
+	  <div class="text">
+		Мой старый основной ПК. Был собран осенью 2011 года. Его процессор относится ко второму поколению Intel Core (Sandy Bridge, Q1&apos;11) и основан на одноимённой архитектуре. Имеет на борту 16&nbsp;Гб оперативной памяти DDR3. Несмотря на 4 полноценных ядра и наличие технологии HT, значительно менее эффективен в задачах, требовательных к пропускной способности памяти. Типичная частота при полной нагрузке (8 потоков) составляет в среднем 3.47GHz (максимальная частота Turbo Boost 3.8GHz).
 	  </div>
 	</div>
   </div>
-
 </div>
 
 <!-- Footer -->
