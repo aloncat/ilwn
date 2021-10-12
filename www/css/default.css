@@ -181,6 +181,10 @@ td.footer {
 	color: #727272;
 }
 
+td.footer .dot {
+	margin: 0 8px;
+}
+
 /* Custom classes: common */
 
 a.nodecor {
@@ -232,22 +236,38 @@ table.nospacing {
 /* Custom classes: specific */
 
 div.statusblock {
+	margin-top: 12px;
+	column-count: 2;
+	column-gap: 12px;
+}
+
+div.statusblock div {
+	break-inside: avoid;
+}
+
+div.statusblock > div {
+	margin-top: 12px;
 	padding: 4px 7px;
+	font-size: 85.71%; /* 12.0px */
+	line-height: 1.417; /* 17.0px */
 	background: #fafafa;
 	border: 1px solid #ddd;
 	border-radius: 5px;
 }
 
-div.statushead {
-	font-size: 92.86%; /* 13.0px */
+div.statusblock > div:first-child {
+	margin-top: 0;
+}
+
+div.statusblock .header {
+	font-size: 108.33%; /* 13.0px */
 	line-height: 1.462; /* 19.0px */
 	text-align: center;
 }
 
-div.statustext {
-	font-size: 85.71%; /* 12.0px */
-	line-height: 1.417; /* 17.0px */
-	text-align: left;
+div.statusblock hr {
+	margin: 3px 0 6px;
+	background: #d4d4d4;
 }
 
 div.newshead {
@@ -422,6 +442,12 @@ ul.news {
 
 	.noheadertop {
 		margin-top: 10px;
+	}
+}
+
+@media screen and (max-width: 600px) {
+	div.statusblock {
+		column-count: 1;
 	}
 }
 

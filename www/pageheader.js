@@ -120,11 +120,11 @@ function insertFooter(lang, url) {
 				  '<a href="/' + urlPrefix + 'map.html">' + mapText + '</a>' +
 				'</div>' +
 				'<div style="display: inline-block">' +
-				  '<span style="margin: 0 8px">&middot;</span>' +
+				  '<span class="dot">&middot;</span>' +
 				  '<a href="/' + urlPrefix + 'contacts.html">' + contactsText + '</a>' +
 				'</div>' +
 				'<div style="display: inline-block">' +
-				  '<span style="margin: 0 8px">&middot;</span>' +
+				  '<span class="dot">&middot;</span>' +
 				  '<a href="' + url + '" title="' + languageTitle + '" style="color: inherit">' +
 					'<b>' + languageCode + '</b>' +
 				  '</a>' +

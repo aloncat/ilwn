@@ -26,40 +26,33 @@
 
 <h2>Текущий статус проектов</h2>
 
-<div class="column">
-  <table class="nospacing" style="width: 100%; margin-top: 15px">
-	<tr style="vertical-align: top">
-	  <td style="width: 49%">
-		<div class="statusblock">
-		  <div class="statushead">
-			<a href="/mdpn/"><b>MDPN</b> &ndash; &laquo;Most Delayed Palindromic Number&raquo;</a>
-		  </div>
-		  <hr style="margin: 4px 0 9px; background: #d4d4d4">
-		  <div class="statustext">
-			Состояние: <b><i>проверка 23-значных чисел</i></b><br><br>
-			Глубина поиска: <i>375 шагов</i><br>
-			Прогресс: <i>2.176%</i><br><br>
-			Наиболее отложенный палиндром: <i>289 шагов</i><br>
-			Последний палиндром найден: <i>20 сентября 2021</i><br>
-		  </div>
-		</div>
-	  </td>
-	  <td></td>
-	  <td style="width: 49%">
-		<div class="statusblock">
-		  <div class="statushead">
-			<a href="/p196/"><b>P196</b> &ndash; &laquo;196 Palindrome Quest&raquo;</b></a>
-		  </div>
-		  <hr style="margin: 4px 0 9px; background: #d4d4d4">
-		  <div class="statustext">
-			Состояние: <b><i>вычисление в 1 поток</i></b><br><br>
-			Выполнено итераций: <i>170,848,900</i><br>
-			Текущая длина: <i>70,714,678 знаков</i><br>
-		  </div>
-		</div>
-	  </td>
-	</tr>
-  </table>
+<div class="column statusblock">
+  <!-- MDPN -->
+  <div>
+	<div class="header">
+	  <a href="/mdpn/"><b>MDPN</b> &ndash; &laquo;Most Delayed Palindromic Number&raquo;</a>
+	</div>
+	<hr>
+	<div>
+	  Состояние: <b><i>проверка 23-значных чисел</i></b><br><br>
+	  Глубина поиска: <i>375 шагов</i><br>
+	  Прогресс: <i>2.183%</i><br><br>
+	  Наиболее отложенный палиндром: <i>289 шагов</i><br>
+	  Последний палиндром найден: <i>20 сентября 2021</i>
+	</div>
+  </div>
+  <!-- P196 -->
+  <div>
+	<div class="header">
+	  <a href="/p196/"><b>P196</b> &ndash; &laquo;196 Palindrome Quest&raquo;</b></a>
+	</div>
+	<hr>
+	<div>
+	  Состояние: <b><i>вычисление в 1 поток</i></b><br><br>
+	  Выполнено итераций: <i>174,384,500</i><br>
+	  Текущая длина: <i>72,178,508 знаков</i>
+	</div>
+  </div>
 </div>
 
 <h2><a href="/news.html">Последние события</a></h2>
@@ -161,14 +154,12 @@
 <h3><a href="/mdpn/">Проект MDPN &ndash; Most Delayed Palindromic Number</a></h3>
 
 <p class="column text">
-  <!-- TODO: нужно переработать этот текст, добавить подробности, ближайшие планы и т.п. -->
   Поиск отложенных палиндромов, то есть таких натуральных чисел, которые становятся палиндромами после выполнения над ними N операций Перевернуть-И-Сложить (Reverse-And-Add). Главная задача проекта состоит в том, чтобы найти наименьшее число (отложенный палиндром) для каждого значения N. Вторая задача &mdash; найти некоторое количество первых отложенных палиндромов для каждого значения N.
 </p>
 
 <h3><a href="/p196/">Проект P196 &ndash; 196 Palindrome Quest</a></h3>
 
 <p class="column text">
-  <!-- TODO: см. предыдущий комментарий - здесь всё то же -->
   Проект P196 проверяет, станет ли число 196 (самое первое число Лишрел), а также некоторые другие числа когда-либо палиндромами в результате многократного применения к ним операции Перевернуть-И-Сложить (RAA, Reverse-And-Add).
 </p>
 
