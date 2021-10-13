@@ -135,3 +135,54 @@ function insertFooter(lang, url) {
 		'</div>'
 	);
 }
+
+function insertTopLinks() {
+	let prevText = "Previous post";
+	let nextText = "Next post";
+
+	if (document.documentElement.lang === "ru") {
+		prevText = "Предыдущий пост";
+		nextText = "Следующий пост";
+	}
+
+	document.write(
+		'<div class="column bloglinks-top">' +
+		  '<div style="display: inline-block">' +
+			'<span id="link-prev-top">' +
+			  '&laquo;&nbsp;' + prevText +
+			'</span>' +
+		  '</div>' +
+		  '<div style="float: right">' +
+			'<span id="link-next-top">' +
+			  nextText + '&nbsp;&raquo;' +
+			'</span>' +
+		  '</div>' +
+		'</div>'
+	);
+}
+
+function insertBottomLinks() {
+	let prevText = "Previous post";
+	let nextText = "Next post";
+	let topText = "To the top";
+
+	if (document.documentElement.lang === "ru") {
+		prevText = "Предыдущий пост";
+		nextText = "Следующий пост";
+		topText = "Наверх";
+	}
+
+	document.write(
+		'<div class="column bloglinks-bottom">' +
+		  '<span id="link-prev-bottom">' +
+			'&laquo;&nbsp;' + prevText +
+		  '</span>' +
+		  '<span class="divider">' +
+			'&middot;<a href="#">' + topText + '</a>&middot;' +
+		  '</span>' +
+		  '<span id="link-next-bottom">' +
+			nextText + '&nbsp;&raquo;' +
+		  '</span>' +
+		'</div>'
+	);
+}

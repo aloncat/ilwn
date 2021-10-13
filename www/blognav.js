@@ -71,7 +71,7 @@ function initNavigation(lang) {
 
 /* Post pages */
 
-function initPostLink(elementId, url) {
+function setBlogPostLink(elementId, url) {
 	let navElement = document.getElementById(elementId);
 
 	navElement.classList.add("postlink");
@@ -80,16 +80,16 @@ function initPostLink(elementId, url) {
 	};
 }
 
-function initPrevPostLinks(url) {
+function setPrevBlogPostUrl(url) {
 	if (url && url != "") {
-		initPostLink("link-prev-top", url);
-		initPostLink("link-prev-bottom", url);
+		setBlogPostLink("link-prev-top", url);
+		setBlogPostLink("link-prev-bottom", url);
 	}
 }
 
-function initNextPostLinks(url) {
+function setNextBlogPostUrl(url) {
 	if (url && url != "") {
-		initPostLink("link-next-top", url);
-		initPostLink("link-next-bottom", url);
+		setBlogPostLink("link-next-top", url);
+		setBlogPostLink("link-next-bottom", url);
 	}
 }

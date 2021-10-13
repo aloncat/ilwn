@@ -360,8 +360,8 @@ div.bloglinks-bottom span {
 
 div.bloglinks-bottom span.divider,
 div.bloglinks-bottom span.divider > a {
-	margin-left: 6px;
-	margin-right: 6px;
+	margin-left: 10px;
+	margin-right: 10px;
 }
 
 div.bloglinks-top span.postlink,
@@ -428,6 +428,14 @@ div.newsheader {
 	border-bottom: 1px solid #aaa;
 }
 
+div#maplinks {
+	color: #666;
+}
+
+div#maplinks div {
+	margin-left: 30px;
+}
+
 .column p.e-link {
 	padding: 0 0 3px 12px;
 	border-left: 4px solid #3c7;
@@ -449,6 +457,10 @@ div.newsheader {
 .column div.patrons span {
 	font-weight: normal;
 	color: #585858;
+}
+
+.column div#yoomoney {
+	width: 400px;
 }
 
 .column .hwitem {
@@ -533,6 +545,18 @@ div.newsheader {
 		padding-right: 15px;
 		border-width: 1px 0;
 		border-radius: 0;
+	}
+
+	div#maplinks div {
+		margin-left: 25px;
+	}
+
+	div#maplinks div:first-child {
+		margin-left: 0;
+	}
+
+	.column div#yoomoney {
+		width: 100%;
 	}
 }
 

@@ -9,7 +9,7 @@
   <link rel="stylesheet" type="text/css" href="/css/default.css">
   <link rel="canonical" href="https://dmaslov.me/blog/about-new-p196-project.html">
 </head>
-<body onload="initPostLinks()">
+<body onload="setPostLinks()">
 
 <!-- Navigation bar -->
 <script type="text/javascript" src="/pageheader.js"></script>
@@ -28,21 +28,8 @@
   </div>
 </div>
 
-<!-- Navigation -->
-<div class="column bloglinks-top">
-  <div style="display: inline-block">
-	<span id="link-prev-top">
-	  &laquo;
-	  Предыдущий пост
-	</span>
-  </div>
-  <div style="float: right">
-	<span id="link-next-top">
-	  Следующий пост
-	  &raquo;
-	</span>
-  </div>
-</div>
+<!-- Navigation links -->
+<script type="text/javascript">insertTopLinks()</script>
 
 <!-- Content -->
 
@@ -50,31 +37,17 @@
   Текст поста здесь...
 </p>
 
-<!-- Navigation -->
-<div class="column bloglinks-bottom">
-  <span id="link-prev-bottom">
-	&laquo;
-	Предыдущий пост
-  </span>
-  <span class="divider">
-	&middot;
-	<a href="#">Наверх</a>
-	&middot;
-  </span>
-  <span id="link-next-bottom">
-	Следующий пост
-	&raquo;
-  </span>
-</div>
+<!-- Navigation links -->
+<script type="text/javascript">insertBottomLinks()</script>
 
 <!-- Footer -->
 <script type="text/javascript">insertFooter("ru", "/blog/about-new-p196-project.html")</script>
 
 <!-- Links to other posts -->
 <script type="text/javascript">
-  function initPostLinks() {
-	initPrevPostLinks("");
-	initNextPostLinks("");
+  function setPostLinks() {
+	setPrevBlogPostUrl("");
+	setNextBlogPostUrl("");
   }
 </script>
 
