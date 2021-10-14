@@ -215,6 +215,12 @@ table.nospacing {
 	text-align: justify;
 }
 
+.footnote {
+	margin: 6px auto;
+	text-align: justify;
+	color: #484848;
+}
+
 .noheadertop {
 	margin-top: 28px;
 }
