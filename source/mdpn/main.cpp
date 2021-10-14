@@ -999,7 +999,7 @@ int AllLychrelsMain()
 {
 	const std::string buildVer = GetAppVersion();
 	aux::Printf("Most Delayed Palindromic Number project. Built on %s\n", buildVer.c_str());
-	aux::Print("For more information, please visit us at http://dmaslov.name/mdpn/\n");
+	aux::Print("For more information, please visit us at https://dmaslov.me/mdpn/\n");
 
 	if (!TestFacility::CheckRequirements(false))
 	{
