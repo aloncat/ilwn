@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html lang="ru"><head>
+  <title>Проверка палиндрома - MDPN</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="description" content="Проверка, является ли натуральное
+	число отложенным палиндромом, с подробным выводом каждого шага">
+  <meta name="keywords" content="проверка, отложенный палиндром, число Лишрел, MDPN">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script defer type="text/javascript" src="/checkpal.js"></script>
+  <link rel="stylesheet" type="text/css" href="/css/default.css">
+  <link rel="canonical" href="https://dmaslov.me/mdpn/checkpal.html">
+</head>
+<body onload="enableInput()">
+
+<!-- Navigation bar -->
+<script type="text/javascript" src="/pageheader.js"></script>
+
+<h1>Проверка отложенного палиндрома</h1>
+
+<p class="column text">
+  Введите любое натуральное число в поле, расположенное ниже, и затем нажмите кнопку &laquo;Проверить&raquo;. Вы можете использовать пробел, запятую или апостроф в качестве разделителя групп разрядов.
+</p>
+
+<div class="column">
+  <div style="max-width: 540px; margin: 0 auto; text-align: center">
+	<input id="numberInput" type="text" maxlength="53" style="width: 98%; margin: 0 auto; padding: 3px; text-align: center">
+	<input id="checkButton" type="button" value="Проверить" style="margin: 25px auto 8px; padding: 3px 20px 4px; display: none">
+	<div id="loadingText" style="margin:20px auto 8px"><i>Пожалуйста, подождите. Скрипт загружается...</i></div>
+  </div>
+</div>
+
+<div id="resultsBlock" class="column" style="margin-top: 18px; display: none">
+  <hr style="margin-bottom: 8px; border-top: 2px dotted #ccc; background: #fff">
+  <p id="errorText" class="text" style="display: none">
+	<span style="color: #e00">Ошибка:</span>
+	введённое число не является корректным натуральным числом. Введите любое целое число, большее или равное 1.
+  </p>
+  <div id="contentBlock">
+  </div>
+</div>
+
+<!-- Footer -->
+<script type="text/javascript">insertFooter("ru", "/checkpal.html")</script>
+
+</body>
+</html>

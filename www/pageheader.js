@@ -1,4 +1,6 @@
-﻿(function() {
+﻿// All pages: navigation bar
+
+(function() {
 	const navBarId = "topNavigationBar";
 	const offsetId = "topOffsetElement";
 
@@ -86,6 +88,8 @@
 	window.addEventListener("resize", resizeThrottler, false);
 })();
 
+// All pages: footer
+
 function insertFooter(lang, url) {
 	let languageCode = "EN";
 	let languageTitle = "English (EN)";
@@ -135,6 +139,8 @@ function insertFooter(lang, url) {
 		'</div>'
 	);
 }
+
+// Blog's posts: links
 
 function insertTopLinks() {
 	let prevText = "Previous post";

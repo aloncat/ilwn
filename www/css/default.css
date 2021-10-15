@@ -30,7 +30,7 @@ h3 a:hover {
 
 hr {
 	margin: 0;
-	border: 0;
+	border: none;
 	height: 1px;
 	background: #ccc;
 }
@@ -98,6 +98,11 @@ li {
 ul > li::marker {
 	font-size: 98%;
 	color: #666;
+}
+
+input {
+	font-size: 100%; /* 14.0px*/
+	line-height: 1.429; /* 20.0px */
 }
 
 /* Navigation bar classes */

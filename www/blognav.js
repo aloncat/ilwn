@@ -1,4 +1,4 @@
-﻿/* Blog main page */
+﻿// Blog: main page
 
 var currentYear = 0;
 var currentMonth = 0;
@@ -69,7 +69,7 @@ function initNavigation(lang) {
 	toggleMonth(9, lang);
 }
 
-/* Post pages */
+// Blog: post pages
 
 function setBlogPostLink(elementId, url) {
 	let navElement = document.getElementById(elementId);
