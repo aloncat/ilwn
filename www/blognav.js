@@ -1,8 +1,8 @@
 ﻿// Blog: main page
 
-var currentYear = 0;
-var currentMonth = 0;
-var currentLanguage = "en";
+let currentYear = 0;
+let currentMonth = 0;
+let currentLanguage = "en";
 
 function toggleYear(year, lang) {
 	for (let i = 2019; i <= 2021; ++i) {
@@ -72,21 +72,23 @@ function initNavigation() {
 function setBlogPostLink(elementId, url) {
 	let navElement = document.getElementById(elementId);
 
-	navElement.classList.add("postlink");
-	navElement.onclick = function() {
-		window.location.href = url;
-	};
+	if (navElement) {
+		navElement.classList.add("postlink");
+		navElement.onclick = function() {
+			window.location.href = url;
+		};
+	}
 }
 
 function setPrevBlogPostUrl(url) {
-	if (url && url != "") {
+	if (url) {
 		setBlogPostLink("link-prev-top", url);
 		setBlogPostLink("link-prev-bottom", url);
 	}
 }
 
 function setNextBlogPostUrl(url) {
-	if (url && url != "") {
+	if (url) {
 		setBlogPostLink("link-next-top", url);
 		setBlogPostLink("link-next-bottom", url);
 	}
