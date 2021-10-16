@@ -5,14 +5,11 @@ var currentMonth = 0;
 var currentLanguage = "en";
 
 function toggleYear(year, lang) {
-	if (lang === "en" || lang === "ru")
-		currentLanguage = lang;
-
 	for (let i = 2019; i <= 2021; ++i) {
 		let yearTag = document.getElementById("nav-y-" + i);
 
 		//yearTag.onclick = function() { toggleYear(i); };
-		yearTag.title = i + ((currentLanguage == "ru") ? " год" : " year");
+		yearTag.title = i + ((currentLanguage === "ru") ? " год" : " year");
 
 		yearTag.style.backgroundColor = null;
 		yearTag.style.color = null;
@@ -30,9 +27,6 @@ function toggleYear(year, lang) {
 }
 
 function toggleMonth(month, lang) {
-	if (lang === "en" || lang === "ru")
-		currentLanguage = lang;
-
 	let monthNamesEn = ["", "January", "February", "March", "April", "May", "June",
 		"July", "August", "September", "October", "November", "December"];
 	let monthNamesRu = ["", "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
@@ -64,9 +58,13 @@ function toggleMonth(month, lang) {
 	}
 }
 
-function initNavigation(lang) {
-	toggleYear(2021, lang);
-	toggleMonth(9, lang);
+function initNavigation() {
+	const lang = document.documentElement.lang;
+	if (lang === "en" || lang === "ru")
+		currentLanguage = lang;
+
+	toggleYear(2021);
+	toggleMonth(9);
 }
 
 // Blog: post pages
