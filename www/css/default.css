@@ -56,6 +56,7 @@ h1 {
 	margin: 36px auto 30px;
 	padding: 4px 20px 6px;
 	max-width: max-content;
+	width: 420px; /* for IE */
 	font-size: 128.57%; /* 18.0px */
 	line-height: 1.444; /* 26.0px */
 }
@@ -465,6 +466,10 @@ div#maplinks div {
 	column-rule: 3px dotted #e0e0e0;
 }
 
+.column div.patrons[data-col-count="2"] {
+	column-width: 275px;
+}
+
 .column div.patrons span {
 	font-weight: normal;
 	color: #585858;
@@ -551,6 +556,7 @@ div#maplinks div {
 
 @media screen and (max-width: 540px) {
 	h1 {
+		width: 100%;
 		max-width: 100%;
 		padding-left: 15px;
 		padding-right: 15px;
