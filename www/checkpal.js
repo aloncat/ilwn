@@ -11,7 +11,7 @@
 	checkButton.onclick = onCheckButtonDown;
 
 	const numFromUrl = window.location.hash;
-	if (numFromUrl.length && numFromUrl != "#")
+	if (numFromUrl.length && numFromUrl !== "#")
 		numberInput.value = numFromUrl.slice(1);
 	onNumberInput();
 
@@ -26,6 +26,28 @@ function onNumberInput() {
 	numberInput.style.color = useNormalColor ? "inherit" : "#e00";
 
 	checkButton.disabled = !isCorrect;
+}
+
+function onCheckButtonDown() {
+	if (numberInput.value.length) {
+		let number = null;
+		if (isCorrectNumber(numberInput.value)) {
+			number = getNumberString(numberInput.value);
+		}
+
+		if (number && number !== "0") {
+			resultsBlock.style.display = null;
+			errorText.style.display = "none";
+			contentBlock.innerHTML = null;
+
+			const language = document.documentElement.lang;
+			contentBlock.innerHTML = getPageContent(language, number);
+		} else {
+			resultsBlock.style.display = null;
+			errorText.style.display = null;
+			contentBlock.innerHTML = null;
+		}
+	}
 }
 
 function isCorrectNumber(value) {
@@ -61,45 +83,53 @@ function getNumberString(value) {
 	return result;
 }
 
-function onCheckButtonDown() {
-	if (numberInput.value.length) {
-		let number = null;
-		if (isCorrectNumber(numberInput.value)) {
-			number = getNumberString(numberInput.value);
-		}
-
-		if (number && number !== "0") {
-			resultsBlock.style.display = null;
-			errorText.style.display = "none";
-			contentBlock.innerHTML = null;
-
-			const language = document.documentElement.lang;
-			contentBlock.innerHTML = getPageContent(language, number);
-		} else {
-			resultsBlock.style.display = null;
-			errorText.style.display = null;
-			contentBlock.innerHTML = null;
-		}
-	}
-}
-
 function getPageContent(language, number) {
-	let result = "";
+	const canonical = getCanonicalForm(number);
 
-	// TODO
-	result += '<p class="text">Проверяемое число: ';
-	result += separateWithCommas(number);
-	result += '.</p>';
+	let result = String();
+	result += '<p class="text" style="word-wrap: break-word; text-align: left">';
+	result += 'Проверяемое число: <span style="color: #03a">' + separateWithCommas(number) + '</span>.</p>';
+
+	result += '<p class="text" style="word-wrap: break-word; text-align: left">';
+	result += 'Длина числа: ' + number.length + '.<br>';
+	result += 'Палиндром: ' + (isPalindrome(number) ? "да" : "нет") + '.<br>';
+	result += 'Каноническое: ' + ((number === canonical) ? "да" : "нет") + '.</p>';
 
 	return result;
 }
 
-function separateWithCommas(value) {
-	// TODO
-	return value;
+function getCanonicalForm(number) {
+	let digits = number.split("");
+	for (let i = 0, j = digits.length - 1; i < j; ++i, --j) {
+		while ((digits[i] > '1' || (digits[i] === '1' && i)) && digits[j] < '9') {
+			--digits[i];
+			++digits[j];
+		}
+	}
+
+	return digits.join("");
+}
+
+function separateWithCommas(value, separator = ",") {
+	let result = String();
+	const size = value.length;
+	for (let p = 0, l = size % 3; p < size;) {
+		if (p && separator)
+			result += separator;
+		for (let i = (p || !l) ? 3 : l; i; --i)
+			result += value[p++];
+	}
+
+	return result;
 }
 
 function isPalindrome(number) {
-	// TODO
+	if (number) {
+		for (let i = 0, j = number.length - 1; i < j; ++i, --j) {
+			if (number[i] !== number[j])
+				return false;
+		}
+		return true;
+	}
 	return false;
 }
