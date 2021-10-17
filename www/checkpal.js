@@ -1,4 +1,6 @@
-﻿function enableInput() {
+﻿var currentNumber;
+
+function enableInput() {
 	loadingText.style.display = "none";
 	checkButton.style.display = null;
 
@@ -11,18 +13,19 @@
 	checkButton.onclick = onCheckButtonDown;
 
 	const numFromUrl = window.location.hash.slice(1);
-	numberInput.value = decodeURIComponent(numFromUrl);
-	onNumberInput();
-
-	if (isCorrectNumber(numberInput.value))
-		onCheckButtonDown();
+	setNewNumber(decodeURIComponent(numFromUrl));
 }
 
 function onNumberInput() {
 	const isCorrect = isCorrectNumber(numberInput.value);
 
-	const useNormalColor = !numberInput.value.length || isCorrect;
-	numberInput.style.color = useNormalColor ? "inherit" : "#e00";
+	if (!numberInput.value.length || isCorrect) {
+		const isTheSameNumber = currentNumber && isCorrect &&
+			getNumberString(numberInput.value) === currentNumber;
+		numberInput.style.color = isTheSameNumber ? "#39e" : "inherit";
+	} else {
+		numberInput.style.color = "#e00";
+	}
 
 	checkButton.disabled = !isCorrect;
 }
@@ -32,17 +35,31 @@ function onCheckButtonDown() {
 		let number = isCorrectNumber(numberInput.value) &&
 			getNumberString(numberInput.value);
 
-		contentBlock.innerHTML = null;
-		resultsBlock.style.display = null;
+		if (!number || number !== currentNumber) {
+			currentNumber = null;
+			contentBlock.innerHTML = null;
+			resultsBlock.style.display = null;
 
-		if (number && number !== "0") {
-			errorText.style.display = "none";
-			const language = document.documentElement.lang;
-			contentBlock.innerHTML = getPageContent(language, number);
-		} else {
-			errorText.style.display = null;
+			if (number && number !== "0") {
+				errorText.style.display = "none";
+				const language = document.documentElement.lang;
+				contentBlock.innerHTML = getPageContent(language, number);
+
+				currentNumber = number;
+				onNumberInput();
+			} else {
+				errorText.style.display = null;
+			}
 		}
 	}
+}
+
+function setNewNumber(number) {
+	numberInput.value = number;
+	onNumberInput();
+
+	if (isCorrectNumber(number))
+		onCheckButtonDown();
 }
 
 function isCorrectNumber(value) {
@@ -67,10 +84,16 @@ function getNumberString(value) {
 }
 
 function getPageContent(language, number) {
-	let result = "";
-
 	const canonical = getLowestKin(number);
-	//const info = raaTillPalindrome(number, 650);
+	const highestKin = getHighestKin(number);
+	const totalKinCount = getKinCount(number);
+
+	const raaLimit = (number.length < 20) ? 350 : 650;
+
+	const info = raaTillPalindrome(number, raaLimit);
+	const resultNumber = info.steps[info.iterationCount];
+
+	let result = "";
 
 	result += '<p class="text" style="word-wrap: break-word; text-align: left">';
 	result += 'Проверяемое число: <span style="color: #03a">' + separateWithCommas(number) + '</span>.</p>';
@@ -103,6 +126,23 @@ function getHighestKin(number) {
 	return digits.join("");
 }
 
+function getKinCount(number) {
+	if (number.length > 33) {
+		// For numbers with more than 33 digits, it's possible to exceed (2^53 - 1) max safe integer
+		// the JavaScript Number type can hold. A 34-digit number can have up to 9*10^16 kin numbers,
+		// so to prevent going above "safe" value, we will return null for all such numbers
+		return null;
+	}
+
+	let count = 1;
+	for (let i = 0, j = number.length - 1; i < j; ++i, --j) {
+		let down = Math.min(number[i] - !i, 9 - number[j]);
+		let up = Math.min(9 - number[i], number[j]);
+		count *= 1 + down + up;
+	}
+	return count;
+}
+
 function isPalindrome(number) {
 	if (number) {
 		for (let i = 0, j = number.length - 1; i < j; ++i, --j) {
@@ -116,23 +156,24 @@ function isPalindrome(number) {
 
 function separateWithCommas(value, separator = ",") {
 	let result = [];
-	const size = value.length;
+	const number = "" + value;
+	const size = number.length;
 	for (let p = 0, l = size % 3; p < size;) {
 		result.push(p ? String(separator) : "");
 		for (let i = (p || !l) ? 3 : l; i; --i)
-			result.push(value[p++]);
+			result.push(number[p++]);
 	}
 	return result.join("");
 }
 
-function raaTillPalindrome(number, maxSteps) {
+function raaTillPalindrome(value, maxSteps) {
 	let result = {
 		iterationCount: 0,
 		isPalindrome: false,
-		steps: [ "" + number ]
+		steps: [ "" + value ]
 	};
 
-	let current = "" + number;
+	let current = "" + value;
 	while (result.iterationCount < maxSteps) {
 		current = reverseAndAdd(current);
 		result.steps.push(current);
