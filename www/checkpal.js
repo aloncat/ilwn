@@ -6,13 +6,12 @@
 	numberInput.onkeydown = function(e) {
 		if (e.keyCode === 13)
 			onCheckButtonDown();
-	}
+	};
 
 	checkButton.onclick = onCheckButtonDown;
 
-	const numFromUrl = window.location.hash;
-	if (numFromUrl.length && numFromUrl !== "#")
-		numberInput.value = numFromUrl.slice(1);
+	const numFromUrl = window.location.hash.slice(1);
+	numberInput.value = decodeURIComponent(numFromUrl);
 	onNumberInput();
 
 	if (isCorrectNumber(numberInput.value))
@@ -29,64 +28,50 @@ function onNumberInput() {
 }
 
 function onCheckButtonDown() {
-	if (numberInput.value.length) {
-		let number = null;
-		if (isCorrectNumber(numberInput.value)) {
-			number = getNumberString(numberInput.value);
-		}
+	if (numberInput.value) {
+		let number = isCorrectNumber(numberInput.value) &&
+			getNumberString(numberInput.value);
+
+		contentBlock.innerHTML = null;
+		resultsBlock.style.display = null;
 
 		if (number && number !== "0") {
-			resultsBlock.style.display = null;
 			errorText.style.display = "none";
-			contentBlock.innerHTML = null;
-
 			const language = document.documentElement.lang;
 			contentBlock.innerHTML = getPageContent(language, number);
 		} else {
-			resultsBlock.style.display = null;
 			errorText.style.display = null;
-			contentBlock.innerHTML = null;
 		}
 	}
 }
 
 function isCorrectNumber(value) {
-	let isCorrect = true;
 	let hasDigits = false;
-
-	if (value.length) {
-		const s = value.trim();
-		for (let i = 0; i < s.length; ++i) {
-			if (s[i] >= '0' && s[i] <= '9')
-				hasDigits = true;
-			else if (!(", \'".includes(s[i]))) {
-				isCorrect = false;
-				break;
-			}
-		}
+	const s = value.trim();
+	for (let i = 0; i < s.length; ++i) {
+		if (s[i] >= "0" && s[i] <= "9")
+			hasDigits = true;
+		else if (!(", \'".includes(s[i])))
+			return false;
 	}
-
-	return hasDigits && isCorrect;
+	return hasDigits;
 }
 
 function getNumberString(value) {
-	let result = "0";
+	let digits = [];
 	for (let i = 0; i < value.length; ++i) {
-		if (value[i] >= '0' && value[i] <= '9') {
-			if (result !== "0")
-				result += value[i];
-			else
-				result = value[i];
-		}
+		if ((value[i] > "0" && value[i] <= "9") || (value[i] === "0" && digits.length))
+			digits.push(value[i]);
 	}
-
-	return result;
+	return digits.length ? digits.join("") : "0";
 }
 
 function getPageContent(language, number) {
-	const canonical = getCanonicalForm(number);
+	let result = "";
 
-	let result = String();
+	const canonical = getLowestKin(number);
+	//const info = raaTillPalindrome(number, 650);
+
 	result += '<p class="text" style="word-wrap: break-word; text-align: left">';
 	result += 'Проверяемое число: <span style="color: #03a">' + separateWithCommas(number) + '</span>.</p>';
 
@@ -98,29 +83,24 @@ function getPageContent(language, number) {
 	return result;
 }
 
-function getCanonicalForm(number) {
+function getLowestKin(number) {
 	let digits = number.split("");
 	for (let i = 0, j = digits.length - 1; i < j; ++i, --j) {
-		while ((digits[i] > '1' || (digits[i] === '1' && i)) && digits[j] < '9') {
-			--digits[i];
-			++digits[j];
-		}
+		const diff = Math.min(digits[i] - !i, 9 - digits[j]);
+		digits[i] -= diff;
+		digits[j] = +digits[j] + diff;
 	}
-
 	return digits.join("");
 }
 
-function separateWithCommas(value, separator = ",") {
-	let result = String();
-	const size = value.length;
-	for (let p = 0, l = size % 3; p < size;) {
-		if (p && separator)
-			result += separator;
-		for (let i = (p || !l) ? 3 : l; i; --i)
-			result += value[p++];
+function getHighestKin(number) {
+	let digits = number.split("");
+	for (let i = 0, j = digits.length - 1; i < j; ++i, --j) {
+		const diff = Math.min(9 - digits[i], digits[j]);
+		digits[i] = +digits[i] + diff;
+		digits[j] -= diff;
 	}
-
-	return result;
+	return digits.join("");
 }
 
 function isPalindrome(number) {
@@ -132,4 +112,53 @@ function isPalindrome(number) {
 		return true;
 	}
 	return false;
+}
+
+function separateWithCommas(value, separator = ",") {
+	let result = [];
+	const size = value.length;
+	for (let p = 0, l = size % 3; p < size;) {
+		result.push(p ? String(separator) : "");
+		for (let i = (p || !l) ? 3 : l; i; --i)
+			result.push(value[p++]);
+	}
+	return result.join("");
+}
+
+function raaTillPalindrome(number, maxSteps) {
+	let result = {
+		iterationCount: 0,
+		isPalindrome: false,
+		steps: [ "" + number ]
+	};
+
+	let current = "" + number;
+	while (result.iterationCount < maxSteps) {
+		current = reverseAndAdd(current);
+		result.steps.push(current);
+		++result.iterationCount;
+
+		if (isPalindrome(current)) {
+			result.isPalindrome = true;
+			break;
+		}
+	}
+
+	return result;
+}
+
+function reverseAndAdd(number) {
+	let result = [], v = 0;
+	const last = number.length - 1;
+	for (let i = 0; i <= last; ++i) {
+		v += +number[i] + +number[last - i];
+		result.push("" + (v % 10));
+		v = v > 9;
+	}
+
+	if (v) {
+		result.push(1);
+	}
+
+	return result.reverse().join("");
 }
