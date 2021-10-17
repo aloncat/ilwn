@@ -818,6 +818,76 @@ static void P196Problem(P196Progress& data)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
+//   Cheat-289+
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//--------------------------------------------------------------------------------------------------------------------------------
+/*static*/ int Cheat289()
+{
+	BigNumber num;
+	// Кандидат для шага 289
+	num.Set("10037000230509917799950");
+	constexpr unsigned sampleLength = 26;
+
+	unsigned doneC = 0;
+	num.RAATillLength(sampleLength, doneC);
+
+	const FixNumber sample = num;
+	const unsigned stepsUndone = 289 - doneC;
+
+	aux::Printf("Sample length: %u\n", sampleLength);
+	aux::Printf("Steps pre-made: %u\n---", doneC);
+
+	BigNumber lastNum, current;
+	// Последнее проверенное число
+	lastNum.Set("10008000000000000000000");
+
+	uint64_t testedC = 0;
+	uint32_t lastTick = ::GetTickCount();
+
+	while (true)
+	{
+		++lastNum;
+		lastNum.SkipRAADups();
+
+		if (lastNum.GetLength() > 23)
+			break;
+
+		doneC = 0;
+		current = lastNum;
+		current.RAATillLength(sampleLength, doneC);
+
+		if (current == sample)
+		{
+			testedC = uint64_t(-1);
+			aux::Printf("\rFound! Steps[%u], number %s\n", stepsUndone + doneC,
+				SeparateWithCommas(lastNum).c_str());
+		}
+
+		if ((++testedC & 0x1fff) == 0)
+		{
+			const uint32_t tick = ::GetTickCount();
+			if (tick - lastTick >= 500)
+			{
+				const uint32_t elapsed = tick - lastTick;
+				const float speed = (elapsed > 50) ? 1000.f * testedC / elapsed : 0.f;
+				aux::Printf("\r%s [%s]... \b", SeparateWithCommas(lastNum).c_str(),
+					FormatSpeed(speed).c_str());
+				lastTick = tick;
+				testedC = 0;
+			}
+
+			if (util::SystemConsole::Instance().IsCtrlCPressed())
+				break;
+		}
+	}
+
+	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 //   All Lychrels
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -988,6 +1058,148 @@ int AllLychrelsMain()
 	return 0;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   Exp-142
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//--------------------------------------------------------------------------------------------------------------------------------
+/*static*/ void PrintNum(const BigNumber& num)
+{
+	BigNumber n = num;
+	//n.ReverseAndAdd(1);
+
+	std::string s = n.AsString();
+	size_t i = 0, j = s.size() - 1;
+
+	for (; i < j; ++i, --j)
+	{
+		int a = s[i] - '0';
+		int b = s[j] - '0';
+		while ((a > 1 || (a == 1 && i)) && b < 9)
+		{
+			--a;
+			++b;
+		}
+		s[i] = static_cast<char>('0' + a);
+		s[j] = static_cast<char>('0' + b);
+	}
+	n = s;
+
+	const bool withCommas = false;
+	aux::Printf("%s\n", withCommas ? SeparateWithCommas(n).c_str() : n.AsString().c_str());
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+/*static*/ void PrintPal(const BigNumber& num)
+{
+	BigNumber n = num;
+	unsigned doneC = 0;
+	if (n.RAATillPalindrome(500, doneC))
+	{
+		aux::Printf("Pal! %u: %s\n", doneC, SeparateWithCommas(num).c_str());
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+static void VarStepNumber(const std::string& orig, std::string& num, int p, const std::function<void(const std::string&)>& cb)
+{
+	if (!cb)
+		return;
+
+	const size_t pairCount = (orig.size() + 1) / 2;
+	const size_t last = orig.size() - 1;
+
+	if (p > 0)
+	{
+		if (num[0] == '0' && num[last] > '0')
+		{
+			num[0] = '1';
+			num[last] = num[last] - 1;
+		}
+		else if (num[0] == '0')
+			return;
+		if (p == pairCount)
+		{
+			cb(num);
+			return;
+		}
+	}
+
+	if (p + 1 < pairCount || (last & 1))
+	{
+		int sum = orig[p] + orig[last - p] - 2 * '0';
+
+		if (sum == 0 || sum == 1)
+		{
+			num[p] = '0'; num[last - p] = '0';
+			VarStepNumber(orig, num, p + 1, cb);
+			num[p] = '5'; num[last - p] = '5';
+			VarStepNumber(orig, num, p + 1, cb);
+		}
+		else if (!(sum & 1))
+		{
+			num[p] = char('0' + ((sum - 2) / 4));
+			num[last - p] = char('0' + (sum / 4));
+			VarStepNumber(orig, num, p + 1, cb);
+			num[p] = char('0' + (sum / 4));
+			num[last - p] = char('0' + ((sum + 2) / 4));
+			VarStepNumber(orig, num, p + 1, cb);
+
+			/*num[p] = char('0' + (5 + (sum - 2) / 8));
+			num[last - p] = char('0' + (5 + sum / 8));
+			VarStepNumber(orig, num, p + 1, cb);
+			num[p] = char('0' + (5 + sum / 8));
+			num[last - p] = char('0' + (5 + (sum + 2) / 8));
+			VarStepNumber(orig, num, p + 1, cb);*/
+		} else
+		{
+			num[p] = char('0' + ((sum - 1) / 4));
+			num[last - p] = char('0' + ((sum + 1) / 4));
+			VarStepNumber(orig, num, p + 1, cb);
+
+			/*ss = (sum + 1) / 4;
+			num[p] = char('5' + ss);
+			num[last - p] = char('5' + ss);
+			VarStepNumber(orig, num, p + 1, cb);*/
+		}
+	} else
+	{
+		const int sum = orig[p] - '0';
+		num[p] = char('0' + sum / 2);
+		VarStepNumber(orig, num, p + 1, cb);
+		num[p] = char('5' + sum / 2);
+		VarStepNumber(orig, num, p + 1, cb);
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+/*static*/ int Exp142()
+{
+	std::string n285 = "05947505409090559474960";
+	std::string num = "00000000000000000000000";
+
+	BigNumber next("105947505409090559474960"), nn;
+	next.ReverseAndAdd(1);
+
+	int count = 0, passed = 0;
+	VarStepNumber(n285, num, 0, [&](const std::string& n) {
+		++count;
+		aux::Printf("%s\n", n.c_str());
+		nn = n; nn.ReverseAndAdd(2);
+		if (nn == next)
+		{
+			++passed;
+			//aux::Printf("%s\n", n.c_str());
+		}
+	});
+
+	aux::Printf("Total: %u, passed: %u\n", count, passed);
+
+	return 0;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   Главная функция
@@ -1028,8 +1240,10 @@ int AllLychrelsMain()
 //----------------------------------------------------------------------------------------------------------------------
 int wmain(int argC, const wchar_t* argA[])
 {
+	//return GuardedCall(Cheat289, 1);
 	//return GuardedCall(P196ProblemMain, 1);
 	//return GuardedCall(AllLychrelsMain, 1);
+	//return GuardedCall(Exp142, 1);
 
 	return GuardedCall(std::bind(Main, argC, argA), 1);
 }
