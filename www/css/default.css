@@ -55,8 +55,8 @@ h1, h2 {
 h1 {
 	margin: 36px auto 30px;
 	padding: 4px 20px 6px;
+	max-width: 420px; /* for IE */
 	max-width: max-content;
-	width: 420px; /* for IE */
 	font-size: 128.57%; /* 18.0px */
 	line-height: 1.444; /* 26.0px */
 }
@@ -556,7 +556,6 @@ div#maplinks div {
 
 @media screen and (max-width: 540px) {
 	h1 {
-		width: 100%;
 		max-width: 100%;
 		padding-left: 15px;
 		padding-right: 15px;
