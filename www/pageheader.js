@@ -1,9 +1,44 @@
-﻿// All pages: navigation bar
+﻿(function() {
+	var resizeTimeout;
+	function resizeThrottler() {
+		if (!resizeTimeout) {
+			resizeTimeout = setTimeout(function() {
+				resizeTimeout = null;
+				resizeHandler();
+			}, 1000);
+		}
+	}
 
-(function() {
 	const navBarId = "topNavigationBar";
 	const offsetId = "topOffsetElement";
 
+	function resizeHandler() {
+		const bodyStyle = window.getComputedStyle(document.body);
+		const margin = parseInt(bodyStyle.marginTop, 10);
+
+		const navBar = document.getElementById(navBarId);
+		const height = navBar ? navBar.offsetHeight : 40;
+
+		if (height >= margin) {
+			let offsetDiv = document.getElementById(offsetId);
+			offsetDiv.style.minHeight = (height - margin) + "px";
+			offsetDiv.style.marginBottom = margin + "px";
+		}
+
+		const padding = (height + 8) + "px";
+		document.documentElement.style.scrollPaddingTop = padding;
+	}
+
+	insertNavigationBar(navBarId, offsetId);
+	resizeHandler();
+
+	window.addEventListener("resize", resizeThrottler, false);
+	document.addEventListener("DOMContentLoaded", insertFooter);
+})();
+
+// All pages: navigation bar
+
+function insertNavigationBar(navBarId, offsetId) {
 	let urlPrefix = "";
 	let blogTitle = "Blog";
 
@@ -56,41 +91,19 @@
 		  '</tr>' +
 		'</table>'
 	);
-
-	var resizeTimeout;
-	function resizeThrottler() {
-		if (!resizeTimeout) {
-			resizeTimeout = setTimeout(function() {
-				resizeTimeout = null;
-				resizeHandler();
-			}, 80);
-		}
-	}
-
-	function resizeHandler() {
-		const bodyStyle = window.getComputedStyle(document.body);
-		const margin = parseInt(bodyStyle.marginTop, 10);
-
-		const navBar = document.getElementById(navBarId);
-		const height = navBar ? navBar.offsetHeight : 40;
-
-		if (height >= margin) {
-			let offsetDiv = document.getElementById(offsetId);
-			offsetDiv.style.minHeight = (height - margin) + "px";
-			offsetDiv.style.marginBottom = margin + "px";
-		}
-
-		const padding = (height + 8) + "px";
-		document.documentElement.style.scrollPaddingTop = padding;
-	}
-
-	resizeHandler();
-	window.addEventListener("resize", resizeThrottler, false);
-})();
+}
 
 // All pages: footer
 
-function insertFooter(lang, url) {
+function insertFooter() {
+	const footer = document.getElementById("pageFooter");
+
+	if (!footer)
+		return;
+
+	const lang = footer.getAttribute("data-lang");
+	const urlPath = footer.getAttribute("data-url-path");
+
 	let languageCode = "EN";
 	let languageTitle = "English (EN)";
 
@@ -109,35 +122,34 @@ function insertFooter(lang, url) {
 		contactsText = "Контакты";
 	}
 
-	document.write(
-		'<div class="column">' +
-		  '<hr class="footer">' +
-		  '<table class="nospacing" style="width: 100%">' +
-			'<tr style="vertical-align: top">' +
-			  '<td class="footer">' +
-				'<div style="margin-right: 25px">' +
-				  'Copyright &copy;&nbsp;2019-2021 Dmitry&nbsp;Maslov' +
-				'</div>' +
-			  '</td>' +
-			  '<td class="footer" style="text-align: right">' +
-				'<div style="display: inline-block">' +
-				  '<a href="/' + urlPrefix + 'map.html">' + mapText + '</a>' +
-				'</div>' +
-				'<div style="display: inline-block">' +
-				  '<span class="dot">&middot;</span>' +
-				  '<a href="/' + urlPrefix + 'contacts.html">' + contactsText + '</a>' +
-				'</div>' +
-				'<div style="display: inline-block">' +
-				  '<span class="dot">&middot;</span>' +
-				  '<a href="' + url + '" title="' + languageTitle + '" style="color: inherit">' +
-					'<b>' + languageCode + '</b>' +
-				  '</a>' +
-				'</div>' +
-			  '</td>' +
-			'</tr>' +
-		  '</table>' +
-		'</div>'
-	);
+	footer.className = "column";
+
+	footer.innerHTML =
+		'<hr class="footer">' +
+		'<table class="nospacing" style="width: 100%">' +
+		  '<tr style="vertical-align: top">' +
+			'<td class="footer">' +
+			  '<div style="margin-right: 25px">' +
+				'Copyright &copy;&nbsp;2019-2021 Dmitry&nbsp;Maslov' +
+			  '</div>' +
+			'</td>' +
+			'<td class="footer" style="text-align: right">' +
+			  '<div style="display: inline-block">' +
+				'<a href="/' + urlPrefix + 'map.html">' + mapText + '</a>' +
+			  '</div>' +
+			  '<div style="display: inline-block">' +
+				'<span class="dot">&middot;</span>' +
+				'<a href="/' + urlPrefix + 'contacts.html">' + contactsText + '</a>' +
+			  '</div>' +
+			  '<div style="display: inline-block">' +
+				'<span class="dot">&middot;</span>' +
+				'<a href="' + urlPath + '" title="' + languageTitle + '" style="color: inherit">' +
+				  '<b>' + languageCode + '</b>' +
+				'</a>' +
+			  '</div>' +
+			'</td>' +
+		  '</tr>' +
+		'</table>';
 }
 
 // Blog's posts: links

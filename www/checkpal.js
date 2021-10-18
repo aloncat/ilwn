@@ -1,6 +1,6 @@
 ﻿var currentNumber;
 
-function enableInput() {
+(function () {
 	loadingText.style.display = "none";
 	checkButton.style.display = "inline-block";
 
@@ -14,7 +14,7 @@ function enableInput() {
 
 	const numFromUrl = window.location.hash.slice(1);
 	setNewNumber(decodeURIComponent(numFromUrl));
-}
+})();
 
 function onNumberInput() {
 	const isCorrect = isCorrectNumber(numberInput.value);
