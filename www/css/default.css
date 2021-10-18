@@ -114,6 +114,7 @@ table.navbar {
 	border-collapse: separate;
 	border-spacing: 5px;
 	position: fixed;
+	z-index: 100;
 	left: 0;
 	top: 0;
 	background: #303030;

@@ -2,7 +2,7 @@
 
 function enableInput() {
 	loadingText.style.display = "none";
-	checkButton.style.display = null;
+	checkButton.style.display = "inline-block";
 
 	numberInput.oninput = onNumberInput;
 	numberInput.onkeydown = function(e) {
@@ -38,7 +38,7 @@ function onCheckButtonDown() {
 		if (!number || number !== currentNumber) {
 			currentNumber = null;
 			contentBlock.innerHTML = null;
-			resultsBlock.style.display = null;
+			resultsBlock.style.display = "block";
 
 			if (number && number !== "0") {
 				errorText.style.display = "none";
@@ -48,7 +48,7 @@ function onCheckButtonDown() {
 				currentNumber = number;
 				onNumberInput();
 			} else {
-				errorText.style.display = null;
+				errorText.style.display = "block";
 			}
 		}
 	}
@@ -58,8 +58,10 @@ function setNewNumber(number) {
 	numberInput.value = number;
 	onNumberInput();
 
-	if (isCorrectNumber(number))
+	if (isCorrectNumber(number)) {
+		document.activeElement.blur();
 		onCheckButtonDown();
+	}
 }
 
 function isCorrectNumber(value) {
@@ -68,7 +70,7 @@ function isCorrectNumber(value) {
 	for (let i = 0; i < s.length; ++i) {
 		if (s[i] >= "0" && s[i] <= "9")
 			hasDigits = true;
-		else if (!(", \'".includes(s[i])))
+		else if (", \'".indexOf(s[i]) === -1)
 			return false;
 	}
 	return hasDigits;
@@ -143,29 +145,6 @@ function getKinCount(number) {
 	return count;
 }
 
-function isPalindrome(number) {
-	if (number) {
-		for (let i = 0, j = number.length - 1; i < j; ++i, --j) {
-			if (number[i] !== number[j])
-				return false;
-		}
-		return true;
-	}
-	return false;
-}
-
-function separateWithCommas(value, separator = ",") {
-	let result = [];
-	const number = "" + value;
-	const size = number.length;
-	for (let p = 0, l = size % 3; p < size;) {
-		result.push(p ? String(separator) : "");
-		for (let i = (p || !l) ? 3 : l; i; --i)
-			result.push(number[p++]);
-	}
-	return result.join("");
-}
-
 function raaTillPalindrome(value, maxSteps) {
 	let result = {
 		iterationCount: 0,
@@ -202,4 +181,32 @@ function reverseAndAdd(number) {
 	}
 
 	return result.reverse().join("");
+}
+
+function isPalindrome(number) {
+	if (number) {
+		for (let i = 0, j = number.length - 1; i < j; ++i, --j) {
+			if (number[i] !== number[j])
+				return false;
+		}
+		return true;
+	}
+	return false;
+}
+
+function getLinkToThisPage(number) {
+	const url = "https://dmaslov.me" + window.location.pathname;
+	return number ? url + "#" + number : url;
+}
+
+function separateWithCommas(value, separator = ",") {
+	let result = [];
+	const number = "" + value;
+	const size = number.length;
+	for (let p = 0, l = size % 3; p < size;) {
+		result.push(p ? String(separator) : "");
+		for (let i = (p || !l) ? 3 : l; i; --i)
+			result.push(number[p++]);
+	}
+	return result.join("");
 }
