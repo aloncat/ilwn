@@ -5,7 +5,7 @@
 			resizeTimeout = setTimeout(function() {
 				resizeTimeout = null;
 				resizeHandler();
-			}, 1000);
+			}, 80);
 		}
 	}
 
