@@ -23,16 +23,18 @@
 
 <div class="column">
   <div style="max-width: 540px; margin: 0 auto; text-align: center">
-	<input id="numberInput" type="text" autofocus maxlength="53" style="width: 98%; margin: 0 auto; padding: 3px; text-align: center">
-	<input id="checkButton" type="button" value="Проверить" style="margin: 25px auto 8px; padding: 3px 20px 4px; display: none">
-	<div id="loadingText" style="margin:25px auto 8px"><i>Пожалуйста, подождите. Скрипт загружается...</i></div>
+	<input id="numberInput" type="text" autofocus maxlength="59">
+	<div id="loadingText">
+	  Пожалуйста, подождите. Скрипт загружается...
+	</div>
+	<input id="checkButton" type="button" value="Проверить" style="display: none">
   </div>
 </div>
 
-<div id="resultsBlock" class="column" style="margin-top: 18px; display: none">
-  <hr style="margin-bottom: 8px; border-top: 2px dotted #ccc; background: #fff">
+<div id="resultsBlock" class="column" style="display: none">
+  <hr>
   <p id="errorText" class="text" style="display: none">
-	<span style="color: #e00">Ошибка:</span>
+	<span class="errorcolor">Ошибка:</span>
 	введённое число не является корректным натуральным числом. Введите любое целое число, большее или равное 1.
   </p>
   <div id="contentBlock">

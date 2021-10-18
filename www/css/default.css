@@ -242,6 +242,10 @@ table.nospacing {
 	color: #b0b0b0;
 }
 
+.errorcolor {
+	color: #e00;
+}
+
 .tiny {
 	font-size: 85.71%; /* 12.0px */
 	line-height: 1.417; /* 17.0px */
@@ -516,6 +520,30 @@ div#maplinks div {
 .column .hwitem .details {
 	margin-left: 25px;
 	color: #484848;
+}
+
+.column input#numberInput {
+	width: calc(100% - 14px);
+	margin: 0 auto;
+	padding: 3px;
+	text-align: center;
+}
+
+.column div#loadingText {
+	margin: 25px auto 8px;
+	font-style: italic;
+	font-weight: bold;
+}
+
+.column input#checkButton {
+	margin: 25px auto;
+	padding: 3px 20px 5px;
+}
+
+div#resultsBlock > hr {
+	margin-bottom: 8px;
+	border-top: 2px dotted #ccc;
+	background: transparent;
 }
 
 /* Adaptive design */

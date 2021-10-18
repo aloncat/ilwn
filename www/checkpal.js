@@ -2,7 +2,7 @@
 
 (function () {
 	loadingText.style.display = "none";
-	checkButton.style.display = "inline-block";
+	checkButton.style.removeProperty("display");
 
 	numberInput.oninput = onNumberInput;
 	numberInput.onkeydown = function(e) {
@@ -20,11 +20,14 @@ function onNumberInput() {
 	const isCorrect = isCorrectNumber(numberInput.value);
 
 	if (!numberInput.value.length || isCorrect) {
-		const isTheSameNumber = currentNumber && isCorrect &&
-			getNumberString(numberInput.value) === currentNumber;
-		numberInput.style.color = isTheSameNumber ? "#39e" : "inherit";
+		numberInput.classList.remove("errorcolor");
+		if (currentNumber && isCorrect && getNumberString(numberInput.value) === currentNumber)
+			numberInput.style.color = "#39e";
+		else
+			numberInput.style.removeProperty("color");
 	} else {
-		numberInput.style.color = "#e00";
+		numberInput.style.removeProperty("color");
+		numberInput.classList.add("errorcolor");
 	}
 
 	checkButton.disabled = !isCorrect;
@@ -38,17 +41,20 @@ function onCheckButtonDown() {
 		if (!number || number !== currentNumber) {
 			currentNumber = null;
 			contentBlock.innerHTML = "";
-			resultsBlock.style.display = "block";
+			resultsBlock.style.removeProperty("display");
 
 			if (number && number !== "0") {
 				errorText.style.display = "none";
+
 				const language = document.documentElement.lang;
-				contentBlock.innerHTML = getPageContent(language, number);
+				const pageContent = getPageContent(language, number);
+				contentBlock.innerHTML = pageContent.htmlData;
+				pageContent.onContentReadyCb();
 
 				currentNumber = number;
 				onNumberInput();
 			} else {
-				errorText.style.display = "block";
+				errorText.style.removeProperty("display");
 			}
 		}
 	}
@@ -86,26 +92,33 @@ function getNumberString(value) {
 }
 
 function getPageContent(language, number) {
-	const canonical = getLowestKin(number);
-	const highestKin = getHighestKin(number);
-	const totalKinCount = getKinCount(number);
+	const data = {};
+	data.number = number;
+	data.canonical = getLowestKin(number);
+	data.highestKin = getHighestKin(number);
+	data.totalKinCount = getKinCount(number);
 
-	const raaLimit = (number.length < 20) ? 350 : 650;
+	const stepLimit = (number.length < 20) ? 350 : 650;
+	const info = raaTillPalindrome(number, stepLimit);
 
-	const info = raaTillPalindrome(number, raaLimit);
-	const resultNumber = info.steps[info.iterationCount];
+	data.result = info.steps[info.iterationCount];
+	data.iterationCount = info.iterationCount;
+	data.isPalindrome = info.isPalindrome;
+	data.steps = info.steps;
 
-	let result = "";
+	const scrollableId = "stepsBlock";
+	let result = getBasicContent(language, data) +
+		'<div class="column divider">&bull; &bull; &bull;</div>' +
+		getStepDetails(data, scrollableId) +
+		getFooterContent(language, data);
 
-	result += '<p class="text" style="word-wrap: break-word; text-align: left">';
-	result += 'Проверяемое число: <span style="color: #03a">' + separateWithCommas(number) + '</span>.</p>';
-
-	result += '<p class="text" style="word-wrap: break-word; text-align: left">';
-	result += 'Длина числа: ' + number.length + '.<br>';
-	result += 'Палиндром: ' + (isPalindrome(number) ? "да" : "нет") + '.<br>';
-	result += 'Каноническое: ' + ((number === canonical) ? "да" : "нет") + '.</p>';
-
-	return result;
+	return {
+		htmlData: result,
+		onContentReadyCb: function() {
+			let scrollable = document.getElementById(scrollableId);
+			scrollable.scrollLeft = scrollable.scrollWidth;
+		}
+	};
 }
 
 function getLowestKin(number) {
@@ -192,6 +205,41 @@ function isPalindrome(number) {
 		return true;
 	}
 	return false;
+}
+
+function getBasicContent(language, data) {
+	let result = "";
+
+	result += '<p class="text" style="word-wrap: break-word; text-align: left">';
+	result += 'Проверяемое число: <span style="color: #03a">' + separateWithCommas(data.number) + '</span>.</p>';
+
+	result += '<p class="text" style="word-wrap: break-word; text-align: left">';
+	result += 'Длина числа: ' + data.number.length + '.<br>';
+	result += 'Палиндром: ' + (isPalindrome(data.number) ? "да" : "нет") + '.<br>';
+	result += 'Каноническое: ' + ((data.number === data.canonical) ? "да" : "нет") + '.</p>';
+
+	return result;
+}
+
+function getStepDetails(data, scrollableId) {
+	let result = "";
+
+	result += '<div id="' + scrollableId + '"></div>';
+
+	return result;
+}
+
+function getFooterContent(language, data) {
+	let topText = "To the top";
+
+	if (language === "ru") {
+		topText = "Наверх";
+	}
+
+	return '' +
+		'<div style="text-align: center">' +
+		  '<a href="#">' + topText + '</a>' +
+		'</div>';
 }
 
 function getLinkToThisPage(number) {
