@@ -37,7 +37,7 @@ function onCheckButtonDown() {
 
 		if (!number || number !== currentNumber) {
 			currentNumber = null;
-			contentBlock.innerHTML = null;
+			contentBlock.innerHTML = "";
 			resultsBlock.style.display = "block";
 
 			if (number && number !== "0") {
@@ -132,8 +132,8 @@ function getKinCount(number) {
 	if (number.length > 33) {
 		// For numbers with more than 33 digits, it's possible to exceed (2^53 - 1) max safe integer
 		// the JavaScript Number type can hold. A 34-digit number can have up to 9*10^16 kin numbers,
-		// so to prevent going above "safe" value, we will return null for all such numbers
-		return null;
+		// so to prevent going above "safe" value, we will return "udefined" for all such numbers
+		return;
 	}
 
 	let count = 1;
@@ -199,7 +199,10 @@ function getLinkToThisPage(number) {
 	return number ? url + "#" + number : url;
 }
 
-function separateWithCommas(value, separator = ",") {
+function separateWithCommas(value, separator) {
+	if (separator === undefined)
+		separator = ",";
+
 	let result = [];
 	const number = "" + value;
 	const size = number.length;

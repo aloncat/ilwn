@@ -11,9 +11,9 @@ function toggleYear(year, lang) {
 		//yearTag.onclick = function() { toggleYear(i); };
 		yearTag.title = i + ((currentLanguage === "ru") ? " год" : " year");
 
-		yearTag.style.backgroundColor = null;
-		yearTag.style.color = null;
-		yearTag.style.cursor = null;
+		yearTag.style.removeProperty("background-color");
+		yearTag.style.removeProperty("color");
+		yearTag.style.removeProperty("cursor");
 	}
 
 	if (year >= 2019 && year <= 2021) {
@@ -41,9 +41,9 @@ function toggleMonth(month, lang) {
 		monthTag.textContent = (i < 10) ? "0" + i : i;
 		monthTag.title = monthNames[i];
 
-		monthTag.style.backgroundColor = null;
-		monthTag.style.color = null;
-		monthTag.style.cursor = null;
+		monthTag.style.removeProperty("background-color");
+		monthTag.style.removeProperty("color");
+		monthTag.style.removeProperty("cursor");
 	}
 
 	if (month >= 1 && month <= 12) {
