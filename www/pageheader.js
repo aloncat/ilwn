@@ -195,9 +195,11 @@ function insertBottomLinks() {
 		  '<span id="link-prev-bottom">' +
 			'&laquo;&nbsp;' + prevText +
 		  '</span>' +
-		  '<span class="divider">' +
-			'&middot;<a href="#">' + topText + '</a>&middot;' +
+		  '<span class="divider">&middot;</span>' +
+		  '<span>' +
+			'<a href="#">' + topText + '</a>' +
 		  '</span>' +
+		  '<span class="divider">&middot;</span>' +
 		  '<span id="link-next-bottom">' +
 			nextText + '&nbsp;&raquo;' +
 		  '</span>' +

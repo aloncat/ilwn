@@ -1,4 +1,4 @@
-﻿var currentNumber;
+﻿var currentData;
 
 (function () {
 	loadingText.style.display = "none";
@@ -21,7 +21,7 @@ function onNumberInput() {
 
 	if (!numberInput.value.length || isCorrect) {
 		numberInput.classList.remove("errorcolor");
-		if (currentNumber && isCorrect && getNumberString(numberInput.value) === currentNumber)
+		if (currentData && isCorrect && getNumberString(numberInput.value) === currentData.number)
 			numberInput.style.color = "#39e";
 		else
 			numberInput.style.removeProperty("color");
@@ -38,26 +38,31 @@ function onCheckButtonDown() {
 		let number = isCorrectNumber(numberInput.value) &&
 			getNumberString(numberInput.value);
 
-		if (!number || number !== currentNumber) {
-			currentNumber = null;
+		if (!number || !currentData || number !== currentData.number) {
+			currentData = null;
 			resultsBlock.style.removeProperty("display");
 			const contentsElement = document.getElementById("contents");
 
 			if (number && number !== "0") {
 				errorText.style.display = "none";
 
+				currentData = calculateData(number);
 				const language = document.documentElement.lang;
-				const pageContent = getPageContent(language, number);
+				const pageContent = getPageContent(language, currentData);
+
 				contentsElement.innerHTML = pageContent.htmlData;
 				pageContent.onContentReadyCb();
-
-				currentNumber = number;
 				onNumberInput();
 				return true;
 			} else {
 				contentsElement.innerHTML = "";
 				errorText.style.removeProperty("display");
 			}
+		} else {
+			// If "Check" button or Enter key is pressed for the same number, scroll the
+			// results to the right to make them visible when page is scrolled to the top
+			let scrollable = document.getElementById(currentData.scrollableId);
+			scrollable.scrollLeft = scrollable.scrollWidth;
 		}
 	}
 
@@ -93,7 +98,7 @@ function getNumberString(value) {
 	return digits.length ? digits.join("") : "0";
 }
 
-function getPageContent(language, number) {
+function calculateData(number) {
 	const data = {};
 	data.number = number;
 	data.canonical = getLowestKin(number);
@@ -109,18 +114,22 @@ function getPageContent(language, number) {
 	data.isPalindrome = info.isPalindrome;
 	data.steps = info.steps;
 
-	const scrollableId = "stepsBlock";
-	let result = getBasicContent(language, data) +
-		getStepDetailsContent(language, data, scrollableId) +
+	return data;
+}
+
+function getPageContent(language, data) {
+	const result = {};
+	data.scrollableId = "stepsBlock";
+	result.htmlData = getBasicContent(language, data) +
+		getStepDetailsContent(language, data) +
 		getFooterContent(language, data);
 
-	return {
-		htmlData: result,
-		onContentReadyCb: function() {
-			let scrollable = document.getElementById(scrollableId);
-			scrollable.scrollLeft = scrollable.scrollWidth;
-		}
+	result.onContentReadyCb = function() {
+		let scrollable = document.getElementById(data.scrollableId);
+		scrollable.scrollLeft = scrollable.scrollWidth;
 	};
+
+	return result;
 }
 
 function getLowestKin(number) {
@@ -245,9 +254,10 @@ function getBasicContent(language, data) {
 	return result;
 }
 
-function getStepDetailsContent(language, data, scrollableId, maxStepsToShow) {
+function getStepDetailsContent(language, data) {
+	data.showMoreAnchor = null;
 	const stepsToShow = data.isPalindrome ? data.iterationCount :
-		Math.min(maxStepsToShow || 30, data.iterationCount);
+		Math.min(data.maxStepsToShow || 30, data.iterationCount);
 
 	let result = '<div>';
 	if (data.isPalindrome) {
@@ -256,13 +266,21 @@ function getStepDetailsContent(language, data, scrollableId, maxStepsToShow) {
 			'Below are shown all the iterations until the number reaches a palindrome.';
 	} else {
 		result += (language === "ru") ?
-			'Ниже выведен' + getCaseEnding(stepsToShow, "", "ы") + ' только <b>' + stepsToShow + '</b> перв' +
-				getCaseEnding(stepsToShow, "ый", "ых") + ' шаг' + getCaseEnding(stepsToShow, "", "а", "ов") + '.' :
-			'Below are shown only the first <b>' + stepsToShow + '</b> iterations.';
+			'Ниже выведен' + getCaseEnding(stepsToShow, "", "ы") + ' только перв' +
+			getCaseEnding(stepsToShow, "ый", "ые") + ' <b>' + stepsToShow +
+				'</b> шаг' + getCaseEnding(stepsToShow, "", "а", "ов") :
+			'Below are shown only the first <b>' + stepsToShow + '</b> iterations';
+		if (stepsToShow < data.iterationCount && stepsToShow < 350) {
+			const moreStepsToShow = (stepsToShow < 100) ? 100 : 350;
+			data.showMoreAnchor = '<a class="jsanchor" onclick="showMoreSteps(' + moreStepsToShow + ')">';
+			result += ' (' + data.showMoreAnchor + ((language === "ru") ?
+				'показать больше' : 'show more') + '</a>)';
+		}
+		result += '.';
 	}
 	result += '</div>';
 
-	result += '<div id="' + scrollableId +'" class="scrollable">' +
+	result += '<div id="' + data.scrollableId +'" class="scrollable">' +
 		'<div class="palsteps">';
 
 	for (let i = 0; i <= stepsToShow; ++i) {
@@ -297,8 +315,20 @@ function getFooterContent(language, data) {
 		topText = "Наверх";
 	}
 
-	return '<div style="text-align: center">' +
-		'<a href="#">' + topText + '</a></div>';
+	// TODO: implement "text" content formatting
+	let result = '<div class="footer"><span class="lightgrey">' + ((language === "ru") ?
+		'Скопировать в буфер обмена' : 'Copy to clipboard') + '</span>';
+
+	if (data.showMoreAnchor) {
+		result += '<span class="divider">&middot;</span>' +
+			'<span>' + data.showMoreAnchor + ((language === "ru") ?
+			'Показать больше шагов' : 'Show more iterations') + '</a></span>';
+	}
+
+	result += '<span class="divider">&middot;</span>' +
+		'<span><a href="#">' + topText + '</a></span></div>';
+
+	return result;
 }
 
 function separateWithCommas(value, separator) {
@@ -377,5 +407,19 @@ function copyTextToClipboard(textToCopy, successCb) {
 
 		if (hasCopied && successCb)
 			successCb();
+	}
+}
+
+function showMoreSteps(stepsToShow) {
+	if (currentData) {
+		currentData.maxStepsToShow = Math.min(currentData.iterationCount,
+			Math.max(stepsToShow || 100, 30));
+
+		const language = document.documentElement.lang;
+		const pageContent = getPageContent(language, currentData);
+
+		const contentsElement = document.getElementById("contents");
+		contentsElement.innerHTML = pageContent.htmlData;
+		pageContent.onContentReadyCb();
 	}
 }

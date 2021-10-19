@@ -380,8 +380,7 @@ div.bloglinks-bottom span {
 	display: inline-block;
 }
 
-div.bloglinks-bottom span.divider,
-div.bloglinks-bottom span.divider > a {
+div.bloglinks-bottom span.divider {
 	margin-left: 10px;
 	margin-right: 10px;
 }
@@ -516,12 +515,6 @@ div#mapLinks div {
 	color: #666;
 }
 
-.column .hwitem a.ctrl {
-	cursor: pointer;
-	font-style: italic;
-	color: #36f;
-}
-
 .column .hwitem .details {
 	margin-left: 25px;
 	color: #484848;
@@ -599,6 +592,18 @@ div#mapLinks div {
 	border-radius: 4px;
 }
 
+#resultsBlock #contents .footer {
+	text-align: center;
+}
+
+#resultsBlock #contents .footer span {
+	display: inline-block;
+}
+
+#resultsBlock #contents .footer span.divider {
+	margin: 0 10px;
+}
+
 /* Adaptive design */
 
 @media screen and (max-width: 830px) {
@@ -649,6 +654,17 @@ div#mapLinks div {
 		border-radius: 0;
 	}
 
+	div.bloglinks-bottom span,
+	#resultsBlock #contents .footer span {
+		margin-left: 15px;
+		margin-right: 15px;
+	}
+
+	div.bloglinks-bottom span.divider,
+	#resultsBlock #contents .footer span.divider {
+		display: none;
+	}
+
 	div#mapLinks div {
 		margin-left: 25px;
 	}
@@ -659,6 +675,10 @@ div#mapLinks div {
 
 	.column div#yoomoney {
 		width: 100%;
+	}
+
+	td.footer .dot {
+		visibility: hidden;
 	}
 }
 
