@@ -540,10 +540,37 @@ div#maplinks div {
 	padding: 3px 20px 5px;
 }
 
-div#resultsBlock > hr {
+#resultsBlock > hr {
 	margin-bottom: 8px;
 	border-top: 2px dotted #ccc;
 	background: transparent;
+}
+
+#resultsBlock .scrollable {
+	width: 100%;
+	margin: 4px auto;
+	overflow-x: auto;
+	background: #fafafa;
+	border: 1px solid #e8e8e8;
+	border-radius: 5px;
+}
+
+#resultsBlock .palsteps {
+	min-width: 1250px; /* for IE */
+	min-width: max-content;
+	padding: 2px 5px;
+	font-family: Courier New, monospace;
+	font-size: 92.86%; /* 13.0px */
+	line-height: 1.231; /* 16.0px */
+	text-align: right;
+}
+
+#resultsBlock .stepmarker {
+	padding: 1px 5px 0;
+	background: #fff;
+	color: #7be;
+	border: 1px solid #e8e8e8;
+	border-radius: 4px;
 }
 
 /* Adaptive design */

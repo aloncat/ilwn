@@ -34,40 +34,39 @@ function onNumberInput() {
 }
 
 function onCheckButtonDown() {
-	if (numberInput.value) {
-		let number = isCorrectNumber(numberInput.value) &&
-			getNumberString(numberInput.value);
+	let number = isCorrectNumber(numberInput.value) &&
+		getNumberString(numberInput.value);
 
-		if (!number || number !== currentNumber) {
-			currentNumber = null;
-			contentBlock.innerHTML = "";
-			resultsBlock.style.removeProperty("display");
+	if (!number || number !== currentNumber) {
+		currentNumber = null;
+		contentBlock.innerHTML = "";
+		resultsBlock.style.removeProperty("display");
 
-			if (number && number !== "0") {
-				errorText.style.display = "none";
+		if (number && number !== "0") {
+			errorText.style.display = "none";
 
-				const language = document.documentElement.lang;
-				const pageContent = getPageContent(language, number);
-				contentBlock.innerHTML = pageContent.htmlData;
-				pageContent.onContentReadyCb();
+			const language = document.documentElement.lang;
+			const pageContent = getPageContent(language, number);
+			contentBlock.innerHTML = pageContent.htmlData;
+			pageContent.onContentReadyCb();
 
-				currentNumber = number;
-				onNumberInput();
-			} else {
-				errorText.style.removeProperty("display");
-			}
+			currentNumber = number;
+			onNumberInput();
+			return true;
+		} else {
+			errorText.style.removeProperty("display");
 		}
 	}
+
+	return false;
 }
 
 function setNewNumber(number) {
 	numberInput.value = number;
 	onNumberInput();
 
-	if (isCorrectNumber(number)) {
-		document.activeElement.blur();
-		onCheckButtonDown();
-	}
+	if (!onCheckButtonDown())
+		numberInput.focus();
 }
 
 function isCorrectNumber(value) {
@@ -98,9 +97,10 @@ function getPageContent(language, number) {
 	data.highestKin = getHighestKin(number);
 	data.totalKinCount = getKinCount(number);
 
+	data.highestKnownStep = 289;
 	const stepLimit = (number.length < 20) ? 350 : 650;
-	const info = raaTillPalindrome(number, stepLimit);
 
+	const info = raaTillPalindrome(number, stepLimit);
 	data.result = info.steps[info.iterationCount];
 	data.iterationCount = info.iterationCount;
 	data.isPalindrome = info.isPalindrome;
@@ -109,7 +109,7 @@ function getPageContent(language, number) {
 	const scrollableId = "stepsBlock";
 	let result = getBasicContent(language, data) +
 		'<div class="column divider">&bull; &bull; &bull;</div>' +
-		getStepDetails(data, scrollableId) +
+		getStepDetailsContent(language, data, scrollableId) +
 		getFooterContent(language, data);
 
 	return {
@@ -221,10 +221,49 @@ function getBasicContent(language, data) {
 	return result;
 }
 
-function getStepDetails(data, scrollableId) {
+function getStepDetailsContent(language, data, scrollableId, maxStepsToShow) {
 	let result = "";
 
-	result += '<div id="' + scrollableId + '"></div>';
+	const stepsToShow = data.isPalindrome ? data.iterationCount :
+		Math.min(maxStepsToShow || 30, data.iterationCount);
+
+	result += '<div style="text-align: center">';
+	if (data.isPalindrome) {
+		result += (language === "ru") ?
+			'Ниже выведены все шаги до достижения указанным числом палиндрома.' :
+			'Below are shown all the iterations until the number reaches a palindrome.';
+	} else {
+		result += (language === "ru") ?
+			'Ниже выведен' + getCaseEnding(stepsToShow, "", "ы") + ' только <b>' + stepsToShow + '</b> перв' +
+				getCaseEnding(stepsToShow, "ый", "ых") + ' шаг' + getCaseEnding(stepsToShow, "", "а", "ов") + '.' :
+			'Below are shown only the first <b>' + stepsToShow + '</b> iterations.';
+	}
+	result += '</div>';
+
+	result += '<div id="' + scrollableId +'" class="scrollable">' +
+		'<div class="palsteps">';
+
+	for (let i = 0; i <= stepsToShow; ++i) {
+		if (i < stepsToShow) {
+			result += '<span class="stepmarker" style="position: relative; left: -5px; top: 8px">#' +
+				(i + 1) + '</span>';
+		}
+
+		result += '&nbsp; ';
+		const n = data.steps[i];
+		const isLast = i === stepsToShow && data.isPalindrome;
+		const lineStyle = isLast ? "solid #999" : "dotted #ccc";
+		result += i ? '<span style="border-top: 2px ' + lineStyle + '">' : '<span>';
+		result += (isLast ? '<b>' + n + '</b>' : n) + '</span><br>';
+
+		if (i < stepsToShow) {
+			const r = n.split("").reverse().join("");
+			result += '<span style="color: #999; position: relative; left: 8px; top: -8px">+</span>' +
+				'&nbsp;<span style="color: #c50">' + r + '</span><br>';
+		}
+	}
+
+	result += '</div></div>';
 
 	return result;
 }
@@ -236,15 +275,8 @@ function getFooterContent(language, data) {
 		topText = "Наверх";
 	}
 
-	return '' +
-		'<div style="text-align: center">' +
-		  '<a href="#">' + topText + '</a>' +
-		'</div>';
-}
-
-function getLinkToThisPage(number) {
-	const url = "https://dmaslov.me" + window.location.pathname;
-	return number ? url + "#" + number : url;
+	return '<div style="text-align: center">' +
+		'<a href="#">' + topText + '</a></div>';
 }
 
 function separateWithCommas(value, separator) {
@@ -260,4 +292,17 @@ function separateWithCommas(value, separator) {
 			result.push(number[p++]);
 	}
 	return result.join("");
+}
+
+function getLinkToThisPage(number) {
+	const url = "https://dmaslov.me" + window.location.pathname;
+	return number ? url + "#" + number : url;
+}
+
+function getCaseEnding(value, one, twofour, other) {
+	if (other === undefined)
+		other = twofour;
+
+	return ((value % 10) && (value % 10 < 5) && ((value % 100 < 11) || (value % 100 > 19))) ?
+		(value % 10 === 1) ? one : twofour : other;
 }
