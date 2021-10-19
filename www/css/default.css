@@ -205,6 +205,11 @@ a.nodecor {
 	color: inherit;
 }
 
+a.jsanchor {
+	cursor: pointer;
+	color: #36f;
+}
+
 table.nospacing {
 	border-collapse: separate;
 	border-spacing: 0;
@@ -445,11 +450,11 @@ div.newsheader {
 	border-bottom: 1px solid #aaa;
 }
 
-div#maplinks {
+div#mapLinks {
 	color: #666;
 }
 
-div#maplinks div {
+div#mapLinks div {
 	margin-left: 30px;
 }
 
@@ -546,7 +551,28 @@ div#maplinks div {
 	background: transparent;
 }
 
-#resultsBlock .scrollable {
+#resultsBlock #contents .bignum {
+	word-wrap: break-word;
+	text-align: left;
+}
+
+#resultsBlock #contents span.specnum {
+	font-style: italic;
+	color: #03b;
+}
+
+#resultsBlock #contents input#pageLink {
+	width: 520px;
+	margin: 2px 0 16px;
+	padding: 0 6px 1px;
+	font-family: Consolas, monospace;
+	background: #f4f4f4;
+	color: #242424;
+	border: 1px solid #e0e0e0;
+	border-radius: 5px;
+}
+
+#resultsBlock #contents .scrollable {
 	width: 100%;
 	margin: 4px auto;
 	overflow-x: auto;
@@ -555,8 +581,8 @@ div#maplinks div {
 	border-radius: 5px;
 }
 
-#resultsBlock .palsteps {
-	min-width: 1250px; /* for IE */
+#resultsBlock #contents .palsteps {
+	min-width: 1320px; /* for IE */
 	min-width: max-content;
 	padding: 2px 5px;
 	font-family: Courier New, monospace;
@@ -565,7 +591,7 @@ div#maplinks div {
 	text-align: right;
 }
 
-#resultsBlock .stepmarker {
+#resultsBlock #contents .stepmarker {
 	padding: 1px 5px 0;
 	background: #fff;
 	color: #7be;
@@ -608,6 +634,10 @@ div#maplinks div {
 	.noheadertop {
 		margin-top: 10px;
 	}
+
+	#resultsBlock #contents input#pageLink {
+		width: calc(100% - 14px);
+	}
 }
 
 @media screen and (max-width: 540px) {
@@ -619,11 +649,11 @@ div#maplinks div {
 		border-radius: 0;
 	}
 
-	div#maplinks div {
+	div#mapLinks div {
 		margin-left: 25px;
 	}
 
-	div#maplinks div:first-child {
+	div#mapLinks div:first-child {
 		margin-left: 0;
 	}
 

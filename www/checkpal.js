@@ -34,27 +34,30 @@ function onNumberInput() {
 }
 
 function onCheckButtonDown() {
-	let number = isCorrectNumber(numberInput.value) &&
-		getNumberString(numberInput.value);
+	if (numberInput.value) {
+		let number = isCorrectNumber(numberInput.value) &&
+			getNumberString(numberInput.value);
 
-	if (!number || number !== currentNumber) {
-		currentNumber = null;
-		contentBlock.innerHTML = "";
-		resultsBlock.style.removeProperty("display");
+		if (!number || number !== currentNumber) {
+			currentNumber = null;
+			resultsBlock.style.removeProperty("display");
+			const contentsElement = document.getElementById("contents");
 
-		if (number && number !== "0") {
-			errorText.style.display = "none";
+			if (number && number !== "0") {
+				errorText.style.display = "none";
 
-			const language = document.documentElement.lang;
-			const pageContent = getPageContent(language, number);
-			contentBlock.innerHTML = pageContent.htmlData;
-			pageContent.onContentReadyCb();
+				const language = document.documentElement.lang;
+				const pageContent = getPageContent(language, number);
+				contentsElement.innerHTML = pageContent.htmlData;
+				pageContent.onContentReadyCb();
 
-			currentNumber = number;
-			onNumberInput();
-			return true;
-		} else {
-			errorText.style.removeProperty("display");
+				currentNumber = number;
+				onNumberInput();
+				return true;
+			} else {
+				contentsElement.innerHTML = "";
+				errorText.style.removeProperty("display");
+			}
 		}
 	}
 
@@ -108,7 +111,6 @@ function getPageContent(language, number) {
 
 	const scrollableId = "stepsBlock";
 	let result = getBasicContent(language, data) +
-		'<div class="column divider">&bull; &bull; &bull;</div>' +
 		getStepDetailsContent(language, data, scrollableId) +
 		getFooterContent(language, data);
 
@@ -208,26 +210,46 @@ function isPalindrome(number) {
 }
 
 function getBasicContent(language, data) {
-	let result = "";
+	let result = '<p class="text bignum">' +
+		((language === "ru") ? 'Проверяемое число: ' : 'Tested number: ') +
+		'<span class="specnum">' + separateWithCommas(data.number) + '</span>.</p>';
 
-	result += '<p class="text" style="word-wrap: break-word; text-align: left">';
-	result += 'Проверяемое число: <span style="color: #03a">' + separateWithCommas(data.number) + '</span>.</p>';
+	result += '<p class="text">' + 'Указанное ' +
+		data.number.length + '-значное число является';
 
-	result += '<p class="text" style="word-wrap: break-word; text-align: left">';
-	result += 'Длина числа: ' + data.number.length + '.<br>';
-	result += 'Палиндром: ' + (isPalindrome(data.number) ? "да" : "нет") + '.<br>';
-	result += 'Каноническое: ' + ((data.number === data.canonical) ? "да" : "нет") + '.</p>';
+	if (data.isPalindrome) {
+		result += ' <b>отложенным палиндромом</b>, разрешающимся за <b>' + data.iterationCount +
+			'</b> операц' + getCaseEnding(data.iterationCount, "ию", "ии", "ий") +
+			' Перевернуть-И-Сложить. Длина его результирующего ' + 'палиндрома составляет <b>' +
+			data.result.length + '</b> знак' + getCaseEnding(data.result.length, "", "а", "ов") + '.';
+	} else {
+		result += ' <b>числом Лишрел</b>. Мы только что выполнили над ним ' + data.iterationCount +
+			' операц' + getCaseEnding(data.iterationCount, "ию", "ии", "ий") + ' Перевернуть-И-Сложить, но, ' +
+			'достигнув длины ' + data.result.length + ' знак' + getCaseEnding(data.result.length, "", "а", "ов") +
+			', оно так и не стало палиндромом.';
+		result += ' Этого количества операций вполне достаточно для того, чтобы утверждать, что ' +
+			'указанное число действительно является числом Лишрел.';
+	}
+
+	if (isPalindrome(data.number)) {
+		result += ' Кроме того, указанное число само является <b>палиндромом</b>.';
+	}
+
+	result += '</p>';
+
+	result += '<div class="small">Ссылка на эту страницу (<a class="jsanchor" ' +
+		'onclick="copyPageLinkToClipboard()">скопировать в буфер обмена</a>):</div>' +
+		'<div><input id="pageLink" class="small" type="text" readonly value="' +
+		getLinkToThisPage(data.number) + '"></input></div>';
 
 	return result;
 }
 
 function getStepDetailsContent(language, data, scrollableId, maxStepsToShow) {
-	let result = "";
-
 	const stepsToShow = data.isPalindrome ? data.iterationCount :
 		Math.min(maxStepsToShow || 30, data.iterationCount);
 
-	result += '<div style="text-align: center">';
+	let result = '<div>';
 	if (data.isPalindrome) {
 		result += (language === "ru") ?
 			'Ниже выведены все шаги до достижения указанным числом палиндрома.' :
@@ -294,15 +316,66 @@ function separateWithCommas(value, separator) {
 	return result.join("");
 }
 
-function getLinkToThisPage(number) {
-	const url = "https://dmaslov.me" + window.location.pathname;
-	return number ? url + "#" + number : url;
-}
-
 function getCaseEnding(value, one, twofour, other) {
 	if (other === undefined)
 		other = twofour;
 
 	return ((value % 10) && (value % 10 < 5) && ((value % 100 < 11) || (value % 100 > 19))) ?
 		(value % 10 === 1) ? one : twofour : other;
+}
+
+function getLinkToThisPage(number) {
+	const url = "https://dmaslov.me" + window.location.pathname;
+	return number ? url + "#" + number : url;
+}
+
+function copyPageLinkToClipboard() {
+	const pageLink = document.getElementById("pageLink");
+	const linkText = pageLink ? pageLink.value : "https://dmaslov.me/mdpn/";
+
+	var hideTimeOut;
+	copyTextToClipboard(linkText, function() {
+		if (pageLink) {
+			pageLink.style.transition = "none";
+			pageLink.style.borderColor = "#0c0";
+			hideTimeout = setTimeout(function() {
+				hideTimeOut = null;
+				pageLink.style.transition = "border 1.0s";
+				pageLink.style.removeProperty("border-color");
+			}, 100);
+		}
+	});
+}
+
+function copyTextToClipboard(textToCopy, successCb) {
+	if (navigator.clipboard) {
+		navigator.clipboard.writeText(textToCopy).then(successCb, function(error) {
+			console.error('Could not copy text into clipboard:', error);
+		});
+	} else {
+		let textArea = document.createElement("textarea");
+
+		textArea.style.position = "fixed";
+		textArea.style.left = 0;
+		textArea.style.top = 0;
+		textArea.style.width = "2em";
+		textArea.style.height = "2em";
+		textArea.style.padding = 0;
+		textArea.style.border = "none";
+		textArea.style.outline = "none";
+		textArea.style.boxShadow = "none";
+		textArea.style.background = "transparent";
+		textArea.style.color = "#fff0";
+
+		textArea.value = textToCopy;
+		document.body.appendChild(textArea);
+
+		textArea.focus();
+		textArea.select();
+		const hasCopied = document.execCommand('copy')
+		document.body.removeChild(textArea);
+
+		if (hasCopied && successCb)
+			successCb();
+	}
 }
