@@ -1,11 +1,12 @@
-﻿// Results for the most recent tested number
+﻿// Results for the last tested number
 var currentData = null;
 
 // Global constants
 const MIN_SHOWN_STEPS = 30;
 const MAX_SHOWN_STEPS = 350;
-const HIDE_STAY_TIMEOUT = 250;
-const ONCOPY_FX_COLOR = "#0c0";
+const FX_STAY_TIMEOUT = 200; // Milliseconds
+const FX_FADE_TIMEOUT = "1.0s"; // Duration (CSS)
+const ONCOPY_FX_COLOR = "#0c0"; // Color (CSS)
 
 (function () {
 	loadingText.style.display = "none";
@@ -262,8 +263,12 @@ function getBasicContent(language, data) {
 }
 
 function getStepDetailsContent(language, data) {
+	// This property contains a string with HTML code for "show more" link. If there
+	// should be no link (because we have shown all the iterations), it will be null
 	data.showMoreAnchor = null;
 
+	// Property data.maxStepsToShow is initially undefined. But it will be initialized
+	// with the desired number of iterations to show, if user clicks "show more" link
 	const maxStepsToShow = data.maxStepsToShow || MIN_SHOWN_STEPS;
 	const stepsToShow = data.isPalindrome ? data.iterationCount :
 		Math.min(maxStepsToShow, data.iterationCount);
@@ -378,9 +383,9 @@ function copyPageLinkToClipboard() {
 			pageLink.style.borderColor = ONCOPY_FX_COLOR;
 			hideTimeout = setTimeout(function() {
 				hideTimeOut = null;
-				pageLink.style.transition = "border 1.0s";
+				pageLink.style.transition = "border " + FX_FADE_TIMEOUT;
 				pageLink.style.removeProperty("border-color");
-			}, HIDE_STAY_TIMEOUT);
+			}, FX_STAY_TIMEOUT);
 		}
 	});
 }
@@ -410,9 +415,9 @@ function copyStepsToClipboard() {
 				stepsBlock.style.borderColor = ONCOPY_FX_COLOR;
 				hideTimeout = setTimeout(function() {
 					hideTimeOut = null;
-					stepsBlock.style.transition = "border 1.0s";
+					stepsBlock.style.transition = "border " + FX_FADE_TIMEOUT;
 					stepsBlock.style.removeProperty("border-color");
-				}, HIDE_STAY_TIMEOUT);
+				}, FX_STAY_TIMEOUT);
 			}
 		});
 	}
@@ -424,6 +429,7 @@ function copyTextToClipboard(textToCopy, successCb) {
 			console.error('Could not copy text into clipboard:', error);
 		});
 	} else {
+		// Fallback for IE mostly
 		let textArea = document.createElement("textarea");
 
 		textArea.style.position = "fixed";
