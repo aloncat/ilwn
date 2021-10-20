@@ -449,6 +449,15 @@ div.newsheader {
 	border-bottom: 1px solid #aaa;
 }
 
+span.newsupdate {
+	margin-right: 3px;
+	padding: 0 4px 1px;
+	font-weight: bold;
+	background: #e0d;
+	color: #fff;
+	border-radius: 5px;
+}
+
 div#mapLinks {
 	color: #666;
 }
