@@ -1,4 +1,11 @@
-﻿var currentData;
+﻿// Results for the most recent tested number
+var currentData = null;
+
+// Global constants
+const MIN_SHOWN_STEPS = 30;
+const MAX_SHOWN_STEPS = 350;
+const HIDE_STAY_TIMEOUT = 250;
+const ONCOPY_FX_COLOR = "#0c0";
 
 (function () {
 	loadingText.style.display = "none";
@@ -256,8 +263,10 @@ function getBasicContent(language, data) {
 
 function getStepDetailsContent(language, data) {
 	data.showMoreAnchor = null;
+
+	const maxStepsToShow = data.maxStepsToShow || MIN_SHOWN_STEPS;
 	const stepsToShow = data.isPalindrome ? data.iterationCount :
-		Math.min(data.maxStepsToShow || 30, data.iterationCount);
+		Math.min(maxStepsToShow, data.iterationCount);
 
 	let result = '<div>';
 	if (data.isPalindrome) {
@@ -270,8 +279,8 @@ function getStepDetailsContent(language, data) {
 			getCaseEnding(stepsToShow, "ый", "ые") + ' <b>' + stepsToShow +
 				'</b> шаг' + getCaseEnding(stepsToShow, "", "а", "ов") :
 			'Below are shown only the first <b>' + stepsToShow + '</b> iterations';
-		if (stepsToShow < data.iterationCount && stepsToShow < 350) {
-			const moreStepsToShow = (stepsToShow < 100) ? 100 : 350;
+		if (stepsToShow < data.iterationCount && stepsToShow < MAX_SHOWN_STEPS) {
+			const moreStepsToShow = (stepsToShow < 100) ? 100 : MAX_SHOWN_STEPS;
 			data.showMoreAnchor = '<a class="jsanchor" onclick="showMoreSteps(' + moreStepsToShow + ')">';
 			result += ' (' + data.showMoreAnchor + ((language === "ru") ?
 				'показать больше' : 'show more') + '</a>)';
@@ -315,9 +324,8 @@ function getFooterContent(language, data) {
 		topText = "Наверх";
 	}
 
-	// TODO: implement "text" content formatting
-	let result = '<div class="footer"><span class="lightgrey">' + ((language === "ru") ?
-		'Скопировать в буфер обмена' : 'Copy to clipboard') + '</span>';
+	let result = '<div class="footer"><a class="jsanchor" onclick="copyStepsToClipboard()">' +
+		((language === "ru") ? 'Скопировать в буфер обмена' : 'Copy to clipboard') + '</a>';
 
 	if (data.showMoreAnchor) {
 		result += '<span class="divider">&middot;</span>' +
@@ -367,14 +375,47 @@ function copyPageLinkToClipboard() {
 	copyTextToClipboard(linkText, function() {
 		if (pageLink) {
 			pageLink.style.transition = "none";
-			pageLink.style.borderColor = "#0c0";
+			pageLink.style.borderColor = ONCOPY_FX_COLOR;
 			hideTimeout = setTimeout(function() {
 				hideTimeOut = null;
 				pageLink.style.transition = "border 1.0s";
 				pageLink.style.removeProperty("border-color");
-			}, 100);
+			}, HIDE_STAY_TIMEOUT);
 		}
 	});
+}
+
+function copyStepsToClipboard() {
+	if (currentData) {
+		const stepsToShow = currentData.isPalindrome ? currentData.iterationCount :
+			Math.min(currentData.iterationCount, MAX_SHOWN_STEPS);
+
+		let result = [];
+		for (let i = 0; i <= stepsToShow; ++i) {
+			const n = currentData.steps[i];
+			if (i < stepsToShow) {
+				const r = n.split("").reverse().join("");
+				result.push('#' + (i + 1) + ':\n ' + n + '\n+' + r + '\n');
+			} else {
+				result.push((n.length === currentData.steps[i - 1].length) ?
+					'===\n ' + n + '\n' : '===\n' + n + '\n');
+			}
+		}
+
+		var hideTimeOut;
+		copyTextToClipboard(result.join(""), function() {
+			const stepsBlock = document.getElementById(currentData.scrollableId);
+			if (stepsBlock) {
+				stepsBlock.style.transition = "none";
+				stepsBlock.style.borderColor = ONCOPY_FX_COLOR;
+				hideTimeout = setTimeout(function() {
+					hideTimeOut = null;
+					stepsBlock.style.transition = "border 1.0s";
+					stepsBlock.style.removeProperty("border-color");
+				}, HIDE_STAY_TIMEOUT);
+			}
+		});
+	}
 }
 
 function copyTextToClipboard(textToCopy, successCb) {
@@ -413,7 +454,7 @@ function copyTextToClipboard(textToCopy, successCb) {
 function showMoreSteps(stepsToShow) {
 	if (currentData) {
 		currentData.maxStepsToShow = Math.min(currentData.iterationCount,
-			Math.max(stepsToShow || 100, 30));
+			Math.max(stepsToShow || 100, MIN_SHOWN_STEPS));
 
 		const language = document.documentElement.lang;
 		const pageContent = getPageContent(language, currentData);
