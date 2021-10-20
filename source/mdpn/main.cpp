@@ -734,7 +734,12 @@ static void P196ProblemSave(const P196Progress& data, bool saveAsLatest)
 static void P196Problem(P196Progress& data)
 {
 	BigNumber num;
-	num.Reserve(80000000); // Резервируем 80 миллионов знаков
+	size_t desiredLength = (data.number.size() + 4999999) / 10000000;
+	desiredLength = std::max(desiredLength + 2, 3ull) * 10000000;
+	num.Reserve(desiredLength);
+
+	aux::Printf("Reserved buffer length: %sM digits\n",
+		SeparateWithCommas(desiredLength / 1000000).c_str());
 
 	num.Set(data.number);
 	uint64_t lastIt = data.iterationC;
@@ -793,7 +798,7 @@ static void P196Problem(P196Progress& data)
 /*static*/ int P196ProblemMain()
 {
 	const std::string buildVer = GetAppVersion();
-	aux::Printf("Most Delayed Palindromic Number project. Built on %s\n", buildVer.c_str());
+	aux::Printf("196 Palindrome Quest project. Built on %s\n", buildVer.c_str());
 	aux::Print("For more information, please visit us at https://dmaslov.me\n");
 
 	if (!TestFacility::CheckRequirements(false))
@@ -986,6 +991,113 @@ int AllLychrelsMain()
 	AllLychrels();
 
 	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   Временное
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void DoNum(const std::string& n)
+{
+	BigNumber num(n);
+	num.ReverseAndAdd(1);
+	PrintNum(num);
+}
+
+void DoSearch()
+{
+	DataBase data;
+	if (data.Init(false, DBChunkState::HEADERONLY))
+	{
+		size_t fileC = 0;
+		uint32_t lastTick = 0;
+		data.ForEachChunk([&](DBChunk* pChunk) {
+			if (!pChunk->LoadData(data, DBChunkState::WITHSTATS))
+			{
+				aux::Printc("\r#12Error\n");
+				return false;
+			}
+
+			if (pChunk->GetHighestStep() > 261)
+			{
+				if (!pChunk->LoadData(data, DBChunkState::FULLDATA))
+				{
+					aux::Printc("\r#12Error\n");
+					return false;
+				}
+
+				Number num;
+				for (const auto& item : pChunk->GetNumbers())
+				{
+					if (item.step > 261)
+					{
+						num = item.num;
+						aux::Printf("\rSteps[%u]: %s\n", item.step,
+							SeparateWithCommas(num).c_str());
+					}
+				}
+			}
+
+			pChunk->UnloadData(DBChunkState::DATAUNLOADED);
+			++fileC;
+
+			uint32_t tick = ::GetTickCount();
+			if (tick - lastTick >= 250)
+			{
+				aux::Printf("\rFiles processed: %u", fileC);
+				lastTick = tick;
+			}
+
+			return true;
+		});
+
+		aux::Printf("\rFiles processed: %u\n", fileC);
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void CheckNum(const std::string& n)
+{
+	BigNumber num(n);
+	unsigned doneC = 0;
+	if (num.RAATillPalindrome(1000, doneC))
+	{
+		aux::Printf("Pal, steps=%u\n", doneC);
+		aux::Printf("Result: length=%u\n%s\n", num.GetLength(),
+			num.AsString().c_str());
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+uint64_t GetKinCount(const std::string& n, BigNumber& maxNum)
+{
+	BigNumber num(n);
+	const uint64_t count = num.GetKinNumberC();
+	aux::Printf("Number %s, kin count: %llu\n", SeparateWithCommas(num).c_str(), count);
+
+	std::string s = n;
+	size_t i = 0, j = s.size() - 1;
+
+	for (; i < j; ++i, --j)
+	{
+		int a = s[i] - '0';
+		int b = s[j] - '0';
+		while (a < 9 && b > 0)
+		{
+			++a;
+			--b;
+		}
+		s[i] = static_cast<char>('0' + a);
+		s[j] = static_cast<char>('0' + b);
+	}
+
+	num = s;
+	if (num > maxNum)
+		maxNum = num;
+
+	return count;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
