@@ -551,7 +551,17 @@ div#mapLinks div {
 
 #resultsBlock #contents span.specnum {
 	font-style: italic;
-	color: #03b;
+	color: #e3a;
+}
+
+#resultsBlock #contents #newRecord {
+	max-width: 640px;
+	margin: 16px auto;
+	padding: 5px 8px 6px;
+	text-align: center;
+	background: #ffc;
+	border: 1px solid #d90;
+	border-radius: 5px;
 }
 
 #resultsBlock #contents input#pageLink {

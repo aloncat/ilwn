@@ -7,6 +7,7 @@ const MAX_SHOWN_STEPS = 350;
 const FX_STAY_TIMEOUT = 200; // Milliseconds
 const FX_FADE_TIMEOUT = "1.0s"; // Duration (CSS)
 const ONCOPY_FX_COLOR = "#0c0"; // Color (CSS)
+const URL_PREFIX = "https://dmaslov.me";
 
 (function () {
 	loadingText.style.display = "none";
@@ -20,8 +21,14 @@ const ONCOPY_FX_COLOR = "#0c0"; // Color (CSS)
 
 	checkButton.onclick = onCheckButtonDown;
 
-	const numFromUrl = window.location.hash.slice(1);
-	setNewNumber(decodeURIComponent(numFromUrl));
+	const params = window.location.search.slice(1);
+	// Treat the very first parameter as a number to test
+	const numFromUrl = params.slice(params.indexOf("=") + 1);
+	numberInput.value = decodeURIComponent(numFromUrl).trim();
+
+	onNumberInput();
+	if (!onCheckButtonDown())
+		numberInput.focus();
 })();
 
 function onNumberInput() {
@@ -75,14 +82,6 @@ function onCheckButtonDown() {
 	}
 
 	return false;
-}
-
-function setNewNumber(number) {
-	numberInput.value = number;
-	onNumberInput();
-
-	if (!onCheckButtonDown())
-		numberInput.focus();
 }
 
 function isCorrectNumber(value) {
@@ -231,6 +230,14 @@ function getBasicContent(language, data) {
 		((language === "ru") ? 'Проверяемое число: ' : 'Tested number: ') +
 		'<span class="specnum">' + separateWithCommas(data.number) + '</span>.</p>';
 
+	if (data.isPalindrome && data.iterationCount > data.highestKnownStep) {
+		result += '<p id="newRecord">Похоже, что Вы обнаружили <b>новый мировой рекорд</b>! ' +
+			'Наиболее отложенный палиндром, известный на данный момент, разрешается за <b>' +
+			data.highestKnownStep + '</b> шаг' + getCaseEnding(data.highestKnownStep, "", "а", "ов") +
+			', тогда как Ваше число &mdash; за <b>' + data.iterationCount + '</b>! Пожалуйста, ' +
+			'<a href="/contacts.html" target="_blank">свяжитесь со мной</a> и сообщите о Вашей находке!</p>';
+	}
+
 	result += '<p class="text">' + 'Указанное ' +
 		data.number.length + '-значное число является';
 
@@ -250,6 +257,42 @@ function getBasicContent(language, data) {
 
 	if (isPalindrome(data.number)) {
 		result += ' Кроме того, указанное число само является <b>палиндромом</b>.';
+	}
+
+	result += '</p><p class="text">';
+
+	if (data.number === data.canonical) {
+		result += 'Указанное число является <b>каноническим</b>, то есть наименьшим числом, которое ' +
+			'можно получить путём изменения симметричных пар его цифр при условии сохранения их сумм.';
+	} else {
+		result += 'Указанное число записано <b><span class="errorcolor">не</span> в канонической форме</b>. ' +
+			'То есть существует меньшее число, которое можно получить из указанного путём изменения ' +
+			'симметричных пар его цифр при условии сохранения их сумм, такое, что результаты одной ' +
+			'операции Перевернуть-И-Сложить для обоих чисел будут совпадать.';
+	}
+
+	if (data.totalKinCount <= 1) {
+		result += ' Для этого числа не существует других родственных чисел.';
+	} else {
+		const count = data.totalKinCount;
+		const e = getCaseEnding(count, "ое", "ых");
+		result += ' Для указанного числа существу' + getCaseEnding(count, "ет", "ют") + ' <b>' +
+			separateWithCommas(count) + '</b> различн' + e + ' родственн' + e + ' чис' +
+			getCaseEnding(count, "ло", "ла", "ел") + ', котор' + getCaseEnding(count, "ое", "ые") +
+			' после всего одной операции Перевернуть-И-Сложить да' + getCaseEnding(count, "ёт", "ют") +
+			' одинаковый результат.';
+	}
+
+	if (data.number !== data.canonical) {
+		result += '</p><p class="text bignum">' +
+			'Канонический вид числа: <a href="' + getLinkToThisPage(data.canonical, "") +
+			'"><i>' + separateWithCommas(data.canonical) + '</i></a>.';
+	}
+
+	if (data.totalKinCount > 1) {
+		result += '</p><p class="text bignum">' +
+			'Наибольшее из всех родственных чисел: <span class="specnum">' +
+			separateWithCommas(data.highestKin) + '</span>.';
 	}
 
 	result += '</p>';
@@ -323,12 +366,6 @@ function getStepDetailsContent(language, data) {
 }
 
 function getFooterContent(language, data) {
-	let topText = "To the top";
-
-	if (language === "ru") {
-		topText = "Наверх";
-	}
-
 	let result = '<div class="footer"><a class="jsanchor" onclick="copyStepsToClipboard()">' +
 		((language === "ru") ? 'Скопировать в буфер обмена' : 'Copy to clipboard') + '</a>';
 
@@ -338,8 +375,8 @@ function getFooterContent(language, data) {
 			'Показать больше шагов' : 'Show more iterations') + '</a></span>';
 	}
 
-	result += '<span class="divider">&middot;</span>' +
-		'<span><a href="#">' + topText + '</a></span></div>';
+	result += '<span class="divider">&middot;</span><span><a href="#">' +
+		((language === "ru") ? 'Наверх' : 'To the top') + '</a></span></div>';
 
 	return result;
 }
@@ -367,14 +404,17 @@ function getCaseEnding(value, one, twofour, other) {
 		(value % 10 === 1) ? one : twofour : other;
 }
 
-function getLinkToThisPage(number) {
-	const url = "https://dmaslov.me" + window.location.pathname;
-	return number ? url + "#" + number : url;
+function getLinkToThisPage(number, host) {
+	if (host === undefined)
+		host = URL_PREFIX;
+
+	const url = host + window.location.pathname;
+	return number ? url + "?n=" + number : url;
 }
 
 function copyPageLinkToClipboard() {
 	const pageLink = document.getElementById("pageLink");
-	const linkText = pageLink ? pageLink.value : "https://dmaslov.me/mdpn/";
+	const linkText = pageLink ? pageLink.value : getLinkToThisPage();
 
 	var hideTimeOut;
 	copyTextToClipboard(linkText, function() {
