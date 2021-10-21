@@ -999,6 +999,7 @@ int AllLychrelsMain()
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+//--------------------------------------------------------------------------------------------------------------------------------
 void DoNum(const std::string& n)
 {
 	BigNumber num(n);
@@ -1006,6 +1007,7 @@ void DoNum(const std::string& n)
 	PrintNum(num);
 }
 
+//--------------------------------------------------------------------------------------------------------------------------------
 void DoSearch()
 {
 	DataBase data;
@@ -1020,7 +1022,7 @@ void DoSearch()
 				return false;
 			}
 
-			if (pChunk->GetHighestStep() > 261)
+			if (pChunk->GetHighestStep() >= 237)
 			{
 				if (!pChunk->LoadData(data, DBChunkState::FULLDATA))
 				{
@@ -1029,13 +1031,25 @@ void DoSearch()
 				}
 
 				Number num;
+				BigNumber current;
 				for (const auto& item : pChunk->GetNumbers())
 				{
-					if (item.step > 261)
+					if (item.step >= 237)
 					{
 						num = item.num;
-						aux::Printf("\rSteps[%u]: %s\n", item.step,
-							SeparateWithCommas(num).c_str());
+						aux::Printf("\rSteps[%u]: %s", item.step,
+							//SeparateWithCommas(num).c_str());
+							num.AsString().c_str());
+
+						current = num;
+						unsigned doneC;
+						if (current.RAATillPalindrome(300, doneC))
+						{
+							auto pal = current.AsString().substr(0, 10);
+							aux::Printf("   PAL[%u] %s...", current.GetLength(), pal.c_str());
+						}
+
+						aux::Print("\n");
 					}
 				}
 			}
@@ -1054,6 +1068,130 @@ void DoSearch()
 		});
 
 		aux::Printf("\rFiles processed: %u\n", fileC);
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+std::string GetLowestKin(const Number& num)
+{
+	std::string s = num.AsString();
+	size_t i = 0, j = s.size() - 1;
+
+	for (; i < j; ++i, --j)
+	{
+		int a = s[i] - '0';
+		int b = s[j] - '0';
+		while ((a > 1 || (a == 1 && i)) && b < 9)
+		{
+			--a;
+			++b;
+		}
+		s[i] = static_cast<char>('0' + a);
+		s[j] = static_cast<char>('0' + b);
+	}
+
+	return s;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void DoNumberTest()
+{
+	util::MemoryFile f, fout;
+	if (f.LoadFrom(L"results.txt"))
+	{
+		size_t fileSize = f.GetSize();
+		char* buffer = new char[fileSize];
+		f.Read(buffer, fileSize);
+		f.Close();
+
+		auto lines = util::Split(std::string(buffer, fileSize), "\r\n");
+		delete[] buffer;
+
+		struct Info {
+			Number num;
+			unsigned steps = 0;
+		};
+
+		unsigned maxStep = 0;
+		std::vector<Info> numbers;
+		for (const auto& line : lines)
+		{
+			Info item;
+			auto tokens = util::Split(line, " ");
+			size_t tokenIdx = (tokens.size() > 1) ? 1 : 0;
+			item.num = GetLowestKin(tokens[tokenIdx]);
+
+			bool exists = false;
+			for (size_t i = 0, count = numbers.size(); i < count; ++i)
+			{
+				if (numbers[i].num == item.num)
+				{
+					exists = true;
+					break;
+				}
+			}
+
+			if (!exists)
+			{
+				unsigned doneC = 0;
+				BigNumber num(item.num);
+				if (num.RAATillPalindrome(1000, doneC))
+				{
+					item.steps = doneC;
+					numbers.push_back(item);
+					maxStep = std::max(maxStep, doneC);
+				}
+			}
+		}
+
+		aux::Printf("Numbers loaded: %u\n", numbers.size());
+
+		fout.Open();
+		size_t writtenC = 0;
+		for (unsigned step = maxStep; step >= 237; --step)
+		{
+			std::sort(numbers.begin(), numbers.end(), [](const Info& a, const Info& b) { return a.num < b.num; });
+
+			BigNumber num, cur;
+			for (size_t i = 0, count = numbers.size(); i < count; ++i)
+			{
+				if (numbers[i].steps == step)
+				{
+					unsigned doneC = 0;
+					cur = numbers[i].num;
+					cur.RAATillPalindrome(500, doneC);
+					auto s = util::Format("Steps[%u]: %s   PAL[%u]\n", step,
+						SeparateWithCommas(numbers[i].num).c_str(), cur.GetLength());
+					fout.Write(s.c_str(), s.size());
+					++writtenC;
+
+					num = numbers[i].num;
+					num.ReverseAndAdd();
+
+					num = GetLowestKin(num);
+
+					for (const auto& n : numbers)
+					{
+						if (n.steps == step - 1 && n.num == num)
+						{
+							num.SetZero();
+							break;
+						}
+					}
+
+					if (num && num.GetLength() <= 28)
+					{
+						Info item;
+						item.num = num;
+						item.steps = step - 1;
+						numbers.push_back(item);
+					}
+				}
+			}
+		}
+
+		aux::Printf("Numbers written: %u\n", writtenC);
+		fout.SaveTo(L"output.txt");
 	}
 }
 
