@@ -12,7 +12,7 @@ const FX_STAY_TIMEOUT = 200; // Milliseconds
 const FX_FADE_TIMEOUT = "1.0s"; // Duration (CSS)
 const ONCOPY_FX_COLOR = "#0c0"; // Color (CSS)
 const URL_PREFIX = "https://dmaslov.me";
-const SCRIPT_VERSION = "2021.10.23";
+const SCRIPT_VERSION = "2021.10.23.2";
 
 (function () {
 	loadingText.style.display = "none";
@@ -62,22 +62,23 @@ function onCheckButtonDown() {
 		if (!number || !currentData || number !== currentData.number) {
 			currentData = null;
 			resultsBlock.style.removeProperty("display");
+			const language = document.documentElement.lang;
 			const contentsElement = document.getElementById("contents");
 
-			if (number && number !== "0") {
+			if (!number || number === "0" || number.length > 250) {
+				contentsElement.innerHTML = "";
+				errorText.innerHTML = getErrorContent(language, number);
+				errorText.style.removeProperty("display");
+			} else {
 				errorText.style.display = "none";
 
 				currentData = calculateData(number);
-				const language = document.documentElement.lang;
 				const pageContent = getPageContent(language, currentData);
 
 				contentsElement.innerHTML = pageContent.htmlData;
 				pageContent.onContentReadyCb();
 				onNumberInput();
 				return true;
-			} else {
-				contentsElement.innerHTML = "";
-				errorText.style.removeProperty("display");
 			}
 		} else {
 			// If "Check" button or Enter key is pressed for the same number, scroll the
@@ -120,6 +121,23 @@ function getNumberString(value) {
 			digits.push(value[i]);
 	}
 	return digits.length ? digits.join("") : "0";
+}
+
+function getErrorContent(language, number) {
+	let result = '<span class="errorcolor">' + ((language === "ru") ?
+		'Ошибка' : 'Error') + ':</span> ';
+
+	if (!number || number === "0") {
+		// Not a valid number
+		result += 'введённое число не является корректным натуральным числом. ' +
+			'Введите любое целое число, большее или равное 1.';
+	} else {
+		// Too long number
+		result += 'введённое число содержит слишком много знаков. ' +
+			'Уменьшите количество цифр в числе и попробуйте проверить его снова.';
+	}
+
+	return result;
 }
 
 function calculateData(number) {
