@@ -12,7 +12,7 @@ const FX_STAY_TIMEOUT = 200; // Milliseconds
 const FX_FADE_TIMEOUT = "1.0s"; // Duration (CSS)
 const ONCOPY_FX_COLOR = "#0c0"; // Color (CSS)
 const URL_PREFIX = "https://dmaslov.me";
-const SCRIPT_VERSION = "2021.10.22.5";
+const SCRIPT_VERSION = "2021.10.23";
 
 (function () {
 	loadingText.style.display = "none";
@@ -289,19 +289,26 @@ function getBasicContent(language, data) {
 				' <span class="sknum">наименьшим известным</span>';
 		}
 		result += ' <b>отложенным палиндромом</b>, разрешающимся за <b>' + data.iterationCount +
-			'</b> операц' + getCaseEnding(data.iterationCount, "ию", "ии", "ий") +
-			' Перевернуть-И-Сложить. Длина его результирующего ' + 'палиндрома составляет <b>' +
+			'</b> операц' + getCaseEnding(data.iterationCount, "ию", "ии", "ий") + ' Перевернуть-И-Сложить';
+
+		if (data.iterationCount === highestKnownStep && isSmallestKnown && !isNewSmallest) {
+			result += ', и текущим <span class="record"><b>мировым рекордом</b></span>!';
+		} else {
+			result += '.';
+		}
+
+		result += ' Длина его результирующего ' + 'палиндрома составляет <b>' +
 			data.result.length + '</b> знак' + getCaseEnding(data.result.length, "", "а", "ов");
 
-			let raaResult = data.result;
-			if (data.result.length <= 20) {
-				result += ': <span id="raaResult">' + raaResult + '</span> (';
-			} else {
-				raaResult = data.result.substr(0, 20);
-				result += ' (первые 20 из них: <span id="raaResult">' + raaResult + '</span>, ';
-			}
-			result += '<a class="jsanchor" onclick="copyRaaResultToClipboard(\'' + raaResult +
-				'\', \'raaResult\')">скопировать в буфер обмена</a>).';
+		let raaResult = data.result;
+		if (data.result.length <= 20) {
+			result += ': <span id="raaResult">' + raaResult + '</span> (';
+		} else {
+			raaResult = data.result.substr(0, 20);
+			result += ' (первые 20 из них: <span id="raaResult">' + raaResult + '</span>, ';
+		}
+		result += '<a class="jsanchor" onclick="copyRaaResultToClipboard(\'' + raaResult +
+			'\', \'raaResult\')">скопировать в буфер обмена</a>).';
 	} else {
 		result += ' <b>числом Лишрел</b>. Мы только что выполнили над ним ' + data.iterationCount +
 			' операц' + getCaseEnding(data.iterationCount, "ию", "ии", "ий") + ' Перевернуть-И-Сложить, но, ' +
@@ -500,7 +507,7 @@ function copyRaaResultToClipboard(textToCopy, elementId) {
 				hideTimeOut = null;
 				raaResult.style.transition = "color " + FX_FADE_TIMEOUT;
 				raaResult.style.removeProperty("color");
-			}, 2 * FX_STAY_TIMEOUT);
+			}, FX_STAY_TIMEOUT);
 		}
 	});
 }
