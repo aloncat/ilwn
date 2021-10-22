@@ -543,7 +543,7 @@ div#mapLinks div {
 }
 
 .column input#checkButton {
-	margin: 25px auto;
+	margin: 25px auto 8px;
 	padding: 3px 20px 5px;
 }
 
@@ -563,14 +563,24 @@ div#mapLinks div {
 	color: #e3a;
 }
 
-#resultsBlock #contents #newRecord {
-	max-width: 640px;
+#resultsBlock #contents #newNumber {
+	max-width: 650px;
 	margin: 16px auto;
 	padding: 5px 8px 6px;
 	text-align: center;
 	background: #ffc;
 	border: 1px solid #d90;
 	border-radius: 5px;
+}
+
+#resultsBlock #contents span.rsnum {
+	font-style: italic;
+	color: #080;
+}
+
+#resultsBlock #contents span.sknum {
+	font-style: italic;
+	color: #60c;
 }
 
 #resultsBlock #contents input#pageLink {
