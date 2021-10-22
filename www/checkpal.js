@@ -160,18 +160,14 @@ function getHighestKin(number) {
 }
 
 function getKinCount(number) {
-	if (number.length > 33) {
-		// For numbers with more than 33 digits, it's possible to exceed (2^53 - 1) max safe integer
-		// the JavaScript Number type can hold. A 34-digit number can have up to 9*10^16 kin numbers,
-		// so to prevent going above "safe" value, we will return "udefined" for all such numbers
-		return;
-	}
-
 	let count = 1;
 	for (let i = 0, j = number.length - 1; i < j; ++i, --j) {
 		let down = Math.min(number[i] - !i, 9 - number[j]);
 		let up = Math.min(9 - number[i], number[j]);
+
 		count *= 1 + down + up;
+		if (!Number.isSafeInteger(count))
+			return Infinity;
 	}
 	return count;
 }
@@ -286,8 +282,10 @@ function getBasicContent(language, data) {
 	} else {
 		const count = data.totalKinCount;
 		const e = getCaseEnding(count, "ое", "ых");
-		result += ' Для указанного числа существу' + getCaseEnding(count, "ет", "ют") + ' <b>' +
-			separateWithCommas(count) + '</b> различн' + e + ' родственн' + e + ' чис' +
+		const amountText = (count === Infinity) ?
+			'существует более 9&times;10<span class="tiny"><sup>15</sup></span>' : 'существу' +
+			getCaseEnding(count, "ет", "ют") + ' <b>' + separateWithCommas(count) + '</b>';
+		result += ' Для указанного числа ' + amountText + ' различн' + e + ' родственн' + e + ' чис' +
 			getCaseEnding(count, "ло", "ла", "ел") + ', котор' + getCaseEnding(count, "ое", "ые") +
 			' после всего одной операции Перевернуть-И-Сложить да' + getCaseEnding(count, "ёт", "ют") +
 			' одинаковый результат.';
