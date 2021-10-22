@@ -563,6 +563,10 @@ div#mapLinks div {
 	color: #e3a;
 }
 
+#resultsBlock #contents span.numlen {
+	color: #b00;
+}
+
 #resultsBlock #contents #newNumber {
 	max-width: 645px;
 	margin: 16px auto;

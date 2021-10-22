@@ -12,7 +12,7 @@ const FX_STAY_TIMEOUT = 200; // Milliseconds
 const FX_FADE_TIMEOUT = "1.0s"; // Duration (CSS)
 const ONCOPY_FX_COLOR = "#0c0"; // Color (CSS)
 const URL_PREFIX = "https://dmaslov.me";
-const SCRIPT_VERSION = "2021.10.22.4";
+const SCRIPT_VERSION = "2021.10.22.5";
 
 (function () {
 	loadingText.style.display = "none";
@@ -279,8 +279,8 @@ function getBasicContent(language, data) {
 			'сообщите о Вашей находке!</p>';
 	}
 
-	result += '<p class="text">' + 'Указанное ' +
-		data.number.length + '-значное число является';
+	result += '<p class="text">' + 'Указанное <span class="numlen">' +
+		data.number.length + '</span>-значное число является';
 
 	if (data.isPalindrome) {
 		if (isSmallestKnown) {
@@ -354,18 +354,20 @@ function getBasicContent(language, data) {
 	}
 
 	if (smallestKnown && !isSmallestKnown && !isNewSmallest) {
+		const smallest = smallestKnown.number;
 		result += '</p><p class="text">' +
 			'Указанный отложенный палиндром <b>не является наименьшим</b> известным ' +
 			'числом, которое разрешается за ' + data.iterationCount + ' операц' +
 			getCaseEnding(data.iterationCount, "ию", "ии", "ий") + '. Наименьшее ' +
-			'известное число: <a href="' + getLinkToThisPage(smallestKnown.number, "") +
-			'"><i>' + separateWithCommas(smallestKnown.number) + '</i></a>.';
+			'известное (<span class="numlen">' + smallest.length + '</span>-значное) ' +
+			'число: <a href="' + getLinkToThisPage(smallest, "") + '"><i>' +
+			separateWithCommas(smallest) + '</i></a>.';
 	}
 
 	if (data.isPalindrome && data.iterationCount > 1) {
 		const firstStep = getLowestKin(data.steps[1]);
 		result += '</p><p class="text bignum">' +
-			'Результат 1 итерации (отложенный палиндром): ' +
+			'Результат 1 итерации (канонический вид): ' +
 			'<a href="' + getLinkToThisPage(firstStep, "") +
 			'"><i>' + separateWithCommas(firstStep) + '</i></a>.';
 	}
