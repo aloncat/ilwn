@@ -245,7 +245,17 @@ function getBasicContent(language, data) {
 		result += ' <b>отложенным палиндромом</b>, разрешающимся за <b>' + data.iterationCount +
 			'</b> операц' + getCaseEnding(data.iterationCount, "ию", "ии", "ий") +
 			' Перевернуть-И-Сложить. Длина его результирующего ' + 'палиндрома составляет <b>' +
-			data.result.length + '</b> знак' + getCaseEnding(data.result.length, "", "а", "ов") + '.';
+			data.result.length + '</b> знак' + getCaseEnding(data.result.length, "", "а", "ов");
+
+			let raaResult = data.result;
+			if (data.result.length <= 20) {
+				result += ': <span id="raaResult">' + raaResult + '</span> (';
+			} else {
+				raaResult = data.result.substr(0, 20);
+				result += ' (первые 20 из них: <span id="raaResult">' + raaResult + '</span>, ';
+			}
+			result += '<a class="jsanchor" onclick="copyRaaResultToClipboard(\'' + raaResult +
+				'\', \'raaResult\')">скопировать в буфер обмена</a>).';
 	} else {
 		result += ' <b>числом Лишрел</b>. Мы только что выполнили над ним ' + data.iterationCount +
 			' операц' + getCaseEnding(data.iterationCount, "ию", "ии", "ий") + ' Перевернуть-И-Сложить, но, ' +
@@ -293,6 +303,14 @@ function getBasicContent(language, data) {
 		result += '</p><p class="text bignum">' +
 			'Наибольшее из всех родственных чисел: <span class="specnum">' +
 			separateWithCommas(data.highestKin) + '</span>.';
+	}
+
+	if (data.isPalindrome && data.iterationCount > 1) {
+		const firstStep = getLowestKin(data.steps[1]);
+		result += '</p><p class="text bignum">' +
+			'Результат 1 итерации (отложенный палиндром): ' +
+			'<a href="' + getLinkToThisPage(firstStep, "") +
+			'"><i>' + separateWithCommas(firstStep) + '</i></a>.';
 	}
 
 	result += '</p>';
@@ -410,6 +428,22 @@ function getLinkToThisPage(number, host) {
 
 	const url = host + window.location.pathname;
 	return number ? url + "?n=" + number : url;
+}
+
+function copyRaaResultToClipboard(textToCopy, elementId) {
+	var hideTimeOut;
+	const raaResult = document.getElementById(elementId);
+	copyTextToClipboard(textToCopy, function() {
+		if (raaResult) {
+			raaResult.style.transition = "none";
+			raaResult.style.color = ONCOPY_FX_COLOR;
+			hideTimeout = setTimeout(function() {
+				hideTimeOut = null;
+				raaResult.style.transition = "color " + FX_FADE_TIMEOUT;
+				raaResult.style.removeProperty("color");
+			}, 2 * FX_STAY_TIMEOUT);
+		}
+	});
 }
 
 function copyPageLinkToClipboard() {
