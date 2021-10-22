@@ -12,7 +12,7 @@ const FX_STAY_TIMEOUT = 200; // Milliseconds
 const FX_FADE_TIMEOUT = "1.0s"; // Duration (CSS)
 const ONCOPY_FX_COLOR = "#0c0"; // Color (CSS)
 const URL_PREFIX = "https://dmaslov.me";
-const SCRIPT_VERSION = "2021.10.22.3";
+const SCRIPT_VERSION = "2021.10.22.4";
 
 (function () {
 	loadingText.style.display = "none";
@@ -258,7 +258,8 @@ function getBasicContent(language, data) {
 
 	if (data.isPalindrome && data.iterationCount > 0) {
 		smallestKnown = knownNumbers[data.iterationCount];
-		isNewSmallest = !smallestKnown || data.number < smallestKnown.number;
+		isNewSmallest = !smallestKnown || data.number.length < smallestKnown.number.length ||
+			(data.number.length === smallestKnown.number.length && data.number < smallestKnown.number);
 		isSmallestKnown = isNewSmallest || data.number === smallestKnown.number;
 		isRsn = isSmallestKnown && !isNewSmallest && smallestKnown.rsn;
 	}
@@ -273,7 +274,7 @@ function getBasicContent(language, data) {
 	else if (isNewSmallest) {
 		result += '<p id="newNumber">Похоже, что Вы обнаружили число, которое <b>меньше</b> ' +
 			'известного на данный момент <i>наименьшего</i> отложенного палиндрома, разрешающегося за <b>' +
-			data.iterationCount + '</b> итерац' + getCaseEnding(highestKnownStep, "ию", "ии", "ий") +
+			data.iterationCount + '</b> итерац' + getCaseEnding(data.iterationCount, "ию", "ии", "ий") +
 			'! Пожалуйста, <a href="/contacts.html" target="_blank">свяжитесь со мной</a> и ' +
 			'сообщите о Вашей находке!</p>';
 	}
