@@ -1,0 +1,237 @@
+﻿<!DOCTYPE html>
+<html lang="ru"><head>
+  <title>Термины и определения - iLWN</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="description" content="Термины и определения, используемые
+	в проекте iLWN и на страницах его веб-сайта (MDPN, P196, ALSN)">
+  <meta name="keywords" content="term, definition, iLWN, MDPN, P196">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="/css/default.css">
+  <link rel="canonical" href="https://dmaslov.me/termsdefs.html">
+</head>
+<body>
+
+<!-- Navigation bar -->
+<script src="/pageheader.js"></script>
+
+<h1>Термины и определения</h1>
+
+<p class="column text">
+  Эта страница является чем-то вроде <b>глоссария</b>. На ней собраны все термины и определения, встречающиеся на этом веб-сайте. Они отсортированы в алфавитном порядке для удобства поиска, а внутри их описаний есть ссылки на связанные определения.
+</p>
+<p class="column text">
+  Я постарался добавить ссылки на всех страницах, где тот или иной термин употребляется впервые. Но если Вам где-то встретится непонятное слово или словосочетание, не снабжённое ссылкой, то Вы наверняка найдёте его на этой странице.
+</p>
+
+<div class="column">
+  <div class="allterms tiny lightgrey">
+	<div><a class="nodecor"><b>ALSN</b></a></div>
+	<div><a class="nodecor"><b>iLWN</b></a></div>
+	<div><a href="#mdpn"><b>MDPN</b></a></div>
+	<div><a class="nodecor"><b>P196</b></a></div>
+	<div><a class="nodecor"><b>RAA</b></a></div>
+	<div><a class="nodecor"><b>Reverse-And-Add</b></a></div>
+	<div><a class="nodecor"><b>базовое</b> число Лишрел</a></div>
+	<div><a class="nodecor"><b>глубина</b> поиска</a></div>
+	<div><a class="nodecor"><b>итерация</b></a></div>
+	<div><a class="nodecor"><b>канонический</b> вид</a></div>
+	<div><a class="nodecor">число <b>Лишрел</b></a></div>
+	<div><a href="#most-delayed-palindrome"><b>наиболее</b> отложенный палиндром</a></div>
+	<div><a href="#delayed-palindrome"><b>отложенный</b> палиндром</a></div>
+	<div><a href="#palindrome"><b>палиндром</b></a></div>
+	<div><a href="#reverse-and-add"><b>Перевернуть-И-Сложить</b></a></div>
+	<div><a class="nodecor"><b>родственное</b> число Лишрел</a></div>
+	<div><a class="nodecor"><b>шаг</b></a></div>
+  </div>
+</div>
+
+<div class="column tiny">
+  <div style="max-width: 600px; margin: 20px auto; padding: 5px 10px 6px; border: 1px solid #ea8; background: #ffe8d8; text-align: center; border-radius: 5px">
+	Эта страница находится в <i>разработке</i>, поэтому чего-то нужного на ней <i>может не быть</i>. Отсутствующие термины и определения будут добавлены позже. Спасибо за понимание!
+  </div>
+</div>
+
+<div class="column divider">&bull; &bull; &bull;</div>
+
+<div id="mdpn" class="column">
+  <div class="termheader">
+	MDPN (проект)
+  </div>
+  <p class="text">
+	Проект <a href="/mdpn/"><b>MDPN</b></a> является частью проекта <a href="#ilwn"><b>iLWN</b></a>. MDPN &mdash; это акроним от <b>M</b>ost <b>D</b>elayed <b>P</b>alindromic <b>N</b>umber (в переводе на русский &laquo;Наиболее отложенное число-палиндром&raquo;). Из названия можно понять, что основная задача проекта &mdash; это поиск наиболее отложенных палиндромов.
+  </p>
+  <p class="text">
+	Искать такие числа &mdash; достаточно ресурсоёмкий процесс, так как единственный известный на данный момент способ это делать &mdash; проверка каждого числа в диапазоне, то есть полный перебор. Благодаря некоторым оптимизациям, проверять приходится не все числа, а лишь малую часть. Однако даже при этом, количество проверяемых чисел измеряется сотнями триллионов (для диапазона 23-значных чисел), и быстро увеличивается с ростом их длины.
+  </p>
+  <p class="text">
+	Поиск отложенных палиндромов &mdash; главная задача проекта MDPN, но не единственная. Все найденные числа собираются в огромную базу данных. Также собирается различная статистика, например, точное полное количество чисел Лишрел в каждом диапазоне. Анализ этих данных помогает находить интересные особенности отложенных палиндромов. Кроме того, база данных проекта используется в проекте ALSN, который занимается поиском базовых чисел Лишрел.
+  </p>
+</div>
+
+<div class="column divider">&bull; &bull; &bull;</div>
+
+<div id="most-delayed-palindrome" class="column">
+  <div class="termheader">
+	Наиболее отложенный палиндром
+  </div>
+  <p class="text">
+	<b><i>Наиболее отложенные палиндромы</i></b> &mdash; это такие <a href="#delayed-palindrome">отложенные палиндромы</a>, которые требуют самого большого количества операций <a href="#reverse-and-add">Перевернуть-И-Сложить</a> для того, чтобы стать <a href="#palindrome">палиндромами</a>. На данный момент к их числу с уверенностью можно отнести отложенные палиндромы, разрешающиеся за 262 и более итераций.
+  </p>
+  <p class="text">
+	Среди чисел, требующих такого количества итераций, лишь отложенные палиндромы для шагов 286 и 287 являются на данный момент <a class="nodecor">достоверно наименьшими</a>, в то время как все остальные (для шагов от 262 до 285, а также 288 и 289) пока считаются <a class=nodecor">кандидатами</a>. Иными словами, мы пока не знаем наверняка, являются ли они наименьшими из всех возможных отложенных палиндромов, разрешающихся за соответствующее количество итераций.
+  </p>
+  <p class="text">
+	Наиболее отложенный палиндром, известный на данный момент требует 289 итераций и является <a href="/mdpn/checkpal.html?n=10036069400174999499950">текущим мировым рекордом</a> среди наиболее отложенных палиндромов. Первый из множества отложенных палиндромов, требующих 289 итераций, был обнаружен 4 января 2021 года <b><i>Антоном Стефановым</i></b> (Anton Stefanov). Найденное им число <a href="/news.html#210920-2">не является наименьшим</a> в этом множестве. Известное на данный момент наименьшее число было найдено <a href="/news.html#211014">14 октября 2021 года</a>, и пока также является кандидатом.
+  </p>
+</div>
+
+<div class="column divider">&bull; &bull; &bull;</div>
+
+<div id="delayed-palindrome" class="column">
+  <div class="termheader">
+	Отложенный палиндром
+  </div>
+  <p class="text">
+	В отличие от обычного <a href="#palindrome">палиндрома</a>, <b><i>отложенный палиндром</i></b> &mdash; это такое натуральное число, которое становится палиндромом после одной или нескольких операций <a href="#reverse-and-add">Перевернуть-И-Сложить</a> (Reverse-And-Add), выполненных над ним. Причём само исходное число может являться палиндромом, а может и нет.
+  </p>
+  <p class="text" style="margin-bottom: 0">
+	Суть операции Перевернуть-И-Сложить заключается в сложении исходного числа с его перевёрнутой копией (т.&nbsp;е. числом, записанным наоборот &mdash; с конца) по следующему алгоритму:
+  </p>
+  <ol>
+	<li>Возьмите некоторое целое положительное число.</li>
+	<li>Переставьте цифры числа задом наперёд и прибавьте получившееся число к исходному.</li>
+	<li>Если число, полученное в результате, не является палиндромом, перейдите к шагу 2.</li>
+  </ol>
+  <p class="text">
+	Примеры отложенных палиндромов в десятичной системе счисления:
+  </p>
+  <div class="tiny" style="margin: 0 auto; max-width: max-content; text-align: center">
+	<div style="margin: 5px 10px; display: inline-block; vertical-align: middle">
+	  <table style="border-collapse: separate; border-spacing: 1px; background: #ccc">
+		<tr>
+		  <td style="padding: 6px; background: #f0f0f0">
+			Число <b>12</b>
+		  </td>
+		</tr>
+		<tr>
+		  <td style="padding: 8px 12px; text-align: left; background: #fff">
+			1. 12 + 21 = <b>33</b>
+		  </td>
+		</tr>
+	  </table>
+	</div>
+	<div style="margin: 5px 10px; display: inline-block; vertical-align: middle">
+	  <table style="border-collapse: separate; border-spacing: 1px; background: #ccc">
+		<tr>
+		  <td style="padding: 6px; background: #f0f0f0">
+			Число <b>37</b>
+		  </td>
+		</tr>
+		<tr>
+		  <td style="padding: 8px 12px; text-align: left; background: #fff">
+			1. 37 + 73 = 110<br>
+			2. 110 + 011 = <b>121</b>
+		  </td>
+		</tr>
+	  </table>
+	</div>
+	<div style="margin: 5px 10px; display: inline-block; vertical-align: middle">
+	  <table style="border-collapse: separate; border-spacing: 1px; background: #ccc">
+		<tr>
+		  <td style="padding: 6px; background: #f0f0f0">
+			Число <b>59</b>
+		  </td>
+		</tr>
+		<tr>
+		  <td style="padding: 8px 12px; text-align: left; background: #fff">
+			1. 59 + 95 = 154<br>
+			2. 154 + 451 = 605<br>
+			3. 605 + 506 = <b>1111</b>
+		  </td>
+		</tr>
+	  </table>
+	</div>
+	<div style="margin: 5px 10px; display: inline-block; vertical-align: middle">
+	  <table style="border-collapse: separate; border-spacing: 1px; background: #ccc">
+		<tr>
+		  <td style="padding: 6px; background: #f0f0f0">
+			Число <b>78</b>
+		  </td>
+		</tr>
+		<tr>
+		  <td style="padding: 8px 12px; text-align: left; background: #fff">
+			1. 78 + 87 = 165<br>
+			2. 165 + 561 = 726<br>
+			3. 726 + 627 = 1353<br>
+			4. 1353 + 3531 = <b>4884</b>
+		  </td>
+		</tr>
+	  </table>
+	</div>
+  </div>
+  <p class="text">
+	Операции Перевернуть-И-Сложить, выполняемые над числом, называют <a class="nodecor"><b>итерациями</b></a> или <a class="nodecor"><b>шагами</b></a>. Когда говорят, что некоторое натуральное число <b>разрешается</b> за N итераций или требует N шагов, то имеют в виду, что этому числу необходимо ровно N операций Перевернуть-И-Сложить, чтобы стать палиндромом.
+  </p>
+  <p class="text">
+	Разные числа требуют разного количества итераций, чтобы превратиться в палиндром. А некоторые из них (так называемые <a class="nodecor">числа Лишрел</a>) вообще никогда не становятся палиндромами. Множество всех отложенных палиндромов, как и множество всех натуральных чисел бесконечно. Однако, чем больше шагов требуется числам, тем их становится меньше.
+  </p>
+  <p class="text">
+	Особый интерес представляют отложенные палиндромы, которые разрешаются за наибольшее количество шагов, или так называемые <a href="#most-delayed-palindrome"><b>наиболее отложенные</b> палиндромы</a>. Их поиск ведётся в рамках проекта <a href="/mdpn/"><b>MDPN</b></a> и является достаточно ресурсоёмкой задачей.
+  </p>
+</div>
+
+<div class="column divider">&bull; &bull; &bull;</div>
+
+<div id="palindrome" class="column">
+  <div class="termheader">
+	Палиндром
+  </div>
+  <p class="text">
+	<b><i>Палиндро́м</i></b> (от древнегреческого <b>πάλιν</b> &mdash; &laquo;назад, снова&raquo; и <b>δρóμος</b> &mdash; &laquo;бег, движение&raquo;) &mdash; число, буквосочетание, слово или фраза (текст), одинаково читающееся в обоих направлениях. Этот термин в 1638 году ввёл в обиход <b><i>Генри Пичем младший</i></b> (<i>Henry Peacham</i>), английский литератор и иллюстратор.
+  </p>
+  <p class="text">
+	Примерами палиндромов являются десятичные числа 101 и 2332, шестнадцатеричное число 1ABA1; слова &laquo;дед&raquo; и &laquo;потоп&raquo; в русском языке, &laquo;Eve&raquo; и &laquo;radar&raquo; в английском, финское &laquo;saippuakivikauppias&raquo; (продавец мыла; торговец щёлоком) &mdash; самое длинное слово-палиндром в мире; словосочетания &laquo;а роза упала на лапу Азора&raquo;, &laquo;Не видно, как он дивен&raquo; и &laquo;Sum summus mus&raquo; (в переводе с латинского &laquo;Я &mdash; сильнейшая мышь&raquo;).
+  </p>
+  <p class="text">
+	В узком смысле палиндромом можно считать последовательность любых символов или знаков, симметричную относительно её середины. В проекте <b>iLWN</b> слово палиндром используется, в основном, в значении <i>десятичное число-палиндром</i> и иногда в более широком значении <i>число-палиндром</i>.
+  </p>
+</div>
+
+<div class="column divider">&bull; &bull; &bull;</div>
+
+<div id="reverse-and-add" class="column">
+  <div class="termheader">
+	Перевернуть-И-Сложить (операция)
+  </div>
+  <p class="text">
+	Операция <b><i>Перевернуть-И-Сложить</i></b> (англ. Reverse-And-Add, сокращённо RAA) заключается в том, чтобы сложить исходное число с его &laquo;перевёрнутой&raquo; копией, то есть числом, цифры которого записаны в обратном порядке. Например, к числу 12 нужно прибавить 21. А к числу 310 прибавить 013.
+  </p>
+  <p class="text">
+	Эта операция может быть применена к любому натуральному числу. В случае, когда число является <a href="#delayed-palindrome">отложенным палиндромом</a>, через некоторое количество операций мы получим в результате палиндром. Тогда как для <a href="#lychrel-number">чисел Лишрел</a> эта операция не приводит к получению палиндрома, сколько бы раз мы её не выполняли.
+  </p>
+  <p class="text">
+	Интересно, что длина числа увеличивается в среднем на 1 знак каждые 2.416 операции Перевернуть-И-Сложить, и не зависит от значения исходного числа. А количество операций, которое можно выполнить над числом, чтобы при этом его длина оставалась неизменной, не может превышать 4 ни для каких чисел.
+  </p>
+  <p class="text">
+	Таким образом, при многократном применении к числу операции Перевернуть-И-Сложить его длина может увеличиться через 1, 2, 3, 4 или 5 операций, но не более. Другими словами, длина числа остаётся постоянной не дольше 5 раз подряд.
+  </p>
+</div>
+
+<!--
+<div class="column divider">&bull; &bull; &bull;</div>
+
+<div id="lychrel-kin-number" class="column">
+  <div class="termheader">
+	Родственное число Лишрел (kin number)
+  </div>
+  <p class="text">
+	Текст...
+  </p>
+</div>
+-->
+
+<!-- Footer -->
+<div id="pageFooter" data-lang="ru" data-url-path="/termsdefs.html"></div>
+
+</body>
+</html>

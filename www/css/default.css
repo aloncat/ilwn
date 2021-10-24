@@ -87,13 +87,13 @@ div, p {
 	padding: 0;
 }
 
-ul {
+ol, ul {
 	margin: 8px 0 0;
-	padding: 0 18px 0 28px;
+	padding: 0 20px 0 40px;
 }
 
 li {
-	margin-bottom: 4px;
+	margin: 0;
 }
 
 ul > li::marker {
@@ -309,8 +309,8 @@ table.nospacing {
 }
 
 .column .blognav > hr {
-	width: 235px;
 	margin: 8px auto;
+	width: 235px;
 	background: #d0d0d0;
 }
 
@@ -434,8 +434,11 @@ div.statusblock hr {
 }
 
 ul.news {
-	font-size: 85.71%; /* 12.0px */
-	line-height: 1.417; /* 17.0px */
+	padding-left: 30px;
+}
+
+ul.news > li {
+	margin-bottom: 4px;
 }
 
 span.newsdate {
@@ -476,6 +479,31 @@ div#mapLinks div {
 	border-left: 4px solid #6af;
 }
 
+div.allterms {
+	margin: 15px auto;
+	padding: 4px 0;
+	max-width: 580px;
+	text-align: center;
+	border-top: 2px dotted #d4d4d4;
+	border-bottom: 2px dotted #d4d4d4;
+	background: linear-gradient(90deg, #fff, #fafafa, #fff);
+}
+
+div.allterms > div {
+	display: inline-block;
+	margin: 0 10px;
+	white-space: nowrap;
+}
+
+div.termheader {
+	padding-bottom: 2px;
+	width: -moz-fit-content;
+	width: fit-content;
+	font-weight: bold;
+	color: #f50;
+	border-bottom: 1px solid #f50;
+}
+
 .column div.patrons {
 	font-weight: bold;
 	font-style: italic;
@@ -501,7 +529,7 @@ div#mapLinks div {
 	margin: 8px auto 10px;
 	padding: 5px 12px 3px;
 	background: #f2f2f2;
-	border: 1px solid #d6d6d6;
+	border: 1px solid #d4d4d4;
 	border-left: 4px solid #a0a4a8;
 	border-radius: 3px;
 }
@@ -530,9 +558,9 @@ div#mapLinks div {
 }
 
 .column input#numberInput {
-	width: calc(100% - 14px);
 	margin: 0 auto;
 	padding: 3px;
+	width: calc(100% - 14px);
 	text-align: center;
 }
 
@@ -572,9 +600,9 @@ div#mapLinks div {
 }
 
 #resultsBlock #contents #newNumber {
-	max-width: 645px;
 	margin: 16px auto;
 	padding: 5px 8px 6px;
+	max-width: 645px;
 	text-align: center;
 	background: #ffc;
 	border: 1px solid #d90;
@@ -592,9 +620,9 @@ div#mapLinks div {
 }
 
 #resultsBlock #contents input#pageLink {
-	width: 520px;
 	margin: 2px 0 16px;
 	padding: 0 6px 1px;
+	width: 520px;
 	font-family: Consolas, monospace;
 	background: #f4f4f4;
 	color: #242424;
@@ -603,8 +631,8 @@ div#mapLinks div {
 }
 
 #resultsBlock #contents .scrollable {
-	width: 100%;
 	margin: 4px auto;
+	width: 100%;
 	overflow-x: auto;
 	background: #fafafa;
 	border: 1px solid #e8e8e8;
@@ -612,9 +640,9 @@ div#mapLinks div {
 }
 
 #resultsBlock #contents .palsteps {
+	padding: 2px 5px;
 	min-width: 1320px; /* for IE */
 	min-width: max-content;
-	padding: 2px 5px;
 	font-family: Courier New, monospace;
 	font-size: 92.86%; /* 13.0px */
 	line-height: 1.231; /* 16.0px */
@@ -684,9 +712,9 @@ div#mapLinks div {
 
 @media screen and (max-width: 540px) {
 	h1 {
-		max-width: 100%;
 		padding-left: 15px;
 		padding-right: 15px;
+		max-width: 100%;
 		border-width: 1px 0;
 		border-radius: 0;
 	}
@@ -708,6 +736,10 @@ div#mapLinks div {
 
 	div#mapLinks div:first-child {
 		margin-left: 0;
+	}
+
+	div.allterms > div {
+		margin-bottom: 6px;
 	}
 
 	.column div#yoomoney {
