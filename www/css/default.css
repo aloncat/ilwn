@@ -482,7 +482,7 @@ div#mapLinks div {
 div.allterms {
 	margin: 15px auto;
 	padding: 4px 0;
-	max-width: 580px;
+	max-width: 620px;
 	text-align: center;
 	border-top: 2px dotted #d4d4d4;
 	border-bottom: 2px dotted #d4d4d4;
@@ -492,6 +492,7 @@ div.allterms {
 div.allterms > div {
 	display: inline-block;
 	margin: 0 10px;
+	margin-bottom: 2px;
 	white-space: nowrap;
 }
 
