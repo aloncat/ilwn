@@ -215,6 +215,30 @@ table.nospacing {
 	border-spacing: 0;
 }
 
+table.basic {
+	margin: 12px auto;
+	border-collapse: separate;
+	border-spacing: 1px;
+	background: #c4c4c4;
+}
+
+table.basic tr {
+	background: #fff;
+}
+
+table.basic tr:nth-child(2n+1) {
+	background: #f8f8f8;
+}
+
+table.basic tr:first-child {
+	background: #e8e8e8;
+}
+
+table.basic td {
+	padding: 1px 5px 2px;
+	text-align: center;
+}
+
 .column {
 	margin: 0 auto;
 	padding: 0 15px;
@@ -225,6 +249,16 @@ table.nospacing {
 .text {
 	margin: 8px auto 14px;
 	text-align: justify;
+}
+
+.txtleft,
+table.basic td.txtleft {
+	text-align: left;
+}
+
+.txtright,
+table.basic td.txtright {
+	text-align: right;
 }
 
 .footnote {
@@ -503,6 +537,20 @@ div.termheader {
 	font-weight: bold;
 	color: #f50;
 	border-bottom: 1px solid #f50;
+}
+
+h3.fact {
+	margin-top: 18px;
+	padding-bottom: 2px;
+	font-family: Verdana, Arial, sans-serif;
+	font-size: 100%;
+	font-weight: bold;
+	color: #f50;
+}
+
+h3.fact > span {
+	font-weight: normal;
+	color: #242424;
 }
 
 .column div.patrons {
