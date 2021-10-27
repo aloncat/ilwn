@@ -1004,7 +1004,27 @@ void DoNum(const std::string& n)
 {
 	BigNumber num(n);
 	num.ReverseAndAdd(1);
-	PrintNum(num);
+
+	std::string s = num.AsString();
+	size_t i = 0, j = s.size() - 1;
+
+	for (; i < j; ++i, --j)
+	{
+		int a = s[i] - '0';
+		int b = s[j] - '0';
+		while ((a > 1 || (a == 1 && i)) && b < 9)
+		{
+			--a;
+			++b;
+		}
+		s[i] = static_cast<char>('0' + a);
+		s[j] = static_cast<char>('0' + b);
+	}
+	num = s;
+
+	const bool withCommas = false;
+	aux::Printf("%s\n", withCommas ? SeparateWithCommas(num).c_str() :
+		num.AsString().c_str());
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -1072,7 +1092,7 @@ void DoSearch()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-std::string GetLowestKin(const Number& num)
+static std::string GetLowestKin(const Number& num)
 {
 	std::string s = num.AsString();
 	size_t i = 0, j = s.size() - 1;
