@@ -1063,10 +1063,10 @@ void DoSearch()
 
 						current = num;
 						unsigned doneC;
-						if (current.RAATillPalindrome(300, doneC))
+						if (current.RAATillPalindrome(500, doneC))
 						{
-							auto pal = current.AsString().substr(0, 10);
-							aux::Printf("   PAL[%u] %s...", current.GetLength(), pal.c_str());
+							auto pal = current.AsString().substr(0, 20);
+							aux::Printf("   PAL[%u] %s", current.GetLength(), pal.c_str());
 						}
 
 						aux::Print("\n");

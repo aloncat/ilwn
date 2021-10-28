@@ -273,7 +273,7 @@ void NumberSet::Purge(size_t eighth)
 	// блок за последним используемым. Если блоков было больше, то освобождаем память
 	Item** chunkA = &m_ChunkA[eighth * EIGHTH_CHUNK_C];
 	if (CLEAR_GAIN + 1 < EIGHTH_CHUNK_C && chunkA[CLEAR_GAIN + 1])
-	FreeMem(chunkA[0]);
+		FreeMem(chunkA[0]);
 
 	Item* pSpareBlock = chunkA[0];
 	// Сдвигаем все оставшиеся блоки к началу
