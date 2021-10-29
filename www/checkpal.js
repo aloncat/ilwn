@@ -12,7 +12,7 @@ const FX_STAY_TIMEOUT = 200; // Milliseconds
 const FX_FADE_TIMEOUT = "1.0s"; // Duration (CSS)
 const ONCOPY_FX_COLOR = "#0c0"; // Color (CSS)
 const URL_PREFIX = "https://dmaslov.me";
-const SCRIPT_VERSION = "2021.10.28.2";
+const SCRIPT_VERSION = "2021.10.28.3";
 
 (function () {
 	loadingText.style.display = "none";
@@ -964,12 +964,12 @@ function getKnownNumbers() {
 	p[280] = pal("1000004285088999999687280", false);
 	p[281] = pal("1000000000007468472243350", false);
 
-	// All others (computed)
+	// All others
 	p[262] = pal("1020010060205799999798929938933", false);
 	p[263] = pal("1064200200047899999954799499911", false);
 	p[264] = pal("200831800008099998950439999599", false);
 	p[265] = pal("153000022030000994899998568994", false);
-	p[266] = pal("59351407000006693175494999999", false);
+	p[266] = pal("59000000000000663175474415399", false);
 	p[267] = pal("10000030300120379932979657696", false);
 	p[268] = pal("7000008000000034730299423429", false);
 	p[269] = pal("1000000510200062399998216217", false);
