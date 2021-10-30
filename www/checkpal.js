@@ -12,7 +12,7 @@ const FX_STAY_TIMEOUT = 200; // Milliseconds
 const FX_FADE_TIMEOUT = "1.0s"; // Duration (CSS)
 const ONCOPY_FX_COLOR = "#0c0"; // Color (CSS)
 const URL_PREFIX = "https://dmaslov.me";
-const SCRIPT_VERSION = "2021.10.30.2";
+const SCRIPT_VERSION = "2021.10.30.3";
 
 (function () {
 	loadingText.style.display = "none";
@@ -129,12 +129,22 @@ function getErrorContent(language, number) {
 
 	if (!number || number === "0") {
 		// Not a valid number
-		result += 'введённое число не является корректным натуральным числом. ' +
-			'Введите любое целое число, большее или равное 1.';
+		if (language === "ru") {
+			result = 'введённое число не является корректным натуральным числом. ' +
+			'Пожалуйста, введите любое целое число, большее или равное 1.';
+		} else {
+			result += 'the entered number is not a valid natural number. ' +
+				'Please enter any integer greater than or equal to 1.';
+		}
 	} else {
 		// Too long number
-		result += 'введённое число содержит слишком много знаков. ' +
-			'Уменьшите количество цифр в числе и попробуйте проверить его снова.';
+		if (language === "ru") {
+			result += 'введённое число содержит слишком много знаков. ' +
+				'Уменьшите количество цифр в числе и попробуйте проверить его снова.';
+		} else {
+			result += 'the entered number is too long. ' +
+				'Please reduce the amount of digits in it and try again.';
+		}
 	}
 
 	return result;
@@ -399,9 +409,11 @@ function getBasicContent(language, data) {
 
 	result += '</p>';
 
-	result += '<div class="small">Ссылка на эту страницу (<a class="jsanchor" ' +
-		'onclick="copyPageLinkToClipboard()">скопировать в буфер обмена</a>):</div>' +
-		'<div><input id="pageLink" class="small" type="text" readonly value="' +
+	result += '<div class="small">' +
+		((language === "ru") ? 'Ссылка на эту страницу' : 'Link to this page') +
+		' (<a class="jsanchor" onclick="copyPageLinkToClipboard()">' +
+		((language === "ru") ? 'скопировать в буфер обмена' : 'copy to clipboard') +
+		'</a>):</div><div><input id="pageLink" class="small" type="text" readonly value="' +
 		getLinkToThisPage(data.number) + '"></input></div>';
 
 	return result;
@@ -978,7 +990,7 @@ function getKnownNumbers() {
 	p[265] = pal("153000022030000994899998568994", false);
 	p[266] = pal("59000000000000663175474415399", false);
 	p[267] = pal("10000000000000876587282257696", false);
-	p[268] = pal("7000008000000034730299423429", false);
+	p[268] = pal("7000008000000030194299423429", false);
 	p[269] = pal("1000000510200062399998216217", false);
 	p[270] = pal("1020019705104059399999950903", false);
 	p[271] = pal("1000000000000497800064910811", false);

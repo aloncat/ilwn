@@ -1,0 +1,51 @@
+﻿<!DOCTYPE html>
+<html lang="ru"><head>
+  <title>Проверка палиндрома - MDPN</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="description" content="Проверка, является ли заданное натуральное число
+	отложенным палиндромом или числом Лишрел, с подробным выводом каждого шага">
+  <meta name="keywords" content="проверка, отложенный палиндром, число Лишрел, MDPN">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="/css/default.css">
+  <link rel="canonical" href="https://dmaslov.me/ru/mdpn/checkpal.html">
+  <script defer src="/checkpal.js"></script>
+</head>
+<body>
+
+<!-- Navigation bar -->
+<script src="/pageheader.js"></script>
+
+<h1>Проверка отложенного палиндрома</h1>
+
+<p class="column text">
+  Введите любое натуральное число в поле, расположенное ниже, и затем нажмите кнопку &laquo;Проверить&raquo;. Вы можете использовать пробел, запятую или апостроф в качестве разделителя групп разрядов.
+</p>
+
+<div class="column">
+  <div style="max-width: 540px; margin: 0 auto; text-align: center">
+	<input id="numberInput" type="text" maxlength="59">
+	<div id="loadingText">
+	  Пожалуйста, подождите. Скрипт загружается...
+	</div>
+	<input id="checkButton" type="button" value="Проверить" style="display: none">
+  </div>
+  <div id="versionText" class="tiny lightgrey" style="text-align: right">
+	&nbsp;
+  </div>
+</div>
+
+<div id="resultsBlock" class="column" style="display: none">
+  <hr>
+  <p id="errorText" class="text" style="display: none">
+	<span class="errorcolor">Ошибка:</span>
+	что-то пошло не так, как нужно...
+  </p>
+  <div id="contents">
+  </div>
+</div>
+
+<!-- Footer -->
+<div id="pageFooter" data-lang="en" data-url-path="/mdpn/checkpal.html"></div>
+
+</body>
+</html>
