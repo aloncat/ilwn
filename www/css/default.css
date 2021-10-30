@@ -688,6 +688,16 @@ h3.fact > span {
 	border-radius: 5px;
 }
 
+#resultsBlock #contents .stepHint {
+	position: absolute;
+	margin: 6px 15px;
+	font-family: Tahoma, Arial, sans-serif;
+	line-height: 1.0;
+	font-size: 72px;
+	font-weight: bold;
+	color: #ccc;
+}
+
 #resultsBlock #contents .palsteps {
 	padding: 2px 5px;
 	min-width: 1320px; /* for IE */
@@ -797,6 +807,10 @@ h3.fact > span {
 
 	td.footer .dot {
 		visibility: hidden;
+	}
+
+	#resultsBlock #contents .stepHint {
+		font-size: 52px;
 	}
 }
 
