@@ -12,7 +12,7 @@ const FX_STAY_TIMEOUT = 200; // Milliseconds
 const FX_FADE_TIMEOUT = "1.0s"; // Duration (CSS)
 const ONCOPY_FX_COLOR = "#0c0"; // Color (CSS)
 const URL_PREFIX = "https://dmaslov.me";
-const SCRIPT_VERSION = "2021.10.30.4";
+const SCRIPT_VERSION = "2021.10.31";
 
 (function () {
 	loadingText.style.display = "none";
@@ -377,33 +377,42 @@ function getBasicContent(language, data) {
 	}
 
 	if (data.number !== data.canonical) {
-		result += '</p><p class="text bignum">' +
-			'Канонический вид числа: <a href="' + getLinkToThisPage(data.canonical, "") +
+		result += '</p><p class="text bignum">' + ((language === "ru") ?
+			'Канонический вид числа' : 'Canonical form of the number') +
+			': <a href="' + getLinkToThisPage(data.canonical, "") +
 			'"><i>' + separateWithCommas(data.canonical) + '</i></a>.';
 	}
 
 	if (data.totalKinCount > 1) {
-		result += '</p><p class="text bignum">' +
-			'Наибольшее из всех родственных чисел: <span class="specnum">' +
-			separateWithCommas(data.highestKin) + '</span>.';
+		result += '</p><p class="text bignum">' + ((language === "ru") ?
+			'Наибольшее из всех родственных чисел' : 'The greatest of all kin numbers') +
+			': <span class="specnum">' + separateWithCommas(data.highestKin) + '</span>.';
 	}
 
 	if (smallestKnown && !isSmallestKnown && !isNewSmallest) {
 		const smallest = smallestKnown.number;
-		result += '</p><p class="text">' +
-			'Указанный отложенный палиндром <b>не является наименьшим</b> известным ' +
-			'числом, которое разрешается за ' + data.iterationCount + ' операц' +
-			getCaseEnding(data.iterationCount, "ию", "ии", "ий") + '. Наименьшее ' +
-			'известное (<span class="numlen">' + smallest.length + '</span>-значное) ' +
-			'число: <a href="' + getLinkToThisPage(smallest, "") + '"><i>' +
+		result += '</p><p class="text">';
+		if (language === "ru") {
+			result += 'Указанный отложенный палиндром <b>не является наименьшим</b> известным ' +
+				'числом, которое разрешается за ' + data.iterationCount + ' операц' +
+				getCaseEnding(data.iterationCount, "ию", "ии", "ий") + '. Наименьшее ' +
+				'известное (<span class="numlen">' + smallest.length +
+				'</span>-значное) число: ';
+		} else {
+			result += 'The specified delayed palindrome is <b>not the smallest</b> known ' +
+				'number that resolves in ' + data.iterationCount + ' iterations. ' +
+				'The smallest known (<span class="numlen">' + smallest.length +
+				'</span>-digit) number is ';
+		}
+		result += '<a href="' + getLinkToThisPage(smallest, "") + '"><i>' +
 			separateWithCommas(smallest) + '</i></a>.';
 	}
 
 	if (data.isPalindrome && data.iterationCount > 1) {
 		const firstStep = getLowestKin(data.steps[1]);
-		result += '</p><p class="text bignum">' +
-			'Результат 1 итерации (канонический вид): ' +
-			'<a href="' + getLinkToThisPage(firstStep, "") +
+		result += '</p><p class="text bignum">' + ((language === "ru") ?
+			'Результат 1 итерации (канонический вид)' : 'Result of 1 iteration (canonical form)') +
+			': <a href="' + getLinkToThisPage(firstStep, "") +
 			'"><i>' + separateWithCommas(firstStep) + '</i></a>.';
 	}
 
@@ -986,15 +995,15 @@ function getKnownNumbers() {
 	// All others
 	p[262] = pal("1020010060205799999798929938933", false);
 	p[263] = pal("1064200200047899999954799499911", false);
-	p[264] = pal("200831800008099998950439999599", false);
-	p[265] = pal("153000022030000994899998568994", false);
+	p[264] = pal("200000000000000998850438138599", false);
+	p[265] = pal("103420000000000994470264099994", false);
 	p[266] = pal("59000000000000663175474415399", false);
 	p[267] = pal("10000000000000876587282257696", false);
 	p[268] = pal("7000008000000030194299423429", false);
 	p[269] = pal("1000000020000060596998216217", false);
 	p[270] = pal("1000000000050059982414991789", false);
-	p[271] = pal("1000000000000497800064910811", false);
-	p[272] = pal("1000040008000076339590966300", false);
+	p[271] = pal("1000000000000394741252995844", false);
+	p[272] = pal("1000040003005499599870966300", false);
 	p[273] = pal("100000600000002993299386499", false);
 	p[274] = pal("10020000000000272118719998", false);
 
