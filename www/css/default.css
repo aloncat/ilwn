@@ -251,6 +251,10 @@ table.basic td {
 	text-align: justify;
 }
 
+.nobottommargin {
+	margin-bottom: 0;
+}
+
 .txtleft,
 table.basic td.txtleft {
 	text-align: left;
