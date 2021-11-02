@@ -265,6 +265,10 @@ table.basic td.txtright {
 	text-align: right;
 }
 
+.breakable {
+	word-wrap: break-word;
+}
+
 .footnote {
 	margin: 6px auto;
 	text-align: justify;
@@ -432,6 +436,76 @@ div.bloglinks-bottom span.postlink {
 div.bloglinks-top span.postlink:hover,
 div.bloglinks-bottom span.postlink:hover {
 	text-decoration: underline;
+}
+
+/* Custom classes: MDPN records page */
+
+span.dpal-candidate {
+	margin-right: 5px;
+	padding: 0 4px;
+	font-weight: bold;
+	background: #ffd8b0;
+	color:#333;
+	border-radius: 8px;
+}
+
+table.dpal {
+	width: 100%;
+	margin: 12px auto 20px;
+	border-collapse: separate;
+	border-spacing: 1px;
+	background: #b8b8b8;
+}
+
+table.dpal tr {
+	background: #fff;
+}
+
+table.dpal tr:first-child {
+	background: #e4e4e4;
+}
+
+table.dpal tr:nth-child(n+3) {
+	font-family: Consolas, monospace;
+}
+
+table.dpal td {
+	padding: 0px 5px 1px;
+	text-align: center;
+}
+
+table.dpal td:first-child {
+	width: 220px;
+	min-width: 160px;
+	white-space: nowrap;
+}
+
+table.dpal td:nth-child(2),
+table.dpal td:nth-child(3) {
+	width: 56px;
+	min-width: 48px;
+}
+
+table.dpal td:nth-child(3) {
+	border-left: 1px solid #b8b8b8;
+}
+
+table.dpal tr:nth-child(2) > td:nth-child(2) {
+	border-left: 1px solid #b8b8b8;
+	text-align: left;
+}
+
+table.dpal tr:nth-child(n+3) > td:first-child {
+	text-align: right;
+}
+
+table.dpal tr:nth-child(n+3) > td:nth-child(4) {
+	text-align: left;
+}
+
+table.dpal td.green {
+	padding: 1px 5px 2px;
+	background: #9e9;
 }
 
 /* Custom classes: others */
@@ -791,6 +865,19 @@ h3.fact > span {
 	div.bloglinks-bottom span.divider,
 	#resultsBlock #contents .footer span.divider {
 		display: none;
+	}
+
+	table.dpal td:nth-child(n+3),
+	table.dpal tr:nth-child(2) > td:nth-child(n+2) {
+		display: none;
+	}
+
+	table.dpal td:first-child {
+		width: auto;
+	}
+
+	table.dpal td:nth-child(2) {
+		width: 75px;
 	}
 
 	div#mapLinks div {
