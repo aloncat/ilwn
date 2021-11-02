@@ -440,7 +440,7 @@ div.bloglinks-bottom span.postlink:hover {
 
 /* Custom classes: MDPN records page */
 
-span.dpal-candidate {
+span.dpalcandidate {
 	padding: 0 4px;
 	font-weight: bold;
 	background: #ffd8b0;
@@ -502,6 +502,10 @@ table.dpal td:nth-child(3) {
 	border-left: 1px solid #b8b8b8;
 }
 
+table.dpal td:nth-child(4) {
+	min-width: 150px;
+}
+
 table.dpal tr:nth-child(2) > td:nth-child(2) {
 	border-left: 1px solid #b8b8b8;
 	text-align: left;
@@ -523,6 +527,27 @@ table.dpal td.green {
 table.dpal td.yellow {
 	padding: 1px 5px 2px;
 	background: #fd9;
+}
+
+table.dpal span.loading {
+	font-style: italic;
+	color: #808080;
+}
+
+table.dpal .pal-short {
+	display: none;
+}
+
+table.dpal .pal-wide {
+	display: inline-block;
+}
+
+table.dpal .pal-active {
+	cursor: pointer;
+}
+
+table.dpal .pal-active:hover {
+	color: #f30;
 }
 
 /* Custom classes: others */
@@ -857,6 +882,14 @@ h3.fact > span {
 
 	.noheadertop {
 		margin-top: 10px;
+	}
+
+	table.dpal .pal-short {
+		display: inline-block;
+	}
+
+	table.dpal .pal-wide {
+		display: none;
 	}
 
 	#resultsBlock #contents input#pageLink {
