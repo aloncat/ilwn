@@ -219,7 +219,7 @@ table.basic {
 	margin: 12px auto;
 	border-collapse: separate;
 	border-spacing: 1px;
-	background: #c4c4c4;
+	background: #b8b8b8;
 }
 
 table.basic tr {
@@ -441,17 +441,21 @@ div.bloglinks-bottom span.postlink:hover {
 /* Custom classes: MDPN records page */
 
 span.dpal-candidate {
-	margin-right: 5px;
 	padding: 0 4px;
 	font-weight: bold;
 	background: #ffd8b0;
-	color:#333;
+	color: #633;
 	border-radius: 8px;
+}
+
+div.column div.dpal {
+	margin-bottom: 18px;
+	overflow-x: auto;
 }
 
 table.dpal {
 	width: 100%;
-	margin: 8px auto 18px;
+	margin: 8px auto 0;
 	border-collapse: separate;
 	border-spacing: 1px;
 	background: #b8b8b8;
@@ -462,11 +466,15 @@ table.dpal tr {
 }
 
 table.dpal tr:first-child {
-	background: #e4e4e4;
+	background: #e8e8e8;
 }
 
 table.dpal tr:nth-child(n+3) {
 	font-family: Consolas, monospace;
+}
+
+table.dpal tr:nth-child(2n+4) {
+	background: #f8f8f8;
 }
 
 table.dpal tr:nth-child(n+3):hover {
@@ -479,7 +487,7 @@ table.dpal td {
 }
 
 table.dpal td:first-child {
-	width: 220px;
+	width: 215px;
 	min-width: 160px;
 	white-space: nowrap;
 }
@@ -510,6 +518,11 @@ table.dpal tr:nth-child(n+3) > td:nth-child(4) {
 table.dpal td.green {
 	padding: 1px 5px 2px;
 	background: #9e9;
+}
+
+table.dpal td.yellow {
+	padding: 1px 5px 2px;
+	background: #fd9;
 }
 
 /* Custom classes: others */
