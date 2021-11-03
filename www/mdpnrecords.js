@@ -1,19 +1,27 @@
-﻿(function() {
-	console.log("Starting calculation...");
-	for (let step = 1; step <= 289; ++step)
-		initPalindrome(step);
+﻿let wideLengths = [];
+for (let i = 1; i <= 30; ++i)
+	wideLengths[i] = 50;
 
-	console.log("Calculation finished");
-})();
+wideLengths[25] = 48;
+
+console.log("Starting calculation...");
+for (let step = 34; step <= 289; ++step)
+	initPalindrome(step);
+
+console.log("Calculation finished");
+
+// BEGIN -->
 
 function initPalindrome(step) {
 	let palElement = document.getElementById("pal-" + step);
 	let resElement = document.getElementById("respal-" + step);
 
 	if (palElement && resElement) {
-		const num = palElement.innerText.replaceAll(",", "");
+		const numText = palElement.innerText;
+		const num = numText.replaceAll(",", "").trim();
+
 		if (isCorrectNumber(num)) {
-			const info = raaTillPalindrome(num.trim(), 500);
+			const info = raaTillPalindrome(num, 500);
 			if (info.isPalindrome) {
 				let shortSpan, wideSpan;
 				if (info.result.length <= 20) {
@@ -24,12 +32,13 @@ function initPalindrome(step) {
 					info.result.substr(0, 20) + '...</span>';
 				}
 
-				if (info.result.length <= 50) {
+				const wideLength = wideLengths[num.length];
+				if (info.result.length <= wideLength) {
 					wideSpan = '<span class="pal-wide">' + info.result + '</span>';
 				} else {
 					wideSpan = '<span class="pal-wide pal-active" ' +
 					'onclick="toggleFullPalindrome(' + step + ', true)">' +
-					info.result.substr(0, 50) + '...</span>';
+					info.result.substr(0, wideLength) + '...</span>';
 				}
 
 				resElement.innerHTML = '<div id="' + step + '-norm" ' +
@@ -105,21 +114,23 @@ function isPalindrome(number) {
 }
 
 function toggleFullPalindrome(step, show) {
-	const norm = document.getElementById(step + "-norm");
-	const full = document.getElementById(step + "-full");
-	if (norm && full) {
-		if (show) {
-			norm.style.display = "none";
-			let element = document.getElementById("respal-" + step);
-			if (element) {
-				const cellStyle = window.getComputedStyle(element);
-				const w = parseInt(cellStyle.width, 10);
-				full.style.width = w + "px";
+	if (!window.getSelection().toString()) {
+		const norm = document.getElementById(step + "-norm");
+		const full = document.getElementById(step + "-full");
+		if (norm && full) {
+			if (show) {
+				norm.style.display = "none";
+				let element = document.getElementById("respal-" + step);
+				if (element) {
+					const cellStyle = window.getComputedStyle(element);
+					const w = parseInt(cellStyle.width, 10);
+					full.style.maxWidth = w + "px";
+				}
+				full.style.display = "inline-block";
+			} else {
+				full.style.display = "none";
+				norm.style.display = "inline-block";
 			}
-			full.style.display = "inline-block";
-		} else {
-			full.style.display = "none";
-			norm.style.display = "inline-block";
 		}
 	}
 }
