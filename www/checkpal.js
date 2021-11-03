@@ -12,7 +12,7 @@ const FX_STAY_TIMEOUT = 200; // Milliseconds
 const FX_FADE_TIMEOUT = "1.0s"; // Duration (CSS)
 const ONCOPY_FX_COLOR = "#0c0"; // Color (CSS)
 const URL_PREFIX = "https://dmaslov.me";
-const SCRIPT_VERSION = "2021.10.31.3";
+const SCRIPT_VERSION = "2021.11.03";
 
 (function () {
 	loadingText.style.display = "none";
@@ -275,9 +275,10 @@ function isPalindrome(number) {
 }
 
 function getBasicContent(language, data) {
-	let result = '<p class="text bignum">' +
+	let result = '<p class="text txtleft">' +
 		((language === "ru") ? 'Проверяемое число: ' : 'Tested number: ') +
-		'<span class="specnum">' + separateWithCommas(data.number) + '</span>.</p>';
+		'<span class="breakable"><span class="specnum">' + separateWithCommas(data.number) +
+		'</span>.</span></p>';
 
 	let smallestKnown;
 	let isNewSmallest = false;
@@ -377,16 +378,17 @@ function getBasicContent(language, data) {
 	}
 
 	if (data.number !== data.canonical) {
-		result += '</p><p class="text bignum">' + ((language === "ru") ?
+		result += '</p><p class="text txtleft">' + ((language === "ru") ?
 			'Канонический вид числа' : 'Canonical form of the number') +
-			': <a href="' + getLinkToThisPage(data.canonical, "") +
-			'"><i>' + separateWithCommas(data.canonical) + '</i></a>.';
+			': <span class="breakable"><a href="' + getLinkToThisPage(data.canonical, "") +
+			'"><i>' + separateWithCommas(data.canonical) + '</i></a>.</span>';
 	}
 
 	if (data.totalKinCount > 1) {
-		result += '</p><p class="text bignum">' + ((language === "ru") ?
+		result += '</p><p class="text txtleft">' + ((language === "ru") ?
 			'Наибольшее из всех родственных чисел' : 'The greatest of all kin numbers') +
-			': <span class="specnum">' + separateWithCommas(data.highestKin) + '</span>.';
+			': <span class="breakable"><span class="specnum">' + separateWithCommas(data.highestKin) +
+			'</span>.</span>';
 	}
 
 	if (smallestKnown && !isSmallestKnown && !isNewSmallest) {
@@ -404,16 +406,16 @@ function getBasicContent(language, data) {
 				'The smallest known (<span class="numlen">' + smallest.length +
 				'</span>-digit) number is ';
 		}
-		result += '<a href="' + getLinkToThisPage(smallest, "") + '"><i>' +
-			separateWithCommas(smallest) + '</i></a>.';
+		result += '<span class="breakable"><a href="' + getLinkToThisPage(smallest, "") + '"><i>' +
+			separateWithCommas(smallest) + '</i></a>.</span>';
 	}
 
 	if (data.isPalindrome && data.iterationCount > 1) {
 		const firstStep = getLowestKin(data.steps[1]);
-		result += '</p><p class="text bignum">' + ((language === "ru") ?
+		result += '</p><p class="text txtleft">' + ((language === "ru") ?
 			'Результат 1 итерации (канонический вид)' : 'Result of 1 iteration (canonical form)') +
-			': <a href="' + getLinkToThisPage(firstStep, "") +
-			'"><i>' + separateWithCommas(firstStep) + '</i></a>.';
+			': <span class="breakable"><a href="' + getLinkToThisPage(firstStep, "") + '"><i>' +
+			separateWithCommas(firstStep) + '</i></a>.</span>';
 	}
 
 	result += '</p>';

@@ -266,7 +266,8 @@ table.basic td.txtright {
 }
 
 .breakable {
-	word-wrap: break-word;
+	display: inline-block;
+	word-break: break-all;
 }
 
 .footnote {
@@ -750,11 +751,6 @@ h3.fact > span {
 	margin-bottom: 8px;
 	border-top: 2px dotted #ccc;
 	background: transparent;
-}
-
-#resultsBlock #contents .bignum {
-	word-wrap: break-word;
-	text-align: left;
 }
 
 #resultsBlock #contents span.specnum {
