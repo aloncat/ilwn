@@ -7,11 +7,16 @@ wideLengths[24] = 50;
 wideLengths[25] = 48;
 wideLengths[0] = 40;
 
+const cache = new Map();
+cache.missCount = 0;
+cache.hitCount = 0;
+
 const wideLenInitFlags = [];
 for (let step = 34; step <= 289; ++step)
 	initPalindrome(step);
 
-console.log("Calculation finished");
+console.log("Calculation finished, cache hits: " + cache.hitCount +
+	"/" + (cache.hitCount + cache.missCount));
 
 function initPalindrome(step) {
 	let palElement = document.getElementById("pal-" + step);
@@ -33,7 +38,7 @@ function initPalindrome(step) {
 				}
 			}
 
-			const info = raaTillPalindrome(num, 500);
+			const info = raaTillPalindrome(num);
 			if (info.isPalindrome) {
 				let shortSpan, wideSpan;
 				if (info.result.length <= 23) {
@@ -89,7 +94,7 @@ function isCorrectNumber(value) {
 	return hasDigits;
 }
 
-function raaTillPalindrome(value, maxSteps) {
+function raaTillPalindrome(value) {
 	let result = {
 		iterationCount: 0,
 		isPalindrome: false,
@@ -97,17 +102,38 @@ function raaTillPalindrome(value, maxSteps) {
 	};
 
 	let current = "" + value;
-	while (result.iterationCount < maxSteps) {
+	while (current.length < 32) {
 		current = reverseAndAdd(current);
 		++result.iterationCount;
 
 		if (isPalindrome(current)) {
 			result.isPalindrome = true;
 			result.result = current;
+			return result;
+		}
+	}
+
+	const key = current;
+	const info = cache.get(key);
+	if (info && info.isPalindrome)
+	{
+		++cache.hitCount;
+		return info;
+	}
+
+	while (result.iterationCount < 500) {
+		current = reverseAndAdd(current);
+		++result.iterationCount;
+
+		if (isPalindrome(current)) {
+			result.isPalindrome = true;
+			result.result = current;
+			cache.set(key, result);
 			break;
 		}
 	}
 
+	++cache.missCount;
 	return result;
 }
 
