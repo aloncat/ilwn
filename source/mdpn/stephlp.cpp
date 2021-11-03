@@ -19,7 +19,7 @@ StepHelper::StepHelper(size_t startRange)
 //----------------------------------------------------------------------------------------------------------------------
 unsigned StepHelper::GetSearchLimit(size_t digitC) const
 {
-	constexpr size_t KNOWN_DIGIT_C = 23;
+	constexpr size_t KNOWN_DIGIT_C = 24;
 
 	// Выведем предупреждение о необходимости обновления параметров класса
 	// при попытке работы с диапазонами, старше доверенных (> KNOWN_DIGIT_C)
@@ -35,7 +35,7 @@ unsigned StepHelper::GetSearchLimit(size_t digitC) const
 		static const unsigned limitA[KNOWN_DIGIT_C + 1] = { 0,
 			100, 100, 100, 115, 125, 140, 155, 170, 185, 195,	//  1 - 10
 			210, 225, 240, 250, 265, 280, 295, 310, 320, 335,	// 11 - 20
-			350, 365, 375 };									// 21 - 23
+			350, 365, 375, 395 };								// 21 - 24
 		return limitA[digitC];
 	}
 
@@ -58,11 +58,11 @@ unsigned StepHelper::GetMinSaveable(size_t digitC) const
 //----------------------------------------------------------------------------------------------------------------------
 unsigned StepHelper::GetHighest(const Number& num)
 {
-	constexpr size_t KNOWN_DIGIT_C = 23;
+	constexpr size_t KNOWN_DIGIT_C = 24;
 	// Каждый элемент массива - это значение наибольшего известного шага среди
 	// всех диапазонов ниже того, который соответствует индексу этого элемента
-	static const unsigned stepA[KNOWN_DIGIT_C + 1] = { 0, 0, 2, 24, 24, 24, 55, 64,
-		96, 96, 98, 109, 149, 149, 188, 188, 201, 201, 236, 236, 261, 261, 261, 261 };
+	static const unsigned stepA[KNOWN_DIGIT_C + 1] = { 0, 0, 2, 24, 24, 24, 55, 64, 96,
+		96, 98, 109, 149, 149, 188, 188, 201, 201, 236, 236, 261, 261, 261, 261, 289 };
 	return stepA[std::min(num.GetLength(), KNOWN_DIGIT_C)];
 }
 
@@ -146,7 +146,7 @@ void StepHelper::InitFoundRanges()
 
 	// Ненайденные шаги (обновятся при обнаружении
 	// нового шага в диапазоне 23-значных чисел или старше)
-	R(~0u) << R(242, 244) << R(262, 285) << R(290, Const::MAX_STEP);
+	R(~0u) << R(243, 244) << R(262, 285) << R(290, Const::MAX_STEP);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
