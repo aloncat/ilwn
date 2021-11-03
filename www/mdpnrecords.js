@@ -12,26 +12,25 @@ for (let step = 34; step <= 289; ++step)
 
 console.log("Calculation finished");
 
-// BEGIN -->
-
 function initPalindrome(step) {
 	let palElement = document.getElementById("pal-" + step);
 	let resElement = document.getElementById("respal-" + step);
 
 	if (palElement && resElement) {
-		const numText = palElement.innerText;
-		const num = numText.replaceAll(",", "").trim();
-		const wideLength = wideLengths[num.length] || defaultWideLength;
-
-		if (!wideLenInitFlags[num.length]) {
-			wideLenInitFlags[num.length] = true;
-			const lenElement = document.getElementById("wideLen-" + num.length);
-			if (lenElement) {
-				lenElement.innerHTML = getWideLengthText(wideLength);
-			}
-		}
+		const numText = palElement.textContent;
+		const num = numText.replace(/[, ']/g, "").trim();
 
 		if (isCorrectNumber(num)) {
+			const wideLength = wideLengths[num.length] || defaultWideLength;
+
+			if (!wideLenInitFlags[num.length]) {
+				wideLenInitFlags[num.length] = true;
+				const lenElement = document.getElementById("wideLen-" + num.length);
+				if (lenElement) {
+					lenElement.innerHTML = getWideLengthText(wideLength);
+				}
+			}
+
 			const info = raaTillPalindrome(num, 500);
 			if (info.isPalindrome) {
 				let shortSpan, wideSpan;
@@ -51,26 +50,22 @@ function initPalindrome(step) {
 					info.result.substr(0, wideLength) + '...</span>';
 				}
 
-				resElement.innerHTML = '<div id="' + step + '-norm" ' +
-					'style="display: none">' + shortSpan + wideSpan + '</div>' +
-					'<div id="' + step + '-full" class="pal-active" style="display: none" ' +
+				resElement.innerHTML = '<div id="' + step + '-norm">' +
+					shortSpan + wideSpan + '</div><div id="' + step +
+					'-full" class="pal-active" style="display: none" ' +
 					'onclick="toggleFullPalindrome(' + step + ', false)">' +
 					'<span class="breakable">' + info.result + '</span></div>';
-
-				document.getElementById(step + "-norm").style.display = "inline-block";
 			}
 		}
 	}
 }
 
-function getWideLengthText(len) {
-	const language = document.documentElement.lang;
-	if (language === "ru") {
-		return "перв" + getCaseEnding(len, "ая", "ые") + " " +
-			len + "&nbsp;цифр" + getCaseEnding(len, "а", "ы", "");
-	} else {
-		return "first " + len + " digits";
+function getWideLengthText(value) {
+	if (document.documentElement.lang === "ru") {
+		return "перв" + getCaseEnding(value, "ая", "ые") + " " +
+			value + "&nbsp;цифр" + getCaseEnding(value, "а", "ы", "");
 	}
+	return "first " + value + " digits";
 }
 
 function getCaseEnding(value, one, twofour, other) {
@@ -145,20 +140,10 @@ function toggleFullPalindrome(step, show) {
 	if (!window.getSelection().toString()) {
 		const norm = document.getElementById(step + "-norm");
 		const full = document.getElementById(step + "-full");
+
 		if (norm && full) {
-			if (show) {
-				norm.style.display = "none";
-				let element = document.getElementById("respal-" + step);
-				if (element) {
-					const cellStyle = window.getComputedStyle(element);
-					const w = parseInt(cellStyle.width, 10);
-					full.style.maxWidth = w + "px";
-				}
-				full.style.display = "inline-block";
-			} else {
-				full.style.display = "none";
-				norm.style.display = "inline-block";
-			}
+			norm.style.display = show ? "none" : "inline-block";
+			full.style.display = show ? "inline-block" : "none";
 		}
 	}
 }
