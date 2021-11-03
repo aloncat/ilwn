@@ -5,6 +5,7 @@ const wideLengths = [];
 wideLengths[23] = 50;
 wideLengths[24] = 50;
 wideLengths[25] = 48;
+wideLengths[0] = 40;
 
 const wideLenInitFlags = [];
 for (let step = 34; step <= 289; ++step)
@@ -21,11 +22,12 @@ function initPalindrome(step) {
 		const num = numText.replace(/[, ']/g, "").trim();
 
 		if (isCorrectNumber(num)) {
-			const wideLength = wideLengths[num.length] || defaultWideLength;
+			const resLength = (num.length < wideLengths.length) ? num.length : 0;
+			const wideLength = wideLengths[resLength] || defaultWideLength;
 
-			if (!wideLenInitFlags[num.length]) {
-				wideLenInitFlags[num.length] = true;
-				const lenElement = document.getElementById("wideLen-" + num.length);
+			if (!wideLenInitFlags[resLength]) {
+				wideLenInitFlags[resLength] = true;
+				const lenElement = document.getElementById("wideLen-" + resLength);
 				if (lenElement) {
 					lenElement.innerHTML = getWideLengthText(wideLength);
 				}

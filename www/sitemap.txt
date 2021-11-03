@@ -1,12 +1,13 @@
 https://dmaslov.me
 https://dmaslov.me/blog/
 https://dmaslov.me/blog/about-new-p196-project.html
-https://dmaslov.me/contacts.html
 https://dmaslov.me/blog/facts.html
+https://dmaslov.me/contacts.html
 https://dmaslov.me/hardware.html
 https://dmaslov.me/map.html
 https://dmaslov.me/mdpn/
 https://dmaslov.me/mdpn/checkpal.html
+https://dmaslov.me/mdpn/records.html
 https://dmaslov.me/news.html
 https://dmaslov.me/patrons.html
 https://dmaslov.me/p196/
