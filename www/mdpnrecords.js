@@ -1,10 +1,12 @@
-﻿let wideLengths = [];
-for (let i = 1; i <= 30; ++i)
-	wideLengths[i] = 50;
+﻿console.log("Starting calculation...");
 
+const defaultWideLength = 55;
+const wideLengths = [];
+wideLengths[23] = 50;
+wideLengths[24] = 50;
 wideLengths[25] = 48;
 
-console.log("Starting calculation...");
+const wideLenInitFlags = [];
 for (let step = 34; step <= 289; ++step)
 	initPalindrome(step);
 
@@ -19,12 +21,21 @@ function initPalindrome(step) {
 	if (palElement && resElement) {
 		const numText = palElement.innerText;
 		const num = numText.replaceAll(",", "").trim();
+		const wideLength = wideLengths[num.length] || defaultWideLength;
+
+		if (!wideLenInitFlags[num.length]) {
+			wideLenInitFlags[num.length] = true;
+			const lenElement = document.getElementById("wideLen-" + num.length);
+			if (lenElement) {
+				lenElement.innerHTML = getWideLengthText(wideLength);
+			}
+		}
 
 		if (isCorrectNumber(num)) {
 			const info = raaTillPalindrome(num, 500);
 			if (info.isPalindrome) {
 				let shortSpan, wideSpan;
-				if (info.result.length <= 20) {
+				if (info.result.length <= 23) {
 					shortSpan = '<span class="pal-short">' + info.result + '</span>';
 				} else {
 					shortSpan = '<span class="pal-short pal-active" ' +
@@ -32,8 +43,7 @@ function initPalindrome(step) {
 					info.result.substr(0, 20) + '...</span>';
 				}
 
-				const wideLength = wideLengths[num.length];
-				if (info.result.length <= wideLength) {
+				if (info.result.length <= wideLength + 3) {
 					wideSpan = '<span class="pal-wide">' + info.result + '</span>';
 				} else {
 					wideSpan = '<span class="pal-wide pal-active" ' +
@@ -51,6 +61,24 @@ function initPalindrome(step) {
 			}
 		}
 	}
+}
+
+function getWideLengthText(len) {
+	const language = document.documentElement.lang;
+	if (language === "ru") {
+		return "перв" + getCaseEnding(len, "ая", "ые") + " " +
+			len + "&nbsp;цифр" + getCaseEnding(len, "а", "ы", "");
+	} else {
+		return "first " + len + " digits";
+	}
+}
+
+function getCaseEnding(value, one, twofour, other) {
+	if (other === undefined)
+		other = twofour;
+
+	return ((value % 10) && (value % 10 < 5) && ((value % 100 < 11) || (value % 100 > 19))) ?
+		(value % 10 === 1) ? one : twofour : other;
 }
 
 function isCorrectNumber(value) {
