@@ -1042,7 +1042,7 @@ void DoSearch()
 				return false;
 			}
 
-			if (pChunk->GetHighestStep() >= 237)
+			if (pChunk->GetHighestStep() >= 235)
 			{
 				if (!pChunk->LoadData(data, DBChunkState::FULLDATA))
 				{
@@ -1054,7 +1054,7 @@ void DoSearch()
 				BigNumber current;
 				for (const auto& item : pChunk->GetNumbers())
 				{
-					if (item.step >= 237)
+					if (item.step >= 235)
 					{
 						num = item.num;
 						aux::Printf("\rSteps[%u]: %s", item.step,
