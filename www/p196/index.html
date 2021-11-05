@@ -1,7 +1,11 @@
 ﻿<!DOCTYPE html>
-<html lang="en"><head>
-  <title>P196 - Home page</title>
+<html lang="ru"><head>
+  <title>P196 - Главная</title>
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="description" content="Проект P196 - поиск палиндрома 196 и проверка,
+	смогут ли какие-либо из базовых чисел Лишрел когда-либо стать палиндромами">
+  <meta name="keywords" content="отложенный палиндром, базовое число Лишрел,
+	проет P196, delayed palindrome, Lychrel number, iLWN">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" type="text/css" href="/css/default.css">
   <link rel="canonical" href="https://dmaslov.me/p196/">
@@ -11,12 +15,115 @@
 <!-- Navigation bar -->
 <script src="/js/pageheader.js"></script>
 
-<br><br>
+<p class="column text noheadertop">
+  Это домашняя страница проекта <b>&laquo;196 Palindrome Quest&raquo;</b>, сокращённо <b>P196</b>. Главная цель проекта состоит в том, чтобы проверить, сможет ли число <a href="/ru/mdpn/checkpal.html?n=196">196</a> когда-либо стать палиндромом в результате многократного выполнения над ним <a href="/termsdefs.html#raa-op">операции RAA</a> (<a href="/termsdefs.html#reverse-and-add-ru">Перевернуть-И-Сложить</a>).
+</p>
+
+<p class="column text">
+  Также в рамках проекта проверяются другие базовые числа Лишрел:
+	<a href="/ru/mdpn/checkpal.html?n=879">879</a>,
+	<a href="/ru/mdpn/checkpal.html?n=1997">1,997</a>,
+	<a href="/ru/mdpn/checkpal.html?n=7059">7,059</a>,
+	<a href="/ru/mdpn/checkpal.html?n=9999">9,999</a>,
+	<a href="/ru/mdpn/checkpal.html?n=10553">10,553</a>,
+	<a href="/ru/mdpn/checkpal.html?n=10563">10,563</a>,
+	<a href="/ru/mdpn/checkpal.html?n=10577">10,577</a>
+	и не только. Немного подробнее о проекте можно <a href="/blog/about-new-p196-project.html">прочитать в блоге</a>.
+</p>
+
+<p class="column text">
+  Сейчас данная страница <b><i>находится в разработке</i></b> и пока на ней отсутствует многое из того, что запланировано. По мере развития проекта я буду добавлять информацию. В данный момент здесь доступна только статистика по проверяемым числам, которая обычно обновляется один раз в неделю.
+</p>
+
+<p class="column text">
+  Исходный код проекта <a href="https://github.com/aloncat/ilwn" target="_blank">в репозитории <b>iLWN</b></a> пока недоступен. Файлы результатов также пока недоступны для скачивания. Среди всех натуральных чисел до 12-значных включительно проектом <b>ALSN</b> были обнаружены <b><i>786,640</i></b> базовых чисел Лишрел. Для каждого из них было выполнено не менее <b><i>10,000</i></b> итераций (ни одно из них при этом не стало палиндромом).
+</p>
+
+<p class="column text">
+  Число <b><i>196</i></b> (самое первое базовое число Лишрел) непрерывно проверяется программой (работает 1 поток), начиная с 19 сентября 2021 года. На проверку других базовых чисел выделено меньше ресурсов. В ближайших планах выполнить по 10 миллионов итераций для всех 5- и 6-значных чисел.
+</p>
+
+<p class="column text">
+  Список первых 173 базовых чисел Лишрел (все числа до 6-значных включительно) расположен <a href="/file/lychrel-base-173.txt" target="_blank">здесь</a>. В таблице ниже указано текущее состояние проверки каждого базового числа Лишрел.
+</p>
+
 <div class="column">
-  <div style="max-width: 600px; margin: 0 auto; padding: 10px 15px; border: 1px solid #ea8; background: #ffe8d8; text-align: center; border-radius: 5px">
-	Sorry, this page is still under construction...<br>
-  </div>
+  <table class="basic small">
+	<tr>
+	  <td width=120>Базовое число Лишрел</td>
+	  <td width=160>Выполнено итераций</td>
+	  <td width=180>Количество и файлов и их суммарный размер</td>
+	</tr>
+	<tr>
+	  <td class="txtright">196</td>
+	  <td class="txtright">284,590,200</td>
+	  <td class="txtright">284 файла; 7.25&nbsp;GiB</td>
+	</tr>
+	<tr>
+	  <td class="txtright">879</td>
+	  <td class="txtright">56,032,700</td>
+	  <td class="txtright">56 файлов; 298&nbsp;MiB</td>
+	</tr>
+	<tr>
+	  <td class="txtright">1,997</td>
+	  <td class="txtright">30,362,100</td>
+	  <td class="txtright">30 файлов; 87.1&nbsp;MiB</td>
+	</tr>
+	<tr>
+	  <td class="txtright">7,059</td>
+	  <td class="txtright">30,340,000</td>
+	  <td class="txtright">30 файлов; 87.1&nbsp;MiB</td>
+	</tr>
+	<tr>
+	  <td class="txtright">9,999</td>
+	  <td class="txtright">30,230,200</td>
+	  <td class="txtright">30 файлов; 87.1&nbsp;MiB</td>
+	</tr>
+	<tr>
+	  <td class="txtright">10,553</td>
+	  <td class="txtright">10,910,600</td>
+	  <td class="txtright">10 файлов; 10.4&nbsp;MiB</td>
+	</tr>
+	<tr>
+	  <td class="txtright">10,563</td>
+	  <td class="txtright">13,547,200</td>
+	  <td class="txtright">13 файлов; 17.1&nbsp;MiB</td>
+	</tr>
+	<tr>
+	  <td class="txtright">10,577</td>
+	  <td class="txtright">11,439,800</td>
+	  <td class="txtright">11 файлов; 12.4&nbsp;MiB</td>
+	</tr>
+	<tr>
+	  <td class="txtright">10,583</td>
+	  <td class="txtright">10,865,700</td>
+	  <td class="txtright">10 файлов; 10.4&nbsp;MiB</td>
+	</tr>
+	<tr>
+	  <td class="txtright">10,585</td>
+	  <td class="txtright">11,235,900</td>
+	  <td class="txtright">11 файлов; 12.4&nbsp;MiB</td>
+	</tr>
+	<tr>
+	  <td class="txtright">10,638</td>
+	  <td class="txtright">11,352,800</td>
+	  <td class="txtright">11 файлов; 12.4&nbsp;MiB</td>
+	</tr>
+	<tr>
+	  <td class="txtright">10,663</td>
+	  <td class="txtright">10,228,000</td>
+	  <td class="txtright">10 файлов; 10.3&nbsp;MiB</td>
+	</tr>
+	<tr>
+	  <td class="txtright">10,668</td>
+	  <td class="txtright">10,800,700</td>
+	  <td class="txtright">10 файлов; 10.3&nbsp;MiB</td>
+	</tr>
+  </table>
 </div>
+
+<!-- Footer -->
+<div id="pageFooter" data-lang="ru" data-url-path="/p196/"></div>
 
 </body>
 </html>
