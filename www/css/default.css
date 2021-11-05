@@ -156,7 +156,7 @@ table.navbar {
 	padding: 5px 14px 4px;
 	line-height: 1.2;
 	font-weight: bold;
-	color: white;
+	color: #e0e0e0;
 	border-radius: 8px;
 	transition: background 0.12s, color 0.12s;
 }
@@ -166,17 +166,28 @@ table.navbar {
 	color: #303030;
 }
 
-.navbar div.svg {
+.navbar div.active {
+	color: #fe6;
+}
+
+.navbar div.svg,
+.navbar div.svgactive {
 	padding: 0 12px;
 }
 
-.navbar .svg svg path {
-	fill: white;
+.navbar .svg svg path,
+.navbar .svgactive svg path {
+	fill: #e0e0e0;
 	fill-opacity: 1.0;
 	transition: fill 0.12s;
 }
 
-.navbar .svg:hover svg path {
+.navbar .svgactive svg path {
+	fill: #fe6;
+}
+
+.navbar .svg:hover svg path,
+.navbar .svgactive:hover svg path {
 	fill: #303030;
 }
 

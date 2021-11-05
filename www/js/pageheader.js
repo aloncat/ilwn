@@ -47,6 +47,8 @@ function insertNavigationBar(navBarId, offsetId) {
 		blogTitle = "Блог";
 	}
 
+	const section = getCurrentSection();
+
 	document.write(
 		'<div id="' + offsetId + '"></div>' +
 		'<table id="' + navBarId + '" class="navbar">' +
@@ -59,7 +61,7 @@ function insertNavigationBar(navBarId, offsetId) {
 			  '<div class="flexitems">' +
 				'<div class="flexitem home">' +
 				  '<a class="nodecor" href="https://dmaslov.me">' +
-					'<div class="navitem svg">' +
+					'<div class="navitem svg' + (section === "home" ? 'active' : '') + '">' +
 					  '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 18 547.6 503.7" style="position: relative; left: 0; top: 1px; width: 25px; height: 23px">' +
 						'<path d="M540.76,254.788L294.506,38.216 c-11.475-10.098-30.064-10.098-41.386,0L6.943,254.788 c-11.475,10.098-8.415,18.284,6.885,18.284 h75.964 v221.773 c0,12.087,9.945,22.108,22.108,22.108 h92.947V371.067 c0-12.087,9.945-22.108,22.109-22.108 h93.865 c12.239,0,22.108,9.792,22.108,22.108 v145.886 h92.947 c12.24,0,22.108-9.945,22.108-22.108 v-221.85 h75.965 C549.021,272.995,552.081,264.886,540.76,254.788z" />' +
 					  '</svg>' +
@@ -68,22 +70,22 @@ function insertNavigationBar(navBarId, offsetId) {
 				'</div>' +
 				'<div class="flexitem">' +
 				  '<a class="nodecor" href="/' + urlPrefix + 'blog/">' +
-					'<div class="navitem">' + blogTitle + '</div>' +
+					'<div class="navitem' + (section === "blog" ? ' active' : '') + '">' + blogTitle + '</div>' +
 				  '</a>' +
 				'</div>' +
 				'<div class="flexitem">' +
-				  //'<a class="nodecor" href="/' + urlPrefix + 'alsn/">' +
-					'<div class="navitem" style="background: inherit; color: #888">ALSN</div>' +
-				  //'</a>' +
+				  '<a class="nodecor" href="/' + urlPrefix + 'alsn/">' +
+					'<div class="navitem' + (section === "alsn" ? ' active' : '') + '">ALSN</div>' +
+				  '</a>' +
 				'</div>' +
 				'<div class="flexitem">' +
 				  '<a class="nodecor" href="/' + urlPrefix + 'mdpn/">' +
-					'<div class="navitem">MDPN</div>' +
+					'<div class="navitem' + (section === "mdpn" ? ' active' : '') + '">MDPN</div>' +
 				  '</a>' +
 				'</div>' +
 				'<div class="flexitem">' +
 				  '<a class="nodecor" href="/' + urlPrefix + 'p196/">' +
-					'<div class="navitem">P196</div>' +
+					'<div class="navitem' + (section === "p196" ? ' active' : '') + '">P196</div>' +
 				  '</a>' +
 				'</div>' +
 			  '</div>' +
@@ -91,6 +93,15 @@ function insertNavigationBar(navBarId, offsetId) {
 		  '</tr>' +
 		'</table>'
 	);
+}
+
+function getCurrentSection() {
+	const url = window.location.pathname;
+	if (url === "/" || url === "/ru" || url === "/ru/")
+		return "home";
+
+	const section = url.match(/^(\/ru)?\/(\w*)\//);
+	return section ? section[2] : "";
 }
 
 // All pages: footer
