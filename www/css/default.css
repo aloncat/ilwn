@@ -276,9 +276,21 @@ table.basic td.txtright {
 	text-align: right;
 }
 
+.txtcenter {
+	text-align: center;
+}
+
 .breakable {
 	display: inline-block;
 	word-break: break-all;
+}
+
+.readingtime {
+	margin-top: 20px;
+	margin-bottom: 15px;
+	text-align: center;
+	font-style: italic;
+	color: #888;
 }
 
 .footnote {
@@ -432,7 +444,7 @@ div.bloglinks-bottom {
 }
 
 div.bloglinks-top {
-	margin: 6px auto 25px;
+	margin: 6px auto 15px;
 }
 
 div.bloglinks-bottom {
