@@ -33,16 +33,17 @@
 <div class="column">
   <div class="allterms tiny lightgrey">
 	<div><a class="nodecor" href="#alsn"><b>ALSN</b></a></div>
-	<div><a class="nodecor" href="#ilwn"><b>iLWN</b></a></div>
+	<div><a href="#ilwn"><b>iLWN</b></a></div>
 	<div><a href="#mdpn"><b>MDPN</b></a></div>
 	<div><a class="nodecor" href="#p196"><b>P196</b></a></div>
 	<div><a href="#raa-op"><b>RAA</b></a></div>
 	<div><a class="nodecor" href="#rs-number"><b>RSN</b></a></div>
 	<div><a href="#reverse-and-add"><b>Reverse-And-Add</b></a></div>
-	<div><a class="nodecor" href="#lychrel-base-number"><b>базовое</b> число Лишрел</a></div>
+	<div><a class="nodecor" href="#lychrel-seed-number"><b>базовое</b> число Лишрел</a></div>
 	<div><a class="nodecor" href="#search-depth"><b>глубина</b> поиска</a></div>
 	<div><a class="nodecor" href="#rs-number-ru"><b>достоверно</b> наименьший ОП</a></div>
 	<div><a class="nodecor" href="#iteration"><b>итерация</b></a></div>
+	<div><a class="nodecor" href="#dp-candidate"><b>кандидат</b> (ОП)</a></div>
 	<div><a class="nodecor" href="#canonical-number"><b>канонический</b> вид</a></div>
 	<div><a class="nodecor" href="#lychrel-number">число <b>Лишрел</b></a></div>
 	<div><a class="nodecor" href="#local-record"><b>локальный</b> рекорд</a></div>
@@ -60,6 +61,17 @@
 
 <div class="column divider">&bull; &bull; &bull;</div>
 
+<div id="ilwn" class="column">
+  <div class="termheader">
+	iLWN (серия проектов)
+  </div>
+  <p class="text">
+	Описание скоро появится...
+  </p>
+</div>
+
+<div class="column divider">&bull; &bull; &bull;</div>
+
 <div id="mdpn" class="column">
   <div class="termheader">
 	MDPN (проект)
@@ -71,7 +83,7 @@
 	Искать такие числа &mdash; достаточно ресурсоёмкий процесс, так как единственный известный на данный момент способ &mdash; это метод полного перебора (brute-force), то есть проверка каждого числа в диапазоне. Благодаря некоторым оптимизациям, проверять приходится не все числа, а лишь малую их часть. Однако даже при этом, количество проверяемых чисел измеряется сотнями триллионов (для диапазонов 22- и 23-значных чисел), и <a href="/blog/facts.html#fact-1">быстро увеличивается с ростом их длины</a>.
   </p>
   <p class="text">
-	Поиск <a href="#delayed-palindrome">отложенных палиндромов</a> &mdash; главная задача проекта MDPN, но не единственная. Все найденные числа сохраняются в огромную базу данных. Также собирается различная статистика, например, точное полное количество <a href="#lychrel-number">чисел Лишрел</a> в каждом диапазоне. Анализ этих данных помогает находить интересные особенности отложенных палиндромов. Кроме того, эта база данных используется в проекте ALSN, который занимается поиском <a href="#lychrel-base-number">базовых чисел Лишрел</a>.
+	Поиск <a href="#delayed-palindrome">отложенных палиндромов</a> &mdash; главная задача проекта MDPN, но не единственная. Все найденные числа сохраняются в огромную базу данных. Также собирается различная статистика, например, точное полное количество <a href="#lychrel-number">чисел Лишрел</a> в каждом диапазоне. Анализ этих данных помогает находить интересные особенности отложенных палиндромов. Кроме того, эта база данных используется в проекте ALSN, который занимается поиском <a href="#lychrel-seed-number">базовых чисел Лишрел</a>.
   </p>
   <p class="text">
 	Проект MDPN стартовал 2 июня 2019 года как самостоятельный проект (в то время iLWN был только идеей, другие его проекты были начаты лишь в 2021 году). В рамках этого проекта я перепроверил все <a href="#smallest-delayed-palindrome">наименьшие отложенные палиндромы</a>, найденные другими исследователями раньше, а также нашёл новые. Собрал в базе данных все <a href="#canonical-number">канонические</a> отложенные палиндромы для <a href="#raa-step">шагов</a> от 50 и выше. Полностью проверил все диапазоны десятичных чисел до 22-значных включительно (по состоянию на 1 апреля 2021 года). И продолжаю поиск дальше.

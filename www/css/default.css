@@ -351,6 +351,16 @@ table.basic td.txtright {
 	color: black;
 }
 
+.p196tag {
+	margin-right: 2px;
+	padding: 0 3px;
+	font-weight: bold;
+	background: #ffe0c0;
+	color: #630;
+	border-radius: 5px;
+	cursor: default;
+}
+
 .blogtag {
 	margin: 0 4px;
 	color: #08f;
