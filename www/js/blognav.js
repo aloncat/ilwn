@@ -63,8 +63,8 @@ function initNavigation() {
 	if (lang === "en" || lang === "ru")
 		currentLanguage = lang;
 
-	toggleYear(2021);
-	toggleMonth(9);
+	//toggleYear(2021);
+	//toggleMonth(9);
 }
 
 // Blog: post pages

@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html lang="ru"><head>
+  <title>Выбор глубины при поиске отложенных палиндромов - блог iLWN</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="description" content="Пост о том, сколько итераций нужно выполнить над
+	проверяемым числом, чтобы сказать, является оно отложенным палиндромом или числом Лишрел">
+  <meta name="keywords" content="отложенный палиндром, число Лишрел, глубина поиска,
+	проект MDPN, перевернуть-и-сложить">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="/css/default.css">
+  <link rel="canonical" href="https://dmaslov.me/blog/choosing-the-proper-search-depth.html">
+  <script defer src="/js/blognav.js"></script>
+</head>
+<body onload="setPostLinks()">
+
+<!-- Navigation bar -->
+<script src="/js/pageheader.js"></script>
+
+<!-- Title, tags, date -->
+
+<h1 class="blogpost">Выбор глубины при поиске отложенных палиндромов</h1>
+
+<div class="column" style="text-align: center">
+  <div class="small">Теги:
+	<span class="blogtag">#delayed-palindrome</span>
+	<span class="blogtag">#mdpn</span>
+  </div>
+  <div class="blogpostdate tiny">
+	25 ноября 2020
+  </div>
+</div>
+
+<!-- Navigation links -->
+<script>insertTopLinks()</script>
+
+<!-- Content -->
+
+<div class="column readingtime">
+  Время на чтение: -- минут
+</div>
+
+<p class="column text">
+  При поиске <a href="/termsdefs.html#delayed-palindrome">отложенных палиндромов</a> мы проверяем по очереди каждое <a href="/termsdefs.html#canonical-number">каноническое число</a> в заданном диапазоне. Суть проверки заключается в выполнении над числом некоторого количества операций <a href="/termsdefs.html#reverse-and-add-ru">Перевернуть-И-Сложить</a>. В результате этого процесса число может стать <a href="/termsdefs.html#palindrome">палиндромом</a> в одной из <a href="/termsdefs.html#iteration">итераций</a> цикла, и тогда оно будет считаться отложенным палиндромом, разрешающимся за <i>N</i> <a href="/termsdefs.html#raa-step">шагов</a>, где <i>N</i> будет равно количеству выполненных итераций.
+</p>
+
+<p class="column text">
+  Но как мы уже знаем, не все числа становятся палиндромами. Такие числа называют <a href="/termsdefs.html#lychrel-number">числами Лишрел</a>. Их особенность в том, что они не становятся палиндромами, сколько бы операций Перевернуть-И-Сложить мы над ними ни сделали. Поэтому для таких чисел мы должны ограничить количество итераций.
+</p>
+
+<p class="column text">
+  И тогда возникает вопрос: а сколько нужно сделать итераций, чтобы точно сказать, что некоторое число не является отложенным палиндромом? Ведь чем больше итераций мы будем делать для каждого проверяемого числа, тем медленнее будет поиск. Но, с другой стороны, если мы будем делать недостаточно операций Перевернуть-И-Сложить, мы ошибочно можем принять отложенный палиндром за число Лишрел, попросту не дождавшись его превращения в палиндром.
+</p>
+
+<p class="column text">
+  Продолжение следует...
+</p>
+
+<!-- Navigation links -->
+<script>insertBottomLinks()</script>
+
+<!-- Footer -->
+<div id="pageFooter" data-lang="ru" data-url-path="/blog/choosing-the-proper-search-depth.html"></div>
+
+<!-- Links to other posts -->
+<script>
+  function setPostLinks() {
+	setPrevBlogPostUrl("");
+	setNextBlogPostUrl("/blog/about-new-p196-project.html");
+  }
+</script>
+
+</body>
+</html>
