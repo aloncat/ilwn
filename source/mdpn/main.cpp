@@ -1044,41 +1044,135 @@ int AllLychrelsMain()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//   Временное
+//   ListAllPalindromes - анализ базы данных и перечисление всех палиндромов для шагов 230 и более
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void DoNum(const std::string& n)
+struct Palindrome
 {
-	BigNumber num(n);
-	num.ReverseAndAdd(1);
+	Number number;			// Наименьшее число, разрешающееся за steps шагов
+	Number palindrome;		// Результирующий палиндром
+	unsigned steps = 0;		// Количество итераций
 
-	std::string s = num.AsString();
-	size_t i = 0, j = s.size() - 1;
+public:
+	Palindrome(const Number& num);
 
-	for (; i < j; ++i, --j)
-	{
-		int a = s[i] - '0';
-		int b = s[j] - '0';
-		while ((a > 1 || (a == 1 && i)) && b < 9)
-		{
-			--a;
-			++b;
-		}
-		s[i] = static_cast<char>('0' + a);
-		s[j] = static_cast<char>('0' + b);
-	}
-	num = s;
+	bool operator <(const Palindrome& that) const;
+	std::string ToString() const;
+};
 
-	const bool withCommas = false;
-	aux::Printf("%s\n", withCommas ? SeparateWithCommas(num).c_str() :
-		num.AsString().c_str());
+//--------------------------------------------------------------------------------------------------------------------------------
+Palindrome::Palindrome(const Number& num)
+{
+	number = num;
+	BigNumber bigNum = num;
+	if (!bigNum.RAATillPalindrome(500, steps))
+		throw std::exception();
+	palindrome = bigNum;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void DoSearch()
+inline bool Palindrome::operator <(const Palindrome& that) const
 {
+	return palindrome < that.palindrome;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+std::string Palindrome::ToString() const
+{
+	return util::Format("PAL[%u] %s [%u][%u] %s", palindrome.GetLength(),
+		palindrome.AsString().substr(0, 20).c_str(), steps, number.GetLength(),
+		SeparateWithCommas(number).c_str());
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool LoadResults(std::set<Palindrome>& allPalindromes)
+{
+	bool isLoaded = false;
+	if (util::BinaryFile f; f.Open(L"results.txt", util::FILE_OPEN_READ))
+	{
+		if (long long fileSize = f.GetSize(); fileSize > 0 && fileSize <= 1024 * 1024)
+		{
+			size_t dataSize = static_cast<size_t>(fileSize);
+			char* buffer = new char[dataSize];
+
+			if (f.Read(buffer, dataSize))
+			{
+				isLoaded = true;
+
+				Number num;
+				std::string s;
+				for (const char* p = buffer; dataSize;)
+				{
+					size_t pad = 0, len = GetStringLength(p, dataSize);
+					while (pad < len && p[len - pad - 1] == 10 || p[len - pad - 1] == 13)
+						++pad;
+
+					s.assign(p, len - pad);
+					if (util::TrimInplace(s); !s.empty())
+					{
+						auto tokens = util::Split(s, " ");
+						if (tokens.size() < 4 || !ConvertToNumber(util::FromAnsi(tokens[3]), num))
+						{
+							isLoaded = false;
+							break;
+						}
+						
+						Palindrome pal(num);
+						allPalindromes.insert(pal);
+					}
+
+					p += len;
+					dataSize -= len;
+				}
+			}
+
+			delete[] buffer;
+		}
+
+		f.Close();
+	}
+
+	return isLoaded;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void SaveResults(const std::set<Palindrome>& allPalindromes)
+{
+	std::vector<const Palindrome*> sorted;
+	for (const Palindrome& pal : allPalindromes)
+		sorted.push_back(&pal);
+
+	std::sort(sorted.begin(), sorted.end(), [](const Palindrome* a, const Palindrome* b) {
+		return a->palindrome.GetLength() < b->palindrome.GetLength() ||
+			(a->palindrome.GetLength() == b->palindrome.GetLength() &&
+			a->palindrome < b->palindrome);
+	});
+
+	if (util::MemoryFile f; f.Open())
+	{
+		for (const Palindrome* p : sorted)
+		{
+			auto s = p->ToString() + '\n';
+			f.Write(s.c_str(), s.size());
+		}
+		f.SaveTo(L"results.txt");
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+int ListAllPalindromes()
+{
+	std::set<Palindrome> allPalindromes;
+	constexpr unsigned STEP_OF_INTEREST = 230;
+
+	if (util::FileSystem::FileExists(L"results.txt") && !LoadResults(allPalindromes))
+	{
+		aux::Print("Couldn't load results, file format is invalid\n");
+		return 1;
+	}
+
 	DataBase data;
 	if (data.Init(false, DBChunkState::HEADERONLY))
 	{
@@ -1091,7 +1185,7 @@ void DoSearch()
 				return false;
 			}
 
-			if (pChunk->GetHighestStep() >= 235)
+			if (pChunk->GetHighestStep() >= STEP_OF_INTEREST)
 			{
 				if (!pChunk->LoadData(data, DBChunkState::FULLDATA))
 				{
@@ -1100,25 +1194,24 @@ void DoSearch()
 				}
 
 				Number num;
-				BigNumber current;
 				for (const auto& item : pChunk->GetNumbers())
 				{
-					if (item.step >= 235)
+					if (item.step >= STEP_OF_INTEREST)
 					{
 						num = item.num;
-						aux::Printf("\rSteps[%u]: %s", item.step,
-							//SeparateWithCommas(num).c_str());
-							num.AsString().c_str());
+						Palindrome pal(num);
 
-						current = num;
-						unsigned doneC;
-						if (current.RAATillPalindrome(500, doneC))
+						aux::Printf("\r%s\n", pal.ToString().c_str());
+
+						if (auto it = allPalindromes.find(pal); it == allPalindromes.end())
 						{
-							auto pal = current.AsString().substr(0, 20);
-							aux::Printf("   PAL[%u] %s", current.GetLength(), pal.c_str());
+							allPalindromes.insert(std::move(pal));
 						}
-
-						aux::Print("\n");
+						else if (pal.steps > it->steps || (pal.steps == it->steps && pal.number < it->number))
+						{
+							allPalindromes.erase(it);
+							allPalindromes.insert(std::move(pal));
+						}
 					}
 				}
 			}
@@ -1127,7 +1220,7 @@ void DoSearch()
 			++fileC;
 
 			uint32_t tick = ::GetTickCount();
-			if (tick - lastTick >= 250)
+			if (tick - lastTick >= 500)
 			{
 				aux::Printf("\rFiles processed: %u", fileC);
 				lastTick = tick;
@@ -1136,9 +1229,18 @@ void DoSearch()
 			return true;
 		});
 
-		aux::Printf("\rFiles processed: %u\n", fileC);
+		SaveResults(allPalindromes);
+		aux::Printf("\rTask finished. Files processed: %u\n", fileC);
 	}
+
+	return 0;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   Временное
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------------------------------------
 static std::string GetLowestKin(const Number& num)
@@ -1265,19 +1367,6 @@ void DoNumberTest()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void CheckNum(const std::string& n)
-{
-	BigNumber num(n);
-	unsigned doneC = 0;
-	if (num.RAATillPalindrome(1000, doneC))
-	{
-		aux::Printf("Pal, steps=%u\n", doneC);
-		aux::Printf("Result: length=%u\n%s\n", num.GetLength(),
-			num.AsString().c_str());
-	}
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
 uint64_t GetKinCount(const std::string& n, BigNumber& maxNum)
 {
 	BigNumber num(n);
@@ -1349,6 +1438,7 @@ int wmain(int argC, const wchar_t* argA[])
 {
 	//return GuardedCall(P196ProblemMain, 1);
 	//return GuardedCall(AllLychrelsMain, 1);
+	//return GuardedCall(ListAllPalindromes, 1);
 
 	return GuardedCall(std::bind(Main, argC, argA), 1);
 }
