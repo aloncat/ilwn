@@ -877,35 +877,41 @@ static void P196Problem(P196Progress& data)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------------------------------------
-static bool CheckSeed(BigNumber& num)
+static bool CheckSeed(BigNumber& num, unsigned& stepDoneC)
 {
 	// Здесь мы проверяем кандидата в числа Лишрел - число num. Предварительно, мы уже выполнили отсев и этот
 	// кандидат не отсеялся. Поэтому мы сделаем 2 вещи: 1) выполним над ним довольное большое количество операций
 	// RAA (десятки, сотни тысяч или даже несколько миллионов) и убедимся, что оно не становится палиндромом;
 	// 2) когда мы выйдем из функции, число будет проверено на отсутствие в полном наборе всех базовых чисел
 
-	constexpr unsigned targetLength = 10000;
-
-	const BigNumber initialNum = num;
-	unsigned stepDoneC = 0;
+	constexpr unsigned targetLength = 425000;
 
 	uint32_t lastTick = ::GetTickCount();
 	bool hasOutput = false;
+
+	stepDoneC = 0;
+	bool isPalindrome = false;
+	const BigNumber initialNum = num;
 
 	while (true)
 	{
 		unsigned doneC;
 		if (targetLength - num.GetLength() < 500)
 		{
-			return !num.RAATillLength(targetLength, doneC);
+			isPalindrome = num.RAATillLength(targetLength, doneC);
+			stepDoneC += doneC;
+			break;
 		}
 
 		if (num.RAATillPalindrome(500, doneC))
-			return false;
+		{
+			isPalindrome = true;
+			break;
+		}
 		stepDoneC += doneC;
 
 		const uint32_t tick = ::GetTickCount();
-		if (tick - lastTick >= 250)
+		if (tick - lastTick >= 500)
 		{
 			hasOutput = true;
 			aux::Printf("\r  Testing %s, iteration %s...", SeparateWithCommas(initialNum).c_str(),
@@ -923,10 +929,7 @@ static bool CheckSeed(BigNumber& num)
 		}
 	}
 
-	// TODO: нужно контролировать получение палиндрома. Если внутри этой функции будет получен палиндром с шагом,
-	// вышеминимального шага проверки MDPN (для диапазона или файла .pal), то это будет ого-го какой прецедент!
-
-	return false;
+	return !isPalindrome;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -942,6 +945,7 @@ static void AllLychrels()
 	std::set<FixNumber> siftSet;
 	std::set<BigNumber> seeds;
 	unsigned seedCount = 0;
+	unsigned minDepth = 0;
 
 	BigNumber bigNum;
 	bigNum.Reserve(2000000);
@@ -953,6 +957,9 @@ static void AllLychrels()
 	{
 		++lastNum;
 		lastNum.SkipRAADups();
+
+		if (lastNum.GetLength() > 6)
+			break;
 
 		unsigned doneC;
 		current = lastNum;
@@ -968,44 +975,53 @@ static void AllLychrels()
 					aux::Printf("\rFound Lychrel candidate: #14#%s\n",
 						SeparateWithCommas(lastNum).c_str());
 
-					bigNum = lastNum;
 					// Теперь конкретно проверяем кандидата
-					if (CheckSeed(bigNum) && seeds.find(bigNum) == seeds.end())
+					if (bigNum = lastNum; CheckSeed(bigNum, doneC))
 					{
-						++seedCount;
-						// NB: этот способ требует огромного количества памяти (особенно при большой глубине проверки).
-						// Лучше завести map, где ключом будет хеш числа, а значением - исходное число Лишрел. При этом,
-						// если хеши совпали, будет необходимо сравнить реальные результаты. Но нет смысла прокручивать
-						// исходное число на полную глубину: можно делать частями для обоих чисел, например, по 500 итераций
-						// и сравнивать числа каждый раз. Если это реальное совпадение, то проверка завершится очень рано.
-						// Если хеши совпали ложно, то при таком способе придётся крутить на полную глубину оба числа
-						// (что, конечно, долго). Поэтому хеш лучше брать 64-битным или больше (например, SHA-256)
-						seeds.insert(bigNum);
+						if (!minDepth || doneC < minDepth)
+							minDepth = doneC;
 
-						auto s = util::Format("Seed #%u: %s\n", seedCount,
-							SeparateWithCommas(lastNum).c_str());
-						log.Write(s.c_str(), s.size());
+						if (seeds.find(bigNum) == seeds.end())
+						{
+							++seedCount;
+							// NB: этот способ требует огромного количества памяти (особенно при большой глубине проверки).
+							// Лучше завести map, где ключом будет хеш числа, а значением - исходное число Лишрел. При этом,
+							// если хеши совпали, будет необходимо сравнить реальные результаты. Но нет смысла прокручивать
+							// исходное число на полную глубину: можно делать частями для обоих чисел, например, по 500 итераций
+							// и сравнивать числа каждый раз. Если это реальное совпадение, то проверка завершится очень рано.
+							// Если хеши совпали ложно, то при таком способе придётся крутить на полную глубину оба числа
+							// (что, конечно, долго). Поэтому хеш лучше брать 64-битным или больше (например, SHA-256)
+							seeds.insert(bigNum);
 
-						aux::Printf("\r  #10Found Lychrel seed number (#15###%u#10): #14#%s\n",
-							seedCount, SeparateWithCommas(lastNum).c_str());
+							auto s = util::Format("Seed #%u: %s\n", seedCount,
+								SeparateWithCommas(lastNum).c_str());
+							log.Write(s.c_str(), s.size());
+
+							aux::Printf("\r  #10Found Lychrel seed number (#15###%u#10): #14#%s\n",
+								seedCount, SeparateWithCommas(lastNum).c_str());
+						} else
+						{
+							if (util::SystemConsole::Instance().IsCtrlCPressed())
+								break;
+
+							aux::Printf("\r  #7Candidate evaluated to a kin number, skipped\n");
+						}
 					} else
 					{
-						if (util::SystemConsole::Instance().IsCtrlCPressed())
-							break;
-
-						aux::Printf("\r  #7Candidate evaluated to a kin number, skipped\n");
+						aux::Printf("#12\rUnexpected palindrome encountered!\n");
+						aux::Printf("  Tested number: %s\n", SeparateWithCommas(lastNum).c_str());
+						break;
 					}
 				}
 			}
 		}
 
-		if ((++testedC & 0x3ff) == 0)
+		if (!(++testedC & 0xff))
 		{
 			const uint32_t tick = ::GetTickCount();
 			if (tick - lastTick >= 500)
 			{
-				const uint32_t elapsed = tick - lastTick;
-				const float speed = (elapsed > 50) ? 1000.f * testedC / elapsed : 0.f;
+				const float speed = 1000.f * testedC / (tick - lastTick);
 				aux::Printf("\r%s [%s]... \b", SeparateWithCommas(lastNum).c_str(),
 					FormatSpeed(speed).c_str());
 				lastTick = tick;
@@ -1020,16 +1036,16 @@ static void AllLychrels()
 		}
 	}
 
+	auto s = util::Format("Min depth: %u\n", minDepth);
+	log.Write(s.c_str(), s.size());
+	aux::Print(s);
+
 	log.Close();
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 int AllLychrelsMain()
 {
-	const std::string buildVer = GetAppVersion();
-	aux::Printf("Most Delayed Palindromic Number project. Built on %s\n", buildVer.c_str());
-	aux::Print("For more information, please visit us at https://dmaslov.me\n");
-
 	if (!TestFacility::CheckRequirements(false))
 	{
 		aux::Printc("#12Error: #7failed to pass one or more crucial checks\n");
@@ -1037,8 +1053,8 @@ int AllLychrelsMain()
 	}
 
 	::SetThreadPriority(::GetCurrentThread(), THREAD_PRIORITY_LOWEST);
-	AllLychrels();
 
+	AllLychrels();
 	return 0;
 }
 
