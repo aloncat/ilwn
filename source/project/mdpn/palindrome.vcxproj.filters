@@ -182,4 +182,7 @@
       <Filter>util</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\..\mdpn\cuda.cpp" />
+  </ItemGroup>
 </Project>

@@ -51,7 +51,9 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.2.props" />
+  </ImportGroup>
   <ImportGroup Label="Shared" />
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -102,6 +104,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61</CodeGeneration>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -123,6 +128,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61</CodeGeneration>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -155,6 +163,9 @@
     <PreBuildEvent>
       <Command>..\..\..\..\aml\bin\ftool.exe --tf ..\..\mdpn\version.cpp</Command>
     </PreBuildEvent>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61</CodeGeneration>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -187,6 +198,9 @@
     <PreBuildEvent>
       <Command>..\..\..\..\aml\bin\ftool.exe --tf ..\..\mdpn\version.cpp</Command>
     </PreBuildEvent>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61</CodeGeneration>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\mdpn\arch.h" />
@@ -250,6 +264,11 @@
     <ClCompile Include="..\..\mdpn\version.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <CudaCompile Include="..\..\mdpn\cuda.cpp">
+      <FileType>Document</FileType>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\..\..\aml\project\core\core.vcxproj">
       <Project>{23e364b3-83f5-43c4-ba0a-c0347276bdcd}</Project>
     </ProjectReference>
@@ -262,5 +281,6 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.2.targets" />
   </ImportGroup>
 </Project>
