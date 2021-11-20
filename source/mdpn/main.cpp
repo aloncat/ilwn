@@ -784,7 +784,7 @@ static void P196Problem(P196Progress& data)
 {
 	BigNumber num;
 	size_t desiredLength = (data.number.size() + 4999999) / 10000000;
-	desiredLength = std::max(desiredLength + 2, 3ull) * 10000000;
+	desiredLength = std::max(desiredLength + 2, size_t(3)) * 10000000;
 	num.Reserve(desiredLength);
 
 	aux::Printf("Reserved buffer length: %sM digits\n",
@@ -1286,7 +1286,7 @@ void DoNumberTest()
 	util::MemoryFile f, fout;
 	if (f.LoadFrom(L"results.txt"))
 	{
-		size_t fileSize = f.GetSize();
+		size_t fileSize = static_cast<size_t>(f.GetSize());
 		char* buffer = new char[fileSize];
 		f.Read(buffer, fileSize);
 		f.Close();
