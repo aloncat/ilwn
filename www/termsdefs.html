@@ -38,18 +38,18 @@
 	<div><a href="#p196"><b>P196</b></a></div>
 	<div><a href="#raa-op"><b>RAA</b></a></div>
 	<div><a href="#reverse-and-add"><b>Reverse-And-Add</b></a></div>
-	<div><a class="nodecor" href="#rs-number"><b>RSN</b></a></div>
+	<div><a href="#rs-number"><b>RSN</b></a></div>
 	<div><a class="nodecor" href="#lychrel-seed-number"><b>базовое</b> число Лишрел</a></div>
 	<div><a href="#search-depth"><b>глубина</b> поиска</a></div>
-	<div><a class="nodecor" href="#rs-number-ru"><b>достоверно</b> наименьший ОП</a></div>
+	<div><a href="#rs-number-ru"><b>достоверно</b> наименьший ОП</a></div>
 	<div><a href="#iteration"><b>итерация</b></a></div>
-	<div><a class="nodecor" href="#dp-candidate"><b>кандидат</b> (ОП)</a></div>
+	<div><a href="#dp-candidate"><b>кандидат</b> (ОП)</a></div>
 	<div><a class="nodecor" href="#canonical-number"><b>канонический</b> вид</a></div>
 	<div><a href="#lychrel-number">число <b>Лишрел</b></a></div>
 	<div><a href="#local-record"><b>локальный</b> рекорд</a></div>
 	<div><a href="#world-record"><b>мировой</b> рекорд</a></div>
 	<div><a href="#most-delayed-palindrome"><b>наиболее</b> отложенный палиндром</a></div>
-	<div><a class="nodecor" href="#smallest-delayed-palindrome"><b>наименьший</b> отложенный палиндром</a></div>
+	<div><a href="#smallest-delayed-palindrome"><b>наименьший</b> отложенный палиндром</a></div>
 	<div><a class="nodecor" href="#reverse-guessing"><b>обратный</b> вывод</a></div>
 	<div><a href="#delayed-palindrome"><b>отложенный</b> палиндром</a></div>
 	<div><a href="#palindrome"><b>палиндром</b></a></div>
@@ -186,18 +186,21 @@
   </p>
 </div>
 
-<!--<div class="column divider">&bull; &bull; &bull;</div>
+<div class="column divider">&bull; &bull; &bull;</div>
 
 <div id="rs-number" class="column">
   <div class="termheader">
 	RSN
   </div>
   <p class="text">
-	Описание скоро появится...
+	Аббревиатура <b><i>RSN</i></b> &mdash; это сокращение от <a href="#rs-number-ru">Reliably Smallest Number</a> (дословно &laquo;достоверно наименьшее число&raquo;), применяемое по отношению к <a href="#smallest-delayed-palindrome">наименьшему отложенному палиндрому</a> и означающее, что были проверены абсолютно все натуральные числа, меньшие его, и что среди них нет <a href="#delayed-palindrome">отложенных палиндромов</a>, разрешающихся за такое же количество <a href="#iteration">итераций</a>.
+  </p>
+  <p class="text">
+	Понятие <a href="#rs-number-ru">достоверно наименьшего отложенного палиндрома</a> неразрывно связано с понятием <a href="#dp-candidate">кандидата</a>.
   </p>
 </div>
 
-<div class="column divider">&bull; &bull; &bull;</div>
+<!--<div class="column divider">&bull; &bull; &bull;</div>
 
 <div id="lychrel-seed-number" class="column">
   <div class="termheader">
@@ -225,16 +228,22 @@
   </p>
 </div>
 
-<!--<div class="column divider">&bull; &bull; &bull;</div>
+<div class="column divider">&bull; &bull; &bull;</div>
 
 <div id="rs-number-ru" class="column">
   <div class="termheader">
 	Достоверно наименьший отложенный палиндром
   </div>
   <p class="text">
-	Описание скоро появится...
+	<b><i>Достоверно наименьший отложенный палиндром</i></b> &mdash; это <a href="#delayed-palindrome">отложенный палиндром</a>, для которого проверены абсолютно все натуральные числа, меньшие его, и среди которых нет отложенных палиндромов, разрешающихся за такое же количество <a href="#iteration">итераций</a>.
   </p>
-</div>-->
+  <p class="text">
+	Другими словами, достоверно наименьший отложенный палиндром для шага <i>N</i> является наименьшим натуральным числом, которому требуется <i>N</i> итераций для того, чтобы стать <a href="#palindrome">палиндромом</a>. И не существует никакого другого числа меньшего данного, которое бы разрешалось за <i>N</i> итераций.
+  </p>
+  <p class="text">
+	В противоположность этому <a href="#dp-candidate">кандидат</a> является наименьшим среди <i>известных</i> отложенных палиндромов, разрешающихся за некоторое количество операций <a href="#reverse-and-add-ru">Перевернуть-И-Сложить</a>. И с определённой вероятностью для него может найтись меньшее число, которое будет разрешаться за это же количество итераций.
+  </p>
+</div>
 
 <div class="column divider">&bull; &bull; &bull;</div>
 
@@ -250,18 +259,27 @@
   </p>
 </div>
 
-<!--<div class="column divider">&bull; &bull; &bull;</div>
+<div class="column divider">&bull; &bull; &bull;</div>
 
 <div id="dp-candidate" class="column">
   <div class="termheader">
 	Кандидат (отложенный палиндром)
   </div>
   <p class="text">
-	Описание скоро появится...
+	<b><i>Кандидатами</i></b> называют такие <a href="#smallest-delayed-palindrome">наименьшие отложенные палиндромы</a>, перед которыми существуют непроверенные числа, то есть числа, о которых мы не знаем, являются они <a href="#lychrel-number">числами Лишрел</a> или <a href="#delayed-palindrome">отложенными палиндромами</a>. Для любого кандидата есть вероятность того, что среди непроверенных перед ним чисел найдётся другое меньшее число, которое разрешается за такое же количество <a href="#iteration">итераций</a>.
+  </p>
+  <p class="text">
+	Наименьший отложенный палиндром для некоторого <a href="#raa-step">шага</a> считается кандидатом до тех пор, пока перед ним не будут проверены все другие числа. Как только это произойдёт, кандидат станет <a href="#rs-number-ru">достоверно наименьшим отложенным палиндромом</a>.
+  </p>
+  <p class="text">
+	Часто числа в некотором диапазоне проверяются не последовательно, а на разных его участках одновременно разными компьютерами. Поэтому, когда мы находим отложенный палиндром для некоторого шага, большое количество чисел, меньших, чем найденное, могут оставаться непроверенными. Число, которое мы нашли, является самым меньшим среди всех, которые нам известны в данный момент. Но среди непроверенных чисел позже может найтись другое меньшее число, разрешающееся за такое же количество итераций.
+  </p>
+  <p class="text">
+	Аналогичная ситуация возникает при <a href="#forward-guessing">прямом</a> и <a href="#reverse-guessing">обратном выводе</a>: найденные отложенные палиндромы могут быть расположены в любой части диапазона, и даже за его пределами, то есть в старшем диапазоне, проверку которого мы ещё даже не начинали. Поэтому все числа, полученные этими способами, как правило, считаются кандидатами до момента завершения проверки методом перебора всех чисел перед ними.
   </p>
 </div>
 
-<div class="column divider">&bull; &bull; &bull;</div>
+<!--<div class="column divider">&bull; &bull; &bull;</div>
 
 <div id="canonical-number" class="column">
   <div class="termheader">
@@ -355,18 +373,24 @@
   </p>
 </div>
 
-<!--<div class="column divider">&bull; &bull; &bull;</div>
+<div class="column divider">&bull; &bull; &bull;</div>
 
 <div id="smallest-delayed-palindrome" class="column">
   <div class="termheader">
 	Наименьший отложенный палиндром
   </div>
   <p class="text">
-	Описание скоро появится...
+	<b><i>Наименьший отложенный палиндром</i></b> (для <a href="#raa-step">шага</a> <i>N</i>) &mdash; это наименьшее число среди всех проверенных натуральных чисел, которые разрешаются за <i>N</i> <a href="#iteration">итераций</a>. Иными словами &mdash; это наименьший среди всех известных в данный момент <a href="#delayed-palindrome">отложенных палиндромов</a> для шага <i>N</i>.
+  </p>
+  <p class="text">
+	В отличие от <a href="#rs-number-ru">достоверно наименьшего отложенного палиндрома</a>, просто наименьший отложенный палиндром не обязательно является самым маленьким натуральным числом, которое становится <a href="#palindrome">палиндромом</a> за <i>N</i> шагов.
+  </p>
+  <p class="text">
+	Причиной этого является наличие перед наименьшим известным отложенным палиндромом других непроверенных чисел. И поэтому такие отложенные палиндромы считаются <a href="#dp-candidate">кандидатами</a> до тех пор, пока перед ними не будут проверены все другие числа.
   </p>
 </div>
 
-<div class="column divider">&bull; &bull; &bull;</div>
+<!--<div class="column divider">&bull; &bull; &bull;</div>
 
 <div id="reverse-guessing" class="column">
   <div class="termheader">
