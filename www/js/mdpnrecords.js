@@ -5,7 +5,7 @@ const wideLengths = [];
 wideLengths[23] = 50;
 wideLengths[24] = 50;
 wideLengths[25] = 48;
-wideLengths[0] = 40;
+wideLengths[0] = 46;
 
 const cache = new Map();
 cache.missCount = 0;
