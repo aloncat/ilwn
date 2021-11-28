@@ -586,6 +586,74 @@ table.dpal .pal-active:hover {
 	color: #f30;
 }
 
+/* Custom classes: MDPN palindromes page */
+
+div.column div.pal {
+	margin: 24px auto;
+	overflow-x: auto;
+	font-size: 92.86%; /* 13.0px */
+	line-height: 1.308; /* 17.0px */
+}
+
+div.pal span.paltag-length {
+	padding: 0 4px;
+	font-size: 12px;
+	font-weight: bold;
+	background: #c0c0c0;
+	color: white;
+	border-radius: 8px;
+}
+
+table.pal {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 1px;
+	background: #b8b8b8;
+}
+
+table.pal tr {
+	background: #fff;
+}
+
+table.pal tr:first-child {
+	background: #e8e8e8;
+}
+
+table.pal tr:nth-child(2n+3) {
+	background: #f8f8f8;
+}
+
+table.pal tr:nth-child(n+2):hover {
+	background: #fffca8;
+}
+
+table.pal td {
+	padding: 2px 5px 3px;
+	text-align: center;
+}
+
+table.pal td:first-child,
+table.pal td:nth-child(3),
+table.pal td:nth-child(4) {
+	width: 60px;
+	min-width: 50px;
+}
+
+table.pal td:nth-child(2) {
+	width: 190px;
+	min-width: 160px;
+}
+
+table.pal td:nth-child(3) {
+	width: 65px;
+}
+
+table.pal tr:nth-child(n+2) > td:nth-child(5) {
+	font-family: Consolas, monospace;
+	text-align: left;
+	white-space: nowrap;
+}
+
 /* Custom classes: others */
 
 div.statusblock {
@@ -927,6 +995,16 @@ h3.fact > span {
 
 	#resultsBlock #contents input#pageLink {
 		width: calc(100% - 14px);
+	}
+}
+
+@media screen and (max-width: 725px) {
+	table.pal td:nth-child(2) {
+		width: auto;
+	}
+
+	table.pal td:nth-child(5) {
+		display: none;
 	}
 }
 
