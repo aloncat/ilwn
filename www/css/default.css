@@ -262,6 +262,11 @@ table.basic td {
 	text-align: justify;
 }
 
+.codetext {
+	font-family: Consolas, monospace;
+	color: #a00;
+}
+
 .nobottommargin {
 	margin-bottom: 0;
 }

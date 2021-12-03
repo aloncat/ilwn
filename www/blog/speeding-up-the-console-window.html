@@ -1,0 +1,162 @@
+﻿<!DOCTYPE html>
+<html lang="ru"><head>
+  <title>Ускоряем работу консольных окон в Windows - блог iLWN</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="description" content="О скорости вывода текста в консольных
+	окнах ОС Windows, от чего она зависит, и как её повысить">
+  <meta name="keywords" content="консоль, Windows, программирование">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="/css/default.css">
+  <link rel="canonical" href="https://dmaslov.me/blog/speeding-up-the-console-window.html">
+  <script defer src="/js/blognav.js"></script>
+</head>
+<body onload="setPostLinks()">
+
+<!-- Navigation bar -->
+<script src="/js/pageheader.js"></script>
+
+<!-- Title, tags, date -->
+
+<h1 class="blogpost">Ускоряем работу консольных окон в Windows</h1>
+
+<div class="column" style="text-align: center">
+  <div class="small">Теги:
+	<span class="blogtag">#console</span>
+	<span class="blogtag">#programming</span>
+  </div>
+  <div class="blogpostdate tiny">
+	3 декабря 2021
+  </div>
+</div>
+
+<!-- Navigation links -->
+<script>insertTopLinks()</script>
+
+<!-- Content -->
+
+<div class="column readingtime">
+  Время на чтение: 5 минут
+</div>
+
+<p class="column text">
+  Последние несколько дней я занимаюсь рефакторингом и переносом кода в новый публичный репозиторий. И сегодня я закончил работу над классом, отвечающим за ввод и вывод в окно консоли. Выполняя тесты, я решил проверить, насколько быстро или медленно работает вывод текста в консоль.
+</p>
+
+<p class="column text">
+  То, что я выяснил, меня несколько удивило. И поэтому я решил поделиться этой информацией, так как думаю, что она может быть полезной кому-то ещё. В этом посте я расскажу о том, как можно сделать работу консольных окон (и некоторых консольных приложений) в ОС Windows немного быстрее.
+</p>
+
+<div class="column divider">&bull; &bull; &bull;</div>
+
+<p class="column text">
+  Начну с того, что можно сделать со стороны пользователя, то есть того, что применимо к любому консольному приложению. Актуально это для тех приложений, которые выводят в своё окно большое количество текста (тысячи строк).
+</p>
+
+<p class="column text">
+  Оказывается, что вне зависимости от способа, которым программа выводит текст, на скорость вывода в окно консоли очень сильно влияют два параметра в свойствах самого окна: высота буфера экрана, а также высота (количество строк) окна. Чем выше каждое из этих значений, тем ниже будет скорость вывода. На скриншоте окна &laquo;Свойства&raquo;, расположенном ниже, оба этих параметра обведены красными прямоугольниками.
+</p>
+
+<div class="column txtcenter">
+  <img src="/img/win_console_wnd_properties-ru.png" width="415" height="514" alt="Console window properties" style="margin: 0 auto; border: 0">
+</div>
+
+<p class="column text">
+  Высота буфера экрана задаёт количество строк текста, которые сохраняются для отображения. То есть то количество выведенного в окно текста, которое будет можно увидеть, прокрутив назад вертикальную полосу прокрутки. По умолчанию это значение равно 9001 (по крайней мере на ОС Windows 10). Максимально возможное значение этого параметра &mdash; 9999. Второй параметр (высота окна) задаёт количество строк, которые будут отображаться в окне.
+</p>
+
+<p class="column text">
+  В таблицах ниже можно увидеть, как влияет выбор значения этих параметров на скорость вывода. В качестве теста я написал простой цикл, в котором в окно консоли подряд выводятся 10,000 строк &laquo;This is a text&raquo;. Причем длина строки практически не влияла на скорость вывода (я пробовал выводить несколько строк разной длины). Для первой таблицы значение высоты окна было равно 30, для второй &mdash; значение высоты буфера было равно 5000.
+</p>
+
+<div class="column">
+  <table class="basic small">
+	<tr style="text-align: center; background: white">
+	  <td style="width: 135px; background: #e8e8e8">Высота буфера</td>
+	  <td style="width: 65px">100</td>
+	  <td style="width: 65px">200</td>
+	  <td style="width: 65px">500</td>
+	  <td style="width: 65px">1000</td>
+	  <td style="width: 65px">2000</td>
+	  <td style="width: 65px">5000</td>
+	  <td style="width: 65px">9000</td>
+	</tr>
+	<tr>
+	  <td style="background: #e8e8e8">Время работы (секунды)</td>
+	  <td>0.196</td>
+	  <td>0.209</td>
+	  <td>0.263</td>
+	  <td>0.351</td>
+	  <td>0.520</td>
+	  <td>1.028</td>
+	  <td>1.745</td>
+	</tr>
+  </table>
+</div>
+
+<div class="column">
+  <table class="basic small">
+	<tr style="text-align: center; background: white">
+	  <td style="width: 135px; background: #e8e8e8">Высота окна</td>
+	  <td style="width: 65px">10</td>
+	  <td style="width: 65px">15</td>
+	  <td style="width: 65px">20</td>
+	  <td style="width: 65px">25</td>
+	  <td style="width: 65px">40</td>
+	  <td style="width: 65px">50</td>
+	  <td style="width: 65px">62</td>
+	</tr>
+	<tr>
+	  <td style="background: #e8e8e8">Время работы (секунды)</td>
+	  <td>0.904</td>
+	  <td>0.936</td>
+	  <td>0.958</td>
+	  <td>1.010</td>
+	  <td>1.286</td>
+	  <td>1.400</td>
+	  <td>1.520</td>
+	</tr>
+  </table>
+</div>
+
+<p class="column text">
+  Таким образом, если большая история вывода в окне не требуется, то уменьшение значения высоты буфера окна может повысить скорость вывода в несколько раз! И если приложение выводит в окно очень большое количество текста, то это также может значительно ускорить его работу.
+</p>
+
+<p class="column text">
+  Размер окна имеет не такое огромное влияние на скорость вывода текста. Но тем не менее, не стоит держать окно раскрытым на весь экран, особенно при большой высоте буфера.
+</p>
+
+<p class="column text">
+  И ещё один момент: если свернуть окно, то скорость вывода всегда будет выше. Это объясняется тем, что операционной системе не приходится обновлять само окно при выводе текста. Для свёрнутого окна обновляются лишь данные в его буфере.
+</p>
+
+<div class="column divider">&bull; &bull; &bull;</div>
+
+<p class="column text">
+  Теперь я хочу рассмотреть эту проблему со стороны программиста. Чтобы снизить затраты на вывод текста в окно консоли и его влияние на производительность всего приложения в целом, нужно постараться свести к минимуму количество обращений к функциям консольного API операционной системы.
+</p>
+
+<p class="column text">
+  Например, если нужно вывести форматированный текст, то лучше будет сначала сформировать всю строку в памяти, и только затем вывести её на экран за один вызов функции <span class="codetext">WriteConsole</span>.
+</p>
+
+<p class="column text">
+  Если программе требуется периодически выводить на экран статус длительной операции или её прогресс, то лучше делать это с определённой заранее заданной периодичностью, например всего 1 или 2 раза в секунду. Этот подход используется во всех консольных приложениях <a href="/termsdefs.html#ilwn"><b>iLWN</b></a>.
+</p>
+
+<!-- Navigation links -->
+<script>insertBottomLinks()</script>
+
+<!-- Footer -->
+<div id="pageFooter" data-lang="ru" data-url-path="/blog/speeding-up-the-console-window.html"></div>
+
+<!-- Links to other posts -->
+<script>
+  function setPostLinks() {
+	setPrevBlogPostUrl("/blog/about-new-p196-project.html");
+	setNextBlogPostUrl("");
+  }
+</script>
+
+</body>
+</html>
