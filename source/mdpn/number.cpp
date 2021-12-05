@@ -897,25 +897,10 @@ size_t FixNumber::Unpack(uint8_t* digitA) const
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//----------------------------------------------------------------------------------------------------------------------
-#define RAA_SUM32(POUT) \
-	carry += 0xf6f6f6f6; \
-	front = util::ByteSwap32(front); \
-	uint32_t sum = static_cast<uint32_t>(front + back + carry); \
-	carry = ~sum >> 31; \
-	uint32_t mask = sum & 0x60606060; \
-	*(POUT) = (sum & 0x0f0f0f0f) - (mask >> 4);
-
-//----------------------------------------------------------------------------------------------------------------------
-#define RAA_SUM64(POUT) \
-	carry += 0xf6f6f6f6f6f6f6f6ull; \
-	front = util::ByteSwap64(front); \
-	uint64_t sum = front + back + carry; \
-	carry = ~sum >> 63; \
-	uint64_t mask = sum & 0x6060606060606060ull; \
-	*(POUT) = (sum & 0x0f0f0f0f0f0f0f0full) - (mask >> 4);
-
 DEFINE_NUMBER_OPS(BigNumber)
+
+const size_t BigNumber::raaMask[8] = { 0, 0xff, 0xffff, 0xffffff,
+	0xffffffff, ~size_t(0) >> 24, ~size_t(0) >> 16, ~size_t(0) >> 8 };
 
 //----------------------------------------------------------------------------------------------------------------------
 BigNumber::BigNumber(const BigNumber& that)
@@ -1093,18 +1078,18 @@ unsigned BigNumber::RAA(unsigned stepC, bool stopOnPalindrome)
 	unsigned doneC = 0;
 	for (unsigned step = 1; step <= stepC; ++step)
 	{
-		const uint32_t* pF = reinterpret_cast<uint32_t*>(pDig1);
-		const uint32_t* pL = reinterpret_cast<uint32_t*>(pDig1 + m_Length);
-		uint32_t* pOut = reinterpret_cast<uint32_t*>(pDig2);
+		const uint64_t* pF = reinterpret_cast<uint64_t*>(pDig1);
+		const uint64_t* pL = reinterpret_cast<uint64_t*>(pDig1 + m_Length);
+		uint64_t* pOut = reinterpret_cast<uint64_t*>(pDig2);
 
-		size_t carry = 0;
+		uint8_t carry = 0;
 		// Алгоритм RAA использует инструкции SSSE3
 		if (size_t i = m_Length / 16)
 		{
 			__m128i cr = _mm_unpacklo_epi64(maskF6, maskF7);
 
 			do {
-				pL -= 4;
+				pL -= 2;
 				// 16 байт левой части массива (младшие 16 разрядов числа) складываем с
 				// "перевёрнутыми" 16 байтами правой части массива (старшие 16 разрядов числа)
 				// и добавляем к сумме значение cr, которое содержит маску 0xf6..f6 и флаг переноса
@@ -1118,47 +1103,67 @@ unsigned BigNumber::RAA(unsigned stepC, bool stopOnPalindrome)
 				_mm_store_si128(reinterpret_cast<__m128i*>(pOut), _mm_sub_epi8(sum, _mm_and_si128(mask, maskF6)));
 				// Формируем новое значение cr, учитывая перенос в старших 64 битах
 				cr = _mm_add_epi8(_mm_srli_si128(mask, 15), maskF7);
-				pF += 4; pOut += 4;
+				pF += 2; pOut += 2;
 			} while (--i);
 
 			carry = _mm_extract_epi16(cr, 0) & 1;
 		}
 
 		#if AML_64BIT
+			constexpr size_t mf6 = 0xf6f6f6f6f6f6f6f6ull;
+			constexpr size_t m0f = 0x0f0f0f0f0f0f0f0full;
+			constexpr size_t m60 = 0x6060606060606060ull;
+
 			if (m_Length & 8)
 			{
-				pL -= 2;
-				uint64_t front = *reinterpret_cast<const uint64_t*>(pL);
-				uint64_t back = *reinterpret_cast<const uint64_t*>(pF);
-				RAA_SUM64(reinterpret_cast<uint64_t*>(pOut));
-				pF +=2; pOut += 2;
+				uint64_t front = *(--pL), back = *pF++;
+				uint64_t sum = util::ByteSwap64(front) + back;
+				carry = _addcarry_u64(carry, sum, mf6, &sum);
+				*pOut++ = (sum & m0f) - ((sum & m60) >> 4);
 			}
-			if (m_Length & 4)
+
+			if (const size_t len = m_Length & 7)
 			{
-				uint32_t front = *(--pL);
-				uint32_t back = *pF++;
-				RAA_SUM32(pOut++);
+				uint64_t front = *reinterpret_cast<const uint64_t*>(pDig1);
+				front = util::ByteSwap64(front << (64 - 8 * len));
+				uint64_t back = *pF & raaMask[len];
+
+				uint64_t sum = front + back;
+				_addcarry_u64(carry, sum, mf6, &sum);
+				sum = (sum & m0f) - ((sum & m60) >> 4);
+				carry = (sum >> (8 * len)) & 0xff;
+				*pOut = sum;
 			}
 		#else
+			constexpr size_t mf6 = 0xf6f6f6f6;
+			constexpr size_t m0f = 0x0f0f0f0f;
+			constexpr size_t m60 = 0x60606060;
+
+			const uint32_t* pBack = reinterpret_cast<const uint32_t*>(pF);
+			const uint32_t* pFront = reinterpret_cast<const uint32_t*>(pL);
+			uint32_t* pOut32 = reinterpret_cast<uint32_t*>(pOut);
+
 			for (size_t i = (m_Length / 4) & 3; i; --i)
 			{
-				uint32_t front = *(--pL);
-				uint32_t back = *pF++;
-				RAA_SUM32(pOut++);
+				uint32_t front = *(--pFront), back = *pBack++;
+				uint32_t sum = util::ByteSwap32(front) + back;
+				carry = _addcarry_u32(carry, sum, mf6, &sum);
+				*pOut32++ = (sum & m0f) - ((sum & m60) >> 4);
+			}
+
+			if (const size_t len = m_Length & 3)
+			{
+				uint32_t front = *reinterpret_cast<const uint32_t*>(pDig1);
+				front = util::ByteSwap32(front << (32 - 8 * len));
+				uint32_t back = *pBack & raaMask[len];
+
+				uint32_t sum = front + back;
+				_addcarry_u32(carry, sum, mf6, &sum);
+				sum = (sum & m0f) - ((sum & m60) >> 4);
+				carry = (sum >> (8 * len)) & 0xff;
+				*pOut32 = sum;
 			}
 		#endif
-
-		const uint8_t* pFb = reinterpret_cast<const uint8_t*>(pF);
-		const uint8_t* pLb = reinterpret_cast<const uint8_t*>(pL);
-		uint8_t* pOb = reinterpret_cast<uint8_t*>(pOut);
-
-		for (size_t i = m_Length & 3; i; --i)
-		{
-			const size_t v = carry + *(--pLb) + *pFb++;
-			const size_t vc = v - 10;
-			*pOb++ = static_cast<uint8_t>((v < 10) ? v : vc);
-			carry = (v < 10) ? 0 : 1;
-		}
 
 		if (carry)
 		{

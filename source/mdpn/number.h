@@ -281,6 +281,8 @@ public:
 protected:
 	// Размер локального буфера для RAATillPalindrome (выделяется на стеке)
 	static constexpr size_t LOCAL_RAA_BUFFER_SIZE = 640;
+	// Массив масок для операции RAA
+	static const size_t raaMask[8];
 
 	uint8_t* AllocateRAABuffer(size_t maxLength);
 
