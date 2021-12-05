@@ -1216,6 +1216,11 @@ void SearchMode::DBThreadFN()
 							m_Data.AddPalindrome(num, totalStepDoneC);
 							if (!alreadyFound && m_Steps->IsNew(totalStepDoneC))
 								m_Events->OnPalindromeFound(num, totalStepDoneC);
+							else if (totalStepDoneC >= 228)
+							{
+								m_Events->OnCustomEvent(util::Format("#8Found new number #7#%s#8 for h-step #6#%u",
+									SeparateWithCommas(num).c_str(), totalStepDoneC));
+							}
 						} else
 							m_Data.AddPalindrome(totalStepDoneC);
 					}

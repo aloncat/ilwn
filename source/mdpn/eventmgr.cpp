@@ -31,8 +31,8 @@ void EventManager::OnPalindromeFound(const Number& num, unsigned step)
 		m_HighestStep = step;
 
 	Event event;
-	event.text = util::Format(isRecord ? "New #12RECORD!#7 found: number #10#%s#7"
-		" for step #10#%u" : "Found the smallest number #15#%s#7 for step #15#%u",
+	event.text = util::Format(isRecord ? "New #12RECORD#7 found: number #10#%s#7"
+		" for step #10#%u" : "Found the smallest number #15#%s#7 for step #14#%u",
 		SeparateWithCommas(num).c_str(), step);
 
 	AddEvent(std::move(event));
