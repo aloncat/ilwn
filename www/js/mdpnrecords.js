@@ -12,7 +12,7 @@ cache.missCount = 0;
 cache.hitCount = 0;
 
 const wideLenInitFlags = [];
-for (let step = 34; step <= 289; ++step)
+for (let step = 34; step <= 293; ++step)
 	initPalindrome(step);
 
 console.log("Calculation finished, cache hits: " + cache.hitCount +
