@@ -46,7 +46,7 @@ function initPalindrome(step) {
 				} else {
 					shortSpan = '<span class="pal-short pal-active" ' +
 					'onclick="toggleFullPalindrome(' + step + ', true)">' +
-					info.result.substr(0, 20) + '...</span>';
+					info.result.substring(0, 20) + '...</span>';
 				}
 
 				if (info.result.length <= wideLength + 3) {
@@ -54,7 +54,7 @@ function initPalindrome(step) {
 				} else {
 					wideSpan = '<span class="pal-wide pal-active" ' +
 					'onclick="toggleFullPalindrome(' + step + ', true)">' +
-					info.result.substr(0, wideLength) + '...</span>';
+					info.result.substring(0, wideLength) + '...</span>';
 				}
 
 				resElement.innerHTML = '<div id="' + step + '-norm">' +

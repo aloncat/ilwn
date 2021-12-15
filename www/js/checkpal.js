@@ -12,7 +12,7 @@ const FX_STAY_TIMEOUT = 200; // Milliseconds
 const FX_FADE_TIMEOUT = "1.0s"; // Duration (CSS)
 const ONCOPY_FX_COLOR = "#0c0"; // Color (CSS)
 const URL_PREFIX = "https://dmaslov.me";
-const SCRIPT_VERSION = "2021.12.14";
+const SCRIPT_VERSION = "2021.12.15.2";
 
 (function () {
 	loadingText.style.display = "none";
@@ -27,10 +27,13 @@ const SCRIPT_VERSION = "2021.12.14";
 
 	checkButton.onclick = onCheckButtonDown;
 
-	const params = window.location.search.slice(1);
-	// Treat the very first parameter as a number to test
-	const numFromUrl = params.slice(params.indexOf("=") + 1);
-	numberInput.value = decodeURIComponent(numFromUrl).trim();
+	const params = window.location.search.slice(1).split("&");
+	if (params.length && params[0])
+	{
+		// Treat the very first parameter as a number to test
+		const numFromUrl = params[0].slice(params[0].indexOf("=") + 1);
+		numberInput.value = decodeURIComponent(numFromUrl).trim();
+	}
 
 	onNumberInput();
 	if (!onCheckButtonDown())
@@ -333,7 +336,7 @@ function getBasicContent(language, data) {
 		if (data.result.length <= 20) {
 			result += ': <span id="raaResult">' + raaResult + '</span> (';
 		} else {
-			raaResult = data.result.substr(0, 20);
+			raaResult = data.result.substring(0, 20);
 			result += ' (первые 20 из них: <span id="raaResult">' + raaResult + '</span>, ';
 		}
 		result += '<a class="jsanchor" onclick="copyRaaResultToClipboard(\'' + raaResult +
