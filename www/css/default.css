@@ -510,6 +510,10 @@ table.dpal tr:first-child {
 	background: #e8e8e8;
 }
 
+table.dpal tr:first-child > td {
+	height: 34px;
+}
+
 table.dpal tr:nth-child(n+3) {
 	font-family: Consolas, monospace;
 }
