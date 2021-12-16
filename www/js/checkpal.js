@@ -12,7 +12,7 @@ const FX_STAY_TIMEOUT = 200; // Milliseconds
 const FX_FADE_TIMEOUT = "1.0s"; // Duration (CSS)
 const ONCOPY_FX_COLOR = "#0c0"; // Color (CSS)
 const URL_PREFIX = "https://dmaslov.me";
-const SCRIPT_VERSION = "2021.12.16.2";
+const SCRIPT_VERSION = "2021.12.16.3";
 
 (function () {
 	loadingText.style.display = "none";
@@ -279,8 +279,8 @@ function isPalindrome(number) {
 function getBasicContent(language, data) {
 	let result = '<p class="text txtleft">' +
 		((language === "ru") ? 'Проверяемое число: ' : 'Tested number: ') +
-		'<span class="breakable"><span class="specnum">' + separateWithCommas(data.number) +
-		'</span>.</span></p>';
+		'<span class="breakable"><span class="specnum">' +
+		separateWithCommas(data.number) + '</span>.</span></p>';
 
 	let smallestKnown;
 	let isNewSmallest = false;
@@ -304,10 +304,9 @@ function getBasicContent(language, data) {
 				', тогда как Ваше число &mdash; за <b>' + data.iterationCount + '</b>! Пожалуйста, ' +
 				'<a href="/contacts.html" target="_blank">свяжитесь со мной</a> и сообщите о Вашей находке!';
 		} else {
-			result += 'It looks like you have found the <b>new world record</b>! ' +
-				'The most delayed palindrome currently known solves in <b>' +
-				highestKnownStep + '</b> iteration' + ((highestKnownStep === 1) ? "" : "s") +
-				', while your number solves in <b>' + data.iterationCount + '</b>! Please ' +
+			result += 'It looks like you have found a <b>new world record</b>! The most ' +
+				'delayed palindromic number currently known solves in <b>' + highestKnownStep +
+				'</b> iterations, while your number solves in <b>' + data.iterationCount + '</b>! Please ' +
 				'<a href="/contacts.html" target="_blank">contact me</a> to let me know about your discovery!';
 		}
 		result += '</p>';
@@ -315,16 +314,15 @@ function getBasicContent(language, data) {
 	else if (isNewSmallest) {
 		result += '<p id="newNumber">';
 		if (language === "ru") {
-			result += 'Похоже, что Вы обнаружили число, которое <b>меньше</b> известного ' +
-				'на данный момент <i>наименьшего</i> отложенного палиндрома, разрешающегося за <b>' +
+			result += 'Похоже, что Вы обнаружили число, которое <b>меньше</b> известного на ' +
+				'данный момент <i>наименьшего</i> отложенного палиндрома, разрешающегося за <b>' +
 				data.iterationCount + '</b> итерац' + getCaseEnding(data.iterationCount, "ию", "ии", "ий") +
 				'! Пожалуйста, <a href="/contacts.html" target="_blank">свяжитесь со мной</a> и ' +
 				'сообщите о Вашей находке!';
 		} else {
-			result += 'It looks like you have found a number that <b>is less</b> than the ' +
-				'currently known <i>smallest</i> delayed palindrome that solves in <b>' +
-				data.iterationCount + '</b> iteration' + ((data.iterationCount === 1) ? "" : "s") +
-				'! Please <a href="/contacts.html" target="_blank">contact me</a> to let ' +
+			result += 'It looks like you have found a number that <b>is less</b> than the currently ' +
+				'known <i>smallest</i> delayed palindromic number that solves in <b>' + data.iterationCount +
+				'</b> iterations! Please <a href="/contacts.html" target="_blank">contact me</a> to let ' +
 				'me know about your discovery!';
 		}
 		result += '</p>';
@@ -426,25 +424,23 @@ function getBasicContent(language, data) {
 	if (data.totalKinCount > 1) {
 		result += '</p><p class="text txtleft">' + ((language === "ru") ?
 			'Наибольшее из всех родственных чисел' : 'The greatest of all kin numbers') +
-			': <span class="breakable"><span class="specnum">' + separateWithCommas(data.highestKin) +
-			'</span>.</span>';
+			': <span class="breakable"><span class="specnum">' +
+			separateWithCommas(data.highestKin) + '</span>.</span>';
 	}
 
 	if (smallestKnown && !isSmallestKnown && !isNewSmallest) {
 		const smallest = smallestKnown.number;
 		result += '</p><p class="text">';
 		if (language === "ru") {
-			result += 'Указанный отложенный палиндром <b>не является наименьшим</b> известным ' +
-				'числом, которое разрешается за ' + data.iterationCount + ' операц' +
-				getCaseEnding(data.iterationCount, "ию", "ии", "ий") + '. Наименьшее ' +
-				'известное (<span class="numlen">' + smallest.length +
-				'</span>-значное) число: ';
+			result += 'Указанный отложенный палиндром <b>не является наименьшим</b> ' +
+				'известным числом, которое разрешается за ' + data.iterationCount + ' операц' +
+				getCaseEnding(data.iterationCount, "ию", "ии", "ий") + '. Наименьшее известное ' +
+				'(<span class="numlen">' + smallest.length + '</span>-значное) число: ';
 		} else {
 			result += 'The specified delayed palindrome is <b>not the smallest</b> ' +
 				'known number that solves in ' + data.iterationCount + ' iteration' +
-				((data.iterationCount === 1) ? '. ' : 's. ') +
-				'The smallest known (<span class="numlen">' + smallest.length +
-				'</span>-digit) number is ';
+				getPluralEnding(data.iterationCount) + '. The smallest known ' +
+				'(<span class="numlen">' + smallest.length + '</span>-digit) number is ';
 		}
 		result += '<span class="breakable"><a href="' + getLinkToThisPage(smallest, "") + '"><i>' +
 			separateWithCommas(smallest) + '</i></a>.</span>';
@@ -574,6 +570,10 @@ function getCaseEnding(value, one, twofour, other) {
 
 	return ((value % 10) && (value % 10 < 5) && ((value % 100 < 11) || (value % 100 > 19))) ?
 		(value % 10 === 1) ? one : twofour : other;
+}
+
+function getPluralEnding(value) {
+	return (value === 1) ? "" : "s";
 }
 
 function getLinkToThisPage(number, host) {
