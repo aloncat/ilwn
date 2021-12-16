@@ -153,7 +153,7 @@ function getErrorContent(language, number) {
 }
 
 function calculateData(number) {
-	console.log("Starting calculation for number: " +
+	console.log("Starting calculation for number " +
 		separateWithCommas(number));
 
 	if (!knownNumbers) {
@@ -170,7 +170,7 @@ function calculateData(number) {
 
 	const stepLimit = (number.length < 20) ? 350 : 650;
 	const info = raaTillPalindrome(number, stepLimit);
-	data.result = info.steps[info.iterationCount];
+	data.resultant = info.steps[info.iterationCount];
 	data.iterationCount = info.iterationCount;
 	data.isPalindrome = info.isPalindrome;
 	data.steps = info.steps;
@@ -306,7 +306,7 @@ function getBasicContent(language, data) {
 		} else {
 			result += 'It looks like you have found the <b>new world record</b>! ' +
 				'The most delayed palindrome currently known solves in <b>' +
-				highestKnownStep + '</b> iteration' + ((highestKnownStep == 1) ? "" : "s") +
+				highestKnownStep + '</b> iteration' + ((highestKnownStep === 1) ? "" : "s") +
 				', while your number solves in <b>' + data.iterationCount + '</b>! Please ' +
 				'<a href="/contacts.html" target="_blank">contact me</a> to let me know about your discovery!';
 		}
@@ -323,7 +323,7 @@ function getBasicContent(language, data) {
 		} else {
 			result += 'It looks like you have found a number that <b>is less</b> than the ' +
 				'currently known <i>smallest</i> delayed palindrome that solves in <b>' +
-				data.iterationCount + '</b> iteration' + ((data.iterationCount == 1) ? "" : "s") +
+				data.iterationCount + '</b> iteration' + ((data.iterationCount === 1) ? "" : "s") +
 				'! Please <a href="/contacts.html" target="_blank">contact me</a> to let ' +
 				'me know about your discovery!';
 		}
@@ -346,40 +346,40 @@ function getBasicContent(language, data) {
 			result += ' <b>отложенным палиндромом</b>, разрешающимся за <b>' + data.iterationCount +
 				'</b> операц' + getCaseEnding(data.iterationCount, "ию", "ии", "ий") + ' Перевернуть-И-Сложить';
 			result += isWorldRecord ? ', и текущим <span class="record"><b>мировым рекордом</b></span>!' : '.';
-			result += ' Длина его результирующего палиндрома составляет <b>' + data.result.length +
-				'</b> знак' + getCaseEnding(data.result.length, "", "а", "ов");
+			result += ' Длина его результирующего палиндрома составляет <b>' + data.resultant.length +
+				'</b> знак' + getCaseEnding(data.resultant.length, "", "а", "ов");
 		} else {
 			result += !isSmallestKnown ? " a" : isRsn ?
 				' a <span class="rsnum">reliably smallest</span>' :
 				' the <span class="sknum">smallest known</span>';
 			result += ' <b>delayed palindrome</b> that solves in <b>' + data.iterationCount +
-				'</b> Reverse-And-Add operation' + ((data.iterationCount == 1) ? "" : "s");
+				'</b> Reverse-And-Add operation' + ((data.iterationCount === 1) ? "" : "s");
 			result += isWorldRecord ? ', and it\'s the current <span class="record"><b>world record</b></span>!' : '.';
-			result += ' The length of its resultant palindrome is <b>' + data.result.length +
-				'</b> digit' + ((data.result.length == 1) ? "" : "s");
+			result += ' The length of its resultant palindrome is <b>' + data.resultant.length +
+				'</b> digit' + ((data.resultant.length === 1) ? "" : "s");
 		}
 
-		let raaResult = data.result;
-		if (data.result.length <= 20) {
-			result += ': <span id="raaResult">' + raaResult + '</span> (';
+		let resultant = data.resultant;
+		if (data.resultant.length <= 20) {
+			result += ': <span id="resultant">' + resultant + '</span> (';
 		} else {
-			raaResult = data.result.substring(0, 20);
+			resultant = data.resultant.substring(0, 20);
 			result += ((language === "ru") ? ' (первые 20 из них' : ' (first 20 of them') +
-				': <span id="raaResult">' + raaResult + '</span>, ';
+				': <span id="resultant">' + resultant + '</span>, ';
 		}
-		result += '<a class="jsanchor" onclick="copyRaaResultToClipboard(\'' + raaResult + '\', \'raaResult\')">' +
+		result += '<a class="jsanchor" onclick="copyResultantToClipboard(\'' + resultant + '\', \'resultant\')">' +
 			((language === "ru") ? 'скопировать в буфер обмена' : 'copy to clipboard') + '</a>).';
 	} else {
 		if (language === "ru") {
 			result += ' <b>числом Лишрел</b>. Мы только что выполнили над ним ' + data.iterationCount +
 				' операц' + getCaseEnding(data.iterationCount, "ию", "ии", "ий") + ' Перевернуть-И-Сложить, но, ' +
-				'достигнув длины ' + data.result.length + ' знак' + getCaseEnding(data.result.length, "", "а", "ов") +
+				'достигнув длины ' + data.resultant.length + ' знак' + getCaseEnding(data.resultant.length, "", "а", "ов") +
 				', оно так и не стало палиндромом. Этого количества операций вполне достаточно для того, чтобы ' +
 				'утверждать, что указанное число действительно является числом Лишрел.';
 		} else {
 			result += ' a <b>Lychrel number</b>. We have just performed ' + data.iterationCount +
-				' Reverse-And-Add operation' + ((data.iterationCount == 1) ? "" : "s") + ' on it, but ' +
-				'after reaching ' + data.result.length + ' digits in length it has not become a palindrome. ' +
+				' Reverse-And-Add operation' + ((data.iterationCount === 1) ? "" : "s") + ' on it, but ' +
+				'after reaching ' + data.resultant.length + ' digits in length it has not become a palindrome. ' +
 				'This amount of operations is quite enough to assert that the given number is indeed a Lychrel number.';
 		}
 	}
@@ -442,7 +442,7 @@ function getBasicContent(language, data) {
 		} else {
 			result += 'The specified delayed palindrome is <b>not the smallest</b> ' +
 				'known number that solves in ' + data.iterationCount + ' iteration' +
-				((data.iterationCount == 1) ? '. ' : 's. ') +
+				((data.iterationCount === 1) ? '. ' : 's. ') +
 				'The smallest known (<span class="numlen">' + smallest.length +
 				'</span>-digit) number is ';
 		}
@@ -584,17 +584,17 @@ function getLinkToThisPage(number, host) {
 	return number ? url + "?n=" + number : url;
 }
 
-function copyRaaResultToClipboard(textToCopy, elementId) {
+function copyResultantToClipboard(textToCopy, elementId) {
 	var hideTimeOut;
-	const raaResult = document.getElementById(elementId);
+	const resultant = document.getElementById(elementId);
 	copyTextToClipboard(textToCopy, function() {
-		if (raaResult) {
-			raaResult.style.transition = "none";
-			raaResult.style.color = ONCOPY_FX_COLOR;
+		if (resultant) {
+			resultant.style.transition = "none";
+			resultant.style.color = ONCOPY_FX_COLOR;
 			hideTimeout = setTimeout(function() {
 				hideTimeOut = null;
-				raaResult.style.transition = "color " + FX_FADE_TIMEOUT;
-				raaResult.style.removeProperty("color");
+				resultant.style.transition = "color " + FX_FADE_TIMEOUT;
+				resultant.style.removeProperty("color");
 			}, FX_STAY_TIMEOUT);
 		}
 	});
@@ -677,7 +677,8 @@ function copyTextToClipboard(textToCopy, successCb) {
 
 		textArea.focus();
 		textArea.select();
-		const hasCopied = document.execCommand('copy')
+		const hasCopied = document.execCommand('copy');
+
 		document.body.removeChild(textArea);
 
 		if (hasCopied && successCb)
