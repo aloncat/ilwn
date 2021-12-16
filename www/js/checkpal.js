@@ -12,7 +12,7 @@ const FX_STAY_TIMEOUT = 200; // Milliseconds
 const FX_FADE_TIMEOUT = "1.0s"; // Duration (CSS)
 const ONCOPY_FX_COLOR = "#0c0"; // Color (CSS)
 const URL_PREFIX = "https://dmaslov.me";
-const SCRIPT_VERSION = "2021.12.15.3";
+const SCRIPT_VERSION = "2021.12.16.2";
 
 (function () {
 	loadingText.style.display = "none";
@@ -22,23 +22,33 @@ const SCRIPT_VERSION = "2021.12.15.3";
 	numberInput.oninput = onNumberInput;
 	numberInput.onkeydown = function(e) {
 		if (e.keyCode === 13)
-			onCheckButtonDown();
+			onTestButtonDown();
 	};
 
-	checkButton.onclick = onCheckButtonDown;
+	checkButton.onclick = onTestButtonDown;
 
 	const params = window.location.search.slice(1).split("&");
-	if (params.length && params[0])
-	{
+	if (params.length && params[0]) {
 		// Treat the very first parameter as a number to test
 		const numFromUrl = params[0].slice(params[0].indexOf("=") + 1);
 		numberInput.value = decodeURIComponent(numFromUrl).trim();
 	}
 
 	onNumberInput();
-	if (!onCheckButtonDown())
+	if (!onTestButtonDown())
 		numberInput.focus();
 })();
+
+function showVersion(version, elementId) {
+	const language = document.documentElement.lang;
+	const verElement = document.getElementById(elementId);
+
+	if (verElement && version) {
+		verElement.innerText = ((language === "ru") ?
+			"Версия скрипта: " : "Script version: ") +
+			version;
+	}
+}
 
 function onNumberInput() {
 	const isCorrect = isCorrectNumber(numberInput.value);
@@ -57,7 +67,7 @@ function onNumberInput() {
 	checkButton.disabled = !isCorrect;
 }
 
-function onCheckButtonDown() {
+function onTestButtonDown() {
 	if (numberInput.value) {
 		let number = isCorrectNumber(numberInput.value) &&
 			getNumberString(numberInput.value);
@@ -84,7 +94,7 @@ function onCheckButtonDown() {
 				return true;
 			}
 		} else {
-			// If "Check" button or Enter key is pressed for the same number, scroll the
+			// If "Test" button or Enter key is pressed for the same number, scroll the
 			// results to the right to make them visible when page is scrolled to the top
 			let scrollable = document.getElementById(currentData.scrollableId);
 			scrollable.scrollLeft = scrollable.scrollWidth;
@@ -94,24 +104,13 @@ function onCheckButtonDown() {
 	return false;
 }
 
-function showVersion(version, elementId) {
-	const language = document.documentElement.lang;
-	const verElement = document.getElementById(elementId);
-
-	if (verElement && version) {
-		verElement.innerText = ((language === "ru") ?
-			"Версия скрипта: " : "Script version: ") +
-			version;
-	}
-}
-
 function isCorrectNumber(value) {
 	let hasDigits = false;
 	const s = value.trim();
 	for (let i = 0; i < s.length; ++i) {
 		if (s[i] >= "0" && s[i] <= "9")
 			hasDigits = true;
-		else if (", \'".indexOf(s[i]) === -1)
+		else if (", \t\'".indexOf(s[i]) === -1)
 			return false;
 	}
 	return hasDigits;
@@ -133,8 +132,8 @@ function getErrorContent(language, number) {
 	if (!number || number === "0") {
 		// Not a valid number
 		if (language === "ru") {
-			result = 'введённое число не является корректным натуральным числом. ' +
-			'Пожалуйста, введите любое целое число, большее или равное 1.';
+			result += 'введённое число не является корректным натуральным числом. ' +
+				'Пожалуйста, введите любое целое число, большее или равное 1.';
 		} else {
 			result += 'the entered number is not a valid natural number. ' +
 				'Please enter any integer greater than or equal to 1.';
@@ -145,8 +144,8 @@ function getErrorContent(language, number) {
 			result += 'введённое число содержит слишком много знаков. ' +
 				'Уменьшите количество цифр в числе и попробуйте проверить его снова.';
 		} else {
-			result += 'the entered number is too long. ' +
-				'Please reduce the amount of digits in it and try again.';
+			result += 'the entered number is too long. Please ' +
+				'reduce the number of digits in it and try again.';
 		}
 	}
 
@@ -442,7 +441,7 @@ function getBasicContent(language, data) {
 				'</span>-значное) число: ';
 		} else {
 			result += 'The specified delayed palindrome is <b>not the smallest</b> ' +
-				'known number that resolves in ' + data.iterationCount + 'iteration' +
+				'known number that solves in ' + data.iterationCount + ' iteration' +
 				((data.iterationCount == 1) ? '. ' : 's. ') +
 				'The smallest known (<span class="numlen">' + smallest.length +
 				'</span>-digit) number is ';
@@ -1049,10 +1048,12 @@ function getKnownNumbers() {
 	p[292] = pal("1000000000005083294994790", false);
 	p[293] = pal("1000206827388999999095750", false);
 
-	// All others
-	p[262] = pal("120000006120509999993599893", false);
+	// 26 digits
 	p[263] = pal("40000400000005685599918179", false);
 	p[264] = pal("14100000330007389999658995", false);
+
+	// 27 digits
+	p[262] = pal("120000006120509999993599893", false);
 
 	return p;
 }
