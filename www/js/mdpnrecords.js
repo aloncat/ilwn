@@ -5,6 +5,7 @@ const wideLengths = [];
 wideLengths[23] = 50;
 wideLengths[24] = 50;
 wideLengths[25] = 48;
+wideLengths[26] = 46;
 wideLengths[0] = 46;
 
 const cache = new Map();
@@ -115,8 +116,7 @@ function raaTillPalindrome(value) {
 
 	const key = current;
 	const info = cache.get(key);
-	if (info && info.isPalindrome)
-	{
+	if (info && info.isPalindrome) {
 		++cache.hitCount;
 		return info;
 	}
