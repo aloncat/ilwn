@@ -28,60 +28,45 @@ function initPalindrome(step) {
 		const num = numText.replace(/[, ']/g, "").trim();
 
 		if (isCorrectNumber(num)) {
-			const resLength = (num.length < wideLengths.length) ? num.length : 0;
-			const wideLength = wideLengths[resLength] || defaultWideLength;
+			const idx = (num.length < wideLengths.length) ? num.length : 0;
+			const wideLength = wideLengths[idx] || defaultWideLength;
 
-			if (!wideLenInitFlags[resLength]) {
-				wideLenInitFlags[resLength] = true;
-				const lenElement = document.getElementById("wideLen-" + resLength);
+			if (!wideLenInitFlags[idx]) {
+				wideLenInitFlags[idx] = true;
+				const lenElement = document.getElementById("wideLen-" + idx);
 				if (lenElement) {
 					lenElement.innerHTML = getWideLengthText(wideLength);
 				}
 			}
 
 			const info = raaTillPalindrome(num);
+
 			if (info.isPalindrome) {
 				let shortSpan, wideSpan;
-				if (info.result.length <= 23) {
-					shortSpan = '<span class="pal-short">' + info.result + '</span>';
+				if (info.resultant.length <= 23) {
+					shortSpan = '<span class="pal-short">' + info.resultant + '</span>';
 				} else {
 					shortSpan = '<span class="pal-short pal-active" ' +
-					'onclick="toggleFullPalindrome(' + step + ', true)">' +
-					info.result.substring(0, 20) + '...</span>';
+						'onclick="toggleFullPalindrome(' + step + ', true)">' +
+						info.resultant.substring(0, 20) + '...</span>';
 				}
 
-				if (info.result.length <= wideLength + 3) {
-					wideSpan = '<span class="pal-wide">' + info.result + '</span>';
+				if (info.resultant.length <= wideLength + 3) {
+					wideSpan = '<span class="pal-wide">' + info.resultant + '</span>';
 				} else {
 					wideSpan = '<span class="pal-wide pal-active" ' +
-					'onclick="toggleFullPalindrome(' + step + ', true)">' +
-					info.result.substring(0, wideLength) + '...</span>';
+						'onclick="toggleFullPalindrome(' + step + ', true)">' +
+						info.resultant.substring(0, wideLength) + '...</span>';
 				}
 
 				resElement.innerHTML = '<div id="' + step + '-norm">' +
 					shortSpan + wideSpan + '</div><div id="' + step +
 					'-full" class="pal-active" style="display: none" ' +
 					'onclick="toggleFullPalindrome(' + step + ', false)">' +
-					'<span class="breakable">' + info.result + '</span></div>';
+					'<span class="breakable">' + info.resultant + '</span></div>';
 			}
 		}
 	}
-}
-
-function getWideLengthText(value) {
-	if (document.documentElement.lang === "ru") {
-		return "перв" + getCaseEnding(value, "ая", "ые") + " " +
-			value + "&nbsp;цифр" + getCaseEnding(value, "а", "ы", "");
-	}
-	return "first " + value + " digits";
-}
-
-function getCaseEnding(value, one, twofour, other) {
-	if (other === undefined)
-		other = twofour;
-
-	return ((value % 10) && (value % 10 < 5) && ((value % 100 < 11) || (value % 100 > 19))) ?
-		(value % 10 === 1) ? one : twofour : other;
 }
 
 function isCorrectNumber(value) {
@@ -95,11 +80,27 @@ function isCorrectNumber(value) {
 	return hasDigits;
 }
 
+function getWideLengthText(value) {
+	if (document.documentElement.lang === "ru") {
+		return "перв" + getCaseEnding(value, "ая", "ые") + " " +
+			value + "&nbsp;цифр" + getCaseEnding(value, "а", "ы", "");
+	}
+	return "first " + value + "&nbsp;digits";
+}
+
+function getCaseEnding(value, one, twofour, other) {
+	if (other === undefined)
+		other = twofour;
+
+	return ((value % 10) && (value % 10 < 5) && ((value % 100 < 11) || (value % 100 > 19))) ?
+		(value % 10 === 1) ? one : twofour : other;
+}
+
 function raaTillPalindrome(value) {
 	let result = {
 		iterationCount: 0,
 		isPalindrome: false,
-		result: ""
+		resultant: ""
 	};
 
 	let current = "" + value;
@@ -109,7 +110,7 @@ function raaTillPalindrome(value) {
 
 		if (isPalindrome(current)) {
 			result.isPalindrome = true;
-			result.result = current;
+			result.resultant = current;
 			return result;
 		}
 	}
@@ -127,7 +128,7 @@ function raaTillPalindrome(value) {
 
 		if (isPalindrome(current)) {
 			result.isPalindrome = true;
-			result.result = current;
+			result.resultant = current;
 			cache.set(key, result);
 			break;
 		}
