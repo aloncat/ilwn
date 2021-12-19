@@ -1181,7 +1181,6 @@ void SaveResults(const std::set<Palindrome>& allPalindromes)
 int ListAllPalindromes()
 {
 	std::set<Palindrome> allPalindromes;
-	constexpr unsigned STEP_OF_INTEREST = 230;
 
 	if (util::FileSystem::FileExists(L"results.txt") && !LoadResults(allPalindromes))
 	{
@@ -1201,7 +1200,7 @@ int ListAllPalindromes()
 				return false;
 			}
 
-			if (pChunk->GetHighestStep() >= STEP_OF_INTEREST)
+			if (pChunk->GetHighestStep() >= 230)
 			{
 				if (!pChunk->LoadData(data, DBChunkState::FULLDATA))
 				{
@@ -1212,21 +1211,23 @@ int ListAllPalindromes()
 				Number num;
 				for (const auto& item : pChunk->GetNumbers())
 				{
-					if (item.step >= STEP_OF_INTEREST)
+					if (item.step >= 230)
 					{
 						num = item.num;
 						Palindrome pal(num);
-
-						aux::Printf("\r%s\n", pal.ToString().c_str());
-
-						if (auto it = allPalindromes.find(pal); it == allPalindromes.end())
+						if (pal.palindrome.GetLength() >= 100)
 						{
-							allPalindromes.insert(std::move(pal));
-						}
-						else if (pal.steps > it->steps || (pal.steps == it->steps && pal.number < it->number))
-						{
-							allPalindromes.erase(it);
-							allPalindromes.insert(std::move(pal));
+							aux::Printf("\r%s\n", pal.ToString().c_str());
+
+							if (auto it = allPalindromes.find(pal); it == allPalindromes.end())
+							{
+								allPalindromes.insert(std::move(pal));
+							}
+							else if (pal.steps > it->steps || (pal.steps == it->steps && pal.number < it->number))
+							{
+								allPalindromes.erase(it);
+								allPalindromes.insert(std::move(pal));
+							}
 						}
 					}
 				}
