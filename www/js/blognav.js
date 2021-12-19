@@ -27,11 +27,11 @@ function toggleYear(year, lang) {
 }
 
 function toggleMonth(month, lang) {
-	let monthNamesEn = ["", "January", "February", "March", "April", "May", "June",
+	const monthNamesEn = ["", "January", "February", "March", "April", "May", "June",
 		"July", "August", "September", "October", "November", "December"];
-	let monthNamesRu = ["", "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+	const monthNamesRu = ["", "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
 		"Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
-	let monthNames = (currentLanguage === "ru") ?
+	const monthNames = (currentLanguage === "ru") ?
 		monthNamesRu : monthNamesEn;
 
 	for (let i = 1; i <= 12; ++i) {

@@ -12,7 +12,7 @@ const FX_STAY_TIMEOUT = 200; // Milliseconds
 const FX_FADE_TIMEOUT = "1.0s"; // Duration (CSS)
 const ONCOPY_FX_COLOR = "#0c0"; // Color (CSS)
 const URL_PREFIX = "https://dmaslov.me";
-const SCRIPT_VERSION = "2021.12.17";
+const SCRIPT_VERSION = "2021.12.19";
 
 (function () {
 	loadingText.style.display = "none";
@@ -343,18 +343,18 @@ function getBasicContent(language, data) {
 			}
 			result += ' <b>отложенным палиндромом</b>, разрешающимся за <b>' + data.iterationCount +
 				'</b> операц' + getCaseEnding(data.iterationCount, "ию", "ии", "ий") + ' Перевернуть-И-Сложить';
-			result += isWorldRecord ? ', и текущим <span class="record"><b>мировым рекордом</b></span>!' : '.';
+			result += isWorldRecord ? ', и текущим <span class="record">мировым рекордом</span>!' : '.';
 			result += ' Длина его результирующего палиндрома составляет <b>' + data.resultant.length +
 				'</b> знак' + getCaseEnding(data.resultant.length, "", "а", "ов");
 		} else {
 			result += !isSmallestKnown ? " a" : isRsn ?
-				' a <span class="rsnum">reliably smallest</span>' :
+				' the <span class="rsnum">reliably smallest</span>' :
 				' the <span class="sknum">smallest known</span>';
 			result += ' <b>delayed palindrome</b> that solves in <b>' + data.iterationCount +
-				'</b> Reverse-And-Add operation' + ((data.iterationCount === 1) ? "" : "s");
-			result += isWorldRecord ? ', and it\'s the current <span class="record"><b>world record</b></span>!' : '.';
+				'</b> Reverse-And-Add operation' + getPluralEnding(data.iterationCount);
+			result += isWorldRecord ? ', and it\'s the current <span class="record">world record</span>!' : '.';
 			result += ' The length of its resultant palindrome is <b>' + data.resultant.length +
-				'</b> digit' + ((data.resultant.length === 1) ? "" : "s");
+				'</b> digit' + getPluralEnding(data.resultant.length);
 		}
 
 		let resultant = data.resultant;
@@ -376,9 +376,9 @@ function getBasicContent(language, data) {
 				'утверждать, что указанное число действительно является числом Лишрел.';
 		} else {
 			result += ' a <b>Lychrel number</b>. We have just performed ' + data.iterationCount +
-				' Reverse-And-Add operation' + ((data.iterationCount === 1) ? "" : "s") + ' on it, but ' +
-				'after reaching ' + data.resultant.length + ' digits in length it has not become a palindrome. ' +
-				'This amount of operations is quite enough to assert that the given number is indeed a Lychrel number.';
+				' Reverse-And-Add operations on it, but after reaching ' + data.resultant.length +
+				' digits in length it has not become a palindrome. This number of iterations is ' +
+				'quite enough to assert that the given number is indeed a Lychrel number.';
 		}
 	}
 
@@ -391,27 +391,49 @@ function getBasicContent(language, data) {
 	result += '</p><p class="text">';
 
 	if (data.number === data.canonical) {
-		result += 'Указанное число является <b>каноническим</b>, то есть наименьшим числом, которое ' +
-			'можно получить путём изменения симметричных пар его цифр при условии сохранения их сумм.';
+		if (language === "ru") {
+			result += 'Указанное число является <b>каноническим</b>, то есть наименьшим числом, которое ' +
+				'можно получить путём изменения симметричных пар его цифр при условии сохранения их сумм.';
+		} else {
+			result += 'The specified number is <b>canonical</b>, that is, the smallest number that can be ' +
+				'obtained by changing the symmetrical pairs of its digits, provided that their sums are preserved.';
+		}
 	} else {
-		result += 'Указанное число записано <b><span class="errorcolor">не</span> в каноническом виде</b>. ' +
-			'То есть существует меньшее число, которое можно получить из указанного путём изменения ' +
-			'симметричных пар его цифр при условии сохранения их сумм, такое, что результаты одной ' +
-			'операции Перевернуть-И-Сложить для обоих чисел будут совпадать.';
+		if (language === "ru") {
+			result += 'Указанное число записано <b><span class="errorcolor">не</span> в каноническом виде</b>. ' +
+				'То есть существует меньшее число, которое можно получить из указанного путём изменения ' +
+				'симметричных пар его цифр при условии сохранения их сумм, такое, что результаты одной ' +
+				'операции Перевернуть-И-Сложить для обоих чисел будут совпадать.';
+		} else {
+			result += 'The specified number is written in <b><span class="errorcolor">non</span></b>-canonical ' +
+				'form. That is, there is a smaller number that can be obtained from the specified one by changing ' +
+				'the symmetric pairs of its digits, provided that their sums are preserved, such that the results ' +
+				'of one Reverse-And-Add operation for both numbers will be equal.';
+		}
 	}
 
 	if (data.totalKinCount <= 1) {
-		result += ' Для этого числа не существует других родственных чисел.';
+		result += (language === "ru") ?
+			' Для этого числа не существует других родственных чисел.' :
+			' There are no other kin numbers for this number.';
 	} else {
 		const count = data.totalKinCount;
-		const e = getCaseEnding(count, "ое", "ых");
-		const amountText = (count === Infinity) ?
-			'существует более 9&times;10<span class="tiny"><sup>15</sup></span>' : 'существу' +
-			getCaseEnding(count, "ет", "ют") + ' <b>' + separateWithCommas(count) + '</b>';
-		result += ' Для указанного числа ' + amountText + ' различн' + e + ' родственн' + e + ' чис' +
-			getCaseEnding(count, "ло", "ла", "ел") + ', котор' + getCaseEnding(count, "ое", "ые") +
-			' после всего одной операции Перевернуть-И-Сложить да' + getCaseEnding(count, "ёт", "ют") +
-			' одинаковый результат.';
+		if (language === "ru") {
+			const e = getCaseEnding(count, "ое", "ых");
+			const amountText = (count === Infinity) ?
+				'существует более <b>9&times;10<span class="tiny"><sup>15</sup></span></b>' :
+				'существу' + getCaseEnding(count, "ет", "ют") + ' <b>' + separateWithCommas(count) + '</b>';
+			result += ' Для указанного числа ' + amountText + ' различн' + e + ' родственн' + e + ' чис' +
+				getCaseEnding(count, "ло", "ла", "ел") + ', котор' + getCaseEnding(count, "ое", "ые") +
+				' после всего одной операции Перевернуть-И-Сложить да' + getCaseEnding(count, "ёт", "ют") +
+				' одинаковый результат.';
+		} else {
+			const amountText = (count === Infinity) ?
+				'more than <b>9&times;10<span class="tiny"><sup>15</sup></span></b>' :
+				'<b>' + separateWithCommas(count) + '</b>';
+			result += ' For the specified number there are ' + amountText + ' different kin numbers ' +
+				'that give the same result after just one Reverse-And-Add operation.';
+		}
 	}
 
 	if (data.number !== data.canonical) {
@@ -421,19 +443,12 @@ function getBasicContent(language, data) {
 			'"><i>' + separateWithCommas(data.canonical) + '</i></a>.</span>';
 	}
 
-	if (data.totalKinCount > 1) {
-		result += '</p><p class="text txtleft">' + ((language === "ru") ?
-			'Наибольшее из всех родственных чисел' : 'The greatest of all kin numbers') +
-			': <span class="breakable"><span class="specnum">' +
-			separateWithCommas(data.highestKin) + '</span>.</span>';
-	}
-
 	if (smallestKnown && !isSmallestKnown && !isNewSmallest) {
 		const smallest = smallestKnown.number;
 		result += '</p><p class="text">';
 		if (language === "ru") {
 			result += 'Указанный отложенный палиндром <b>не является наименьшим</b> ' +
-				'известным числом, которое разрешается за ' + data.iterationCount + ' операц' +
+				'известным числом, которое разрешается за ' + data.iterationCount + ' итерац' +
 				getCaseEnding(data.iterationCount, "ию", "ии", "ий") + '. Наименьшее известное ' +
 				'(<span class="numlen">' + smallest.length + '</span>-значное) число: ';
 		} else {
@@ -444,6 +459,13 @@ function getBasicContent(language, data) {
 		}
 		result += '<span class="breakable"><a href="' + getLinkToThisPage(smallest, "") + '"><i>' +
 			separateWithCommas(smallest) + '</i></a>.</span>';
+	}
+
+	if (data.totalKinCount > 1) {
+		result += '</p><p class="text txtleft">' + ((language === "ru") ?
+			'Наибольшее из всех родственных чисел' : 'The greatest of all kin numbers') +
+			': <span class="breakable"><span class="specnum">' +
+			separateWithCommas(data.highestKin) + '</span>.</span>';
 	}
 
 	if (data.isPalindrome && data.iterationCount > 1) {

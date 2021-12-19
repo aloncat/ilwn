@@ -873,6 +873,7 @@ h3.fact > span {
 }
 
 #resultsBlock #contents span.record {
+	font-weight: bold;
 	color: #f00;
 }
 
