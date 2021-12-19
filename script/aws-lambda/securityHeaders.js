@@ -13,8 +13,10 @@ exports.handler = (event, context, callback) => {
 	if (requestUri.slice(-5) === ".html") {
 		headers["content-security-policy"] = [{
 			key: "Content-Security-Policy",
-			value: "default-src 'none'; img-src 'self'" +
-				"; script-src 'self' 'unsafe-inline'" +
+			value: "default-src 'none'" +
+				"; img-src 'self' www.googletagmanager.com www.google-analytics.com" +
+				"; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com 'unsafe-inline'" +
+				"; connect-src https://www.google-analytics.com" +
 				"; style-src 'self' 'unsafe-inline'" +
 				"; frame-src https:"
 		}];
