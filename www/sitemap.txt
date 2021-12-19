@@ -1,8 +1,10 @@
-https://dmaslov.me
+https://dmaslov.me/
 https://dmaslov.me/alsn/
 https://dmaslov.me/blog/
 https://dmaslov.me/blog/about-new-p196-project.html
+https://dmaslov.me/blog/choosing-the-proper-search-depth.html
 https://dmaslov.me/blog/facts.html
+https://dmaslov.me/blog/speeding-up-the-console-window.html
 https://dmaslov.me/contacts.html
 https://dmaslov.me/hardware.html
 https://dmaslov.me/map.html
