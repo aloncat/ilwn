@@ -4,9 +4,10 @@ exports.handler = (event, context, callback) => {
 	let request = event.Records[0].cf.request;
 
 	if (request.uri === "/ru" ||
-		request.uri === "/blog" || request.uri === "/ru/blog" ||
 		request.uri === "/alsn" || request.uri === "/ru/alsn" ||
+		request.uri === "/blog" || request.uri === "/ru/blog" ||
 		request.uri === "/mdpn" || request.uri === "/ru/mdpn" ||
+		request.uri === "/mdpn/pal" || request.uri === "/ru/mdpn/pal" ||
 		request.uri === "/p196" || request.uri === "/ru/p196")
 	{
 		request.uri += "/";
