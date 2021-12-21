@@ -16,6 +16,8 @@
 	function gtag() { dataLayer.push(arguments); }
 	gtag('js', new Date());
 	gtag('config', 'G-B65M23L0K6');
+	if (window.location.hostname === 'localhost')
+	  window['ga-disable-G-B65M23L0K6'] = true;
   </script>
 </head>
 <body onload="setPostLinks()">
