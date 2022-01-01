@@ -141,7 +141,7 @@ function insertFooter() {
 		  '<tr style="vertical-align: top">' +
 			'<td class="footer">' +
 			  '<div style="margin-right: 25px">' +
-				'Copyright &copy;&nbsp;2019-2021 Dmitry&nbsp;Maslov' +
+				'Copyright &copy;&nbsp;2019-2022 Dmitry&nbsp;Maslov' +
 			  '</div>' +
 			'</td>' +
 			'<td class="footer" style="text-align: right">' +
