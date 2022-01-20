@@ -19,10 +19,11 @@ The ALSN project is enumerating Lychrel seed numbers.
 Directory structure:
 --------------------
   script	Various auxiliary scripts
+  source	Source code (all subprojects)
   www		iLWN website sources
 
 
-Copyright (C) 2019-2021 Dmitry Maslov.
+Copyright (C) 2019-2022 Dmitry Maslov.
 
 This software is distributed under LGPL version 2.1 or
 later (see the ./LICENCE file for the full license).

@@ -1,0 +1,3 @@
+[submodule "source/aml"]
+	path = source/aml
+	url = https://github.com/aloncat/aml.git

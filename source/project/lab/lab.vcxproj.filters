@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="platform">
+      <UniqueIdentifier>{2e2a011b-755b-4393-bc7f-9e0d55b9b84a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\lab\pch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\lab\prefix.cpp">
+      <Filter>platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\lab\main.cpp">
+    </ClCompile>
+  </ItemGroup>
+</Project>
