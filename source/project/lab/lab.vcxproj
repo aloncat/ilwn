@@ -184,9 +184,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\lab\diophantine.h" />
     <ClInclude Include="..\..\lab\pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\lab\diophantine.cpp" />
     <ClCompile Include="..\..\lab\main.cpp" />
     <ClCompile Include="..\..\lab\prefix.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
