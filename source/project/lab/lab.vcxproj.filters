@@ -8,6 +8,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\lab\pch.h" />
     <ClInclude Include="..\..\lab\diophantine.h" />
+    <ClInclude Include="..\..\lab\palindromicdates.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\lab\prefix.cpp">
@@ -16,5 +17,6 @@
     <ClCompile Include="..\..\lab\main.cpp">
     </ClCompile>
     <ClCompile Include="..\..\lab\diophantine.cpp" />
+    <ClCompile Include="..\..\lab\palindromicdates.cpp" />
   </ItemGroup>
 </Project>
