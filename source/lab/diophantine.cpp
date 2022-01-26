@@ -6,6 +6,7 @@
 #include "diophantine.h"
 
 #include <map>
+#include <set>
 
 namespace lab {
 
@@ -16,7 +17,164 @@ namespace lab {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------------------------------------
-unsigned CalcPowers(unsigned high, int power, int count, uint64_t* powers)
+static std::vector<unsigned> GetPrimes(unsigned limit)
+{
+	std::vector<unsigned> primes;
+
+	if (limit > 1)
+	{
+		primes.reserve(100);
+		primes.push_back(2);
+
+		if (limit > 2)
+		{
+			const size_t bufferSize = (limit + 13) >> 4;
+			uint8_t* bits = new uint8_t[bufferSize];
+			memset(bits, 0, bufferSize);
+
+			const unsigned lastBit = (limit - 3) >> 1;
+			const unsigned k = (limit < 25) ? 0 : (static_cast<unsigned>(sqrt(limit)) - 3) >> 1;
+
+			for (unsigned i = 0; i <= k; ++i)
+			{
+				if (!(bits[i >> 3] & (1 << (i & 7))))
+				{
+					unsigned n = (i << 1) + 3;
+					primes.push_back(n);
+
+					for (unsigned j = (i + 1) * 3; j <= lastBit; j += n)
+						bits[j >> 3] |= 1 << (j & 7);
+				}
+			}
+
+			for (unsigned i = k + 1; i <= lastBit; ++i)
+			{
+				if (!(bits[i >> 3] & (1 << (i & 7))))
+					primes.push_back((i << 1) + 3);
+			}
+
+			delete[] bits;
+		}
+	}
+
+	return primes;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+struct Solution
+{
+	// Все коэффициенты уравнения
+	std::vector<unsigned> factors;
+
+public:
+	Solution(unsigned left, const unsigned* right, int count)
+	{
+		factors.push_back(left);
+		for (int i = 0; i < count; ++i)
+			factors.push_back(right[i]);
+	}
+
+	void SortFactors()
+	{
+		std::sort(factors.begin(), factors.end(), [](unsigned left, unsigned right) {
+			return left > right;
+		});
+	}
+
+	bool operator ==(const Solution& rhs) const
+	{
+		if (const size_t count = factors.size(); count && count == rhs.factors.size())
+		{
+			for (size_t i = 0; i < count; ++i)
+			{
+				if (factors[i] != rhs.factors[i])
+					return false;
+			}
+			return true;
+		}
+		return false;
+	}
+
+	bool operator <(const Solution& rhs) const
+	{
+		if (const size_t count = factors.size(); count && count == rhs.factors.size())
+		{
+			for (size_t i = 0; i < count; ++i)
+			{
+				if (factors[i] != rhs.factors[i])
+					return factors[i] < rhs.factors[i];
+			}
+		}
+		return false;
+	}
+};
+
+//--------------------------------------------------------------------------------------------------------------------------------
+class Solutions
+{
+public:
+	bool Insert(const Solution& s)
+	{
+		if (!IsPrimitive(s))
+			return false;
+
+		Solution sorted = s;
+		sorted.SortFactors();
+
+		auto result = m_Solutions.insert(std::move(sorted));
+		return result.second;
+	}
+
+	size_t Count() const
+	{
+		return m_Solutions.size();
+	}
+
+protected:
+	bool IsPrimitive(const Solution& s)
+	{
+		if (s.factors.empty())
+			return false;
+
+		unsigned lowest = ~0u;
+		for (auto f : s.factors)
+		{
+			if (f < lowest)
+				lowest = f;
+		}
+
+		if (m_Primes.empty() || m_Primes.back() < lowest)
+			m_Primes = GetPrimes(lowest + 5000);
+
+		for (unsigned p : m_Primes)
+		{
+			if (p > lowest)
+				break;
+
+			bool allDivisible = true;
+			for (auto f : s.factors)
+			{
+				if (f % p)
+				{
+					allDivisible = false;
+					break;
+				}
+			}
+
+			if (allDivisible)
+				return false;
+		}
+
+		return true;
+	}
+
+protected:
+	std::set<Solution> m_Solutions;		// Все найденные решения уравнения
+	std::vector<unsigned> m_Primes;		// Набор простых чисел (начиная с 2)
+};
+
+//--------------------------------------------------------------------------------------------------------------------------------
+static unsigned CalcPowers(unsigned high, int power, int count, uint64_t* powers)
 {
 	memset(powers, 0, 8 * (high + 1));
 
@@ -71,7 +229,8 @@ bool SearchForFactors(int power, int count, unsigned hiFactor)
 	for (unsigned i = hiFactor; i <= maxFactor; ++i)
 		results.emplace(powers[i], i);
 
-	size_t solutionsFound = 0;
+	Solutions solutions;
+
 	while (k[1] <= maxFactor)
 	{
 		uint64_t sum = 0;
@@ -82,20 +241,23 @@ bool SearchForFactors(int power, int count, unsigned hiFactor)
 		// Ищем подходящий коэффициент для левой части
 		if (auto it = results.find(sum); it != results.end())
 		{
-			// Если нашли 100 решений, заканчиваем работу
-			if (++solutionsFound >= 100)
-				break;
-
-			// Формируем строку с коэффициентами
-			auto s = std::to_string(it->second);
-			s += "=" + std::to_string(k[1]);
-			for (int i = 1; i < count; ++i)
+			if (solutions.Insert(Solution(it->second, k + 1, count)))
 			{
-				s += "+" + std::to_string(k[i + 1]);
-			}
+				// Формируем строку с коэффициентами
+				auto s = std::to_string(it->second);
+				s += "=" + std::to_string(k[1]);
+				for (int i = 1; i < count; ++i)
+				{
+					s += "+" + std::to_string(k[i + 1]);
+				}
 
-			// И выводим её на экран
-			printf("Solution found: %s\n", s.c_str());
+				// И выводим её на экран
+				printf("Solution found: %s\n", s.c_str());
+
+				// Если нашли 100 решений, заканчиваем работу
+				if (solutions.Count() >= 100)
+					break;
+			}
 		}
 
 		// Переходим к следующему набору коэффициентов правой части, перебирая все возможные
