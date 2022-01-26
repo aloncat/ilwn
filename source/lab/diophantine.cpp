@@ -5,6 +5,12 @@
 #include "pch.h"
 #include "diophantine.h"
 
+#include <auxlib/print.h>
+#include <core/console.h>
+#include <core/file.h>
+#include <core/strformat.h>
+#include <core/winapi.h>
+
 #include <set>
 
 namespace lab {
@@ -14,6 +20,28 @@ namespace lab {
 //   Поиск коэффициентов Диофантова уравнения вида p.1.n (наивное решение)
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//--------------------------------------------------------------------------------------------------------------------------------
+class Timer
+{
+public:
+	Timer()
+	{
+		::QueryPerformanceCounter(&m_Start);
+	}
+
+	float Elapsed() const
+	{
+		LARGE_INTEGER finish, frequency;
+		::QueryPerformanceCounter(&finish);
+		::QueryPerformanceFrequency(&frequency);
+
+		return static_cast<float>(finish.QuadPart - m_Start.QuadPart) / frequency.QuadPart;
+	}
+
+protected:
+	LARGE_INTEGER m_Start;
+};
 
 //--------------------------------------------------------------------------------------------------------------------------------
 static std::vector<unsigned> GetPrimes(unsigned limit)
@@ -209,11 +237,22 @@ bool SearchForFactors(int power, int count, unsigned hiFactor)
 	if (power < 2 || power > 9 || count < 2 || count > MAX_COUNT)
 		return false;
 
-	printf("Searching for factors (%i.1.%i)\n", power, count);
+	util::BinaryFile log;
+	log.Open(util::Format(L"log-%i.1.%i.txt", power, count),
+		util::FILE_OPEN_ALWAYS | util::FILE_OPEN_READWRITE);
+
+	if (auto fileSize = log.GetSize(); fileSize < 0 || !log.SetPosition(fileSize))
+	{
+		log.Close();
+		aux::Printf("Error: failed to open log file\n");
+		return false;
+	}
+
+	aux::Printf("Searching for factors (%i.1.%i)\n", power, count);
 
 	uint64_t* powers = new uint64_t[MAX_FACTOR + 1];
 	const unsigned maxFactor = CalcPowers(MAX_FACTOR, power, count, powers);
-	printf("Factor limit is set to %u\n", maxFactor);
+	aux::Printf("Factor limit is set to #10#%u\n", maxFactor);
 
 	// Массив k хранит коэффициенты правой части уравнения, начиная с индекса 1.
 	// В элементе с индексом 0 будем хранить коэффициент левой части уравнения
@@ -221,7 +260,12 @@ bool SearchForFactors(int power, int count, unsigned hiFactor)
 	for (int i = 1; i <= count; ++i)
 		k[i] = 1;
 
+	size_t itCount = 0;
+	uint32_t lastTick = 0;
+	bool isCancelled = false;
+
 	Solutions solutions;
+	Timer timer;
 
 	while (k[0] <= maxFactor)
 	{
@@ -242,12 +286,28 @@ bool SearchForFactors(int power, int count, unsigned hiFactor)
 				s += "+" + std::to_string(k[i]);
 			}
 
-			// И выводим её на экран
-			printf("Solution found: %s\n", s.c_str());
+			s += "\n";
+			// И выводим её на экран и в файл
+			aux::Printf("\rSolution found: %s", s.c_str());
+			log.Write(s.c_str(), s.size());
 
 			// Если нашли 100 решений, заканчиваем работу
 			if (solutions.Count() >= 100)
 				break;
+		}
+
+		if (!(++itCount & 0x7fff))
+		{
+			if (util::SystemConsole::Instance().IsCtrlCPressed())
+			{
+				isCancelled = true;
+				break;
+			}
+			if (uint32_t tick = ::GetTickCount(); tick - lastTick >= 500)
+			{
+				lastTick = tick;
+				aux::Printf("\rTesting %u=%u+%u...    \b\b\b\b", k[0], k[1], k[2]);
+			}
 		}
 
 		// Переходим к следующему набору коэффициентов правой части, перебирая все возможные
@@ -265,7 +325,16 @@ bool SearchForFactors(int power, int count, unsigned hiFactor)
 		}
 	}
 
+	aux::Printf("\rTask %s, solutions found: #6#%u\n", isCancelled ?
+		"cancelled" : "finished", solutions.Count());
+	aux::Printf("Running time: %.2fs\n", timer.Elapsed());
+
 	delete[] powers;
+
+	auto s = util::Format("Highest factor: %u\n", k[0]);
+	log.Write(s.c_str(), s.size());
+	log.Close();
+
 	return true;
 }
 
@@ -294,7 +363,7 @@ int DiophantineMain(int argCount, const wchar_t* args[])
 	}
 
 	// Аргументы в командной строке некорректны
-	printf("Error: invalid command line\n");
+	aux::Print("Error: invalid command line\n");
 	return 1;
 }
 
