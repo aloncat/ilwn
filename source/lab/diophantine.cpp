@@ -5,7 +5,6 @@
 #include "pch.h"
 #include "diophantine.h"
 
-#include <map>
 #include <set>
 
 namespace lab {
@@ -216,48 +215,39 @@ bool SearchForFactors(int power, int count, unsigned hiFactor)
 	const unsigned maxFactor = CalcPowers(MAX_FACTOR, power, count, powers);
 	printf("Factor limit is set to %u\n", maxFactor);
 
-	// Массив k хранит коэффициенты уравнения (начиная с индекса 1). В элементе
-	// с индексом 0 будем хранить максимально возможное значение коэффициента
-	unsigned k[1 + MAX_COUNT] = { maxFactor };
-	k[1] = (hiFactor > 1) ? hiFactor : 2;
-	for (int i = 1; i < count; ++i)
-		k[i + 1] = 1;
-
-	std::map<uint64_t, unsigned> results;
-	// В results поместим все возможные значения частей уравнения
-	// и соответствующие им значения коэффициента в левой части
-	for (unsigned i = hiFactor; i <= maxFactor; ++i)
-		results.emplace(powers[i], i);
+	// Массив k хранит коэффициенты правой части уравнения, начиная с индекса 1.
+	// В элементе с индексом 0 будем хранить коэффициент левой части уравнения
+	unsigned k[1 + MAX_COUNT] = { (hiFactor > 1) ? hiFactor : 2 };
+	for (int i = 1; i <= count; ++i)
+		k[i] = 1;
 
 	Solutions solutions;
 
-	while (k[1] <= maxFactor)
+	while (k[0] <= maxFactor)
 	{
 		uint64_t sum = 0;
 		// Вычисляем сумму в правой части
-		for (int i = 0; i < count; ++i)
-			sum += powers[k[i + 1]];
+		for (int i = 1; i <= count; ++i)
+			sum += powers[k[i]];
 
-		// Ищем подходящий коэффициент для левой части
-		if (auto it = results.find(sum); it != results.end())
+		// Если сумма в правой части равна степени коэффициента в левой,
+		// то значит, мы нашли подходящий набор коэффициентов (решение)
+		if (sum == powers[k[0]] && solutions.Insert(Solution(k[0], k + 1, count)))
 		{
-			if (solutions.Insert(Solution(it->second, k + 1, count)))
+			// Формируем строку с коэффициентами
+			auto s = std::to_string(k[0]);
+			s += "=" + std::to_string(k[1]);
+			for (int i = 2; i <= count; ++i)
 			{
-				// Формируем строку с коэффициентами
-				auto s = std::to_string(it->second);
-				s += "=" + std::to_string(k[1]);
-				for (int i = 1; i < count; ++i)
-				{
-					s += "+" + std::to_string(k[i + 1]);
-				}
-
-				// И выводим её на экран
-				printf("Solution found: %s\n", s.c_str());
-
-				// Если нашли 100 решений, заканчиваем работу
-				if (solutions.Count() >= 100)
-					break;
+				s += "+" + std::to_string(k[i]);
 			}
+
+			// И выводим её на экран
+			printf("Solution found: %s\n", s.c_str());
+
+			// Если нашли 100 решений, заканчиваем работу
+			if (solutions.Count() >= 100)
+				break;
 		}
 
 		// Переходим к следующему набору коэффициентов правой части, перебирая все возможные
@@ -270,6 +260,8 @@ bool SearchForFactors(int power, int count, unsigned hiFactor)
 				break;
 			}
 			k[i] = 1;
+			if (i == 1)
+				++k[0];
 		}
 	}
 
