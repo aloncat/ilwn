@@ -4,11 +4,14 @@
 
 #include "pch.h"
 
+#include "diophantine.h"
+
 #include <core/util.h>
 
 //--------------------------------------------------------------------------------------------------------------------------------
 int wmain(int argCount, const wchar_t* args[], const wchar_t* envVars[])
 {
 	util::CheckMinimalRequirements();
-	return 0;
+
+	return lab::DiophantineMain(argCount, args);
 }

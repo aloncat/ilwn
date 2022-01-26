@@ -47,7 +47,7 @@ unsigned CalcPowers(unsigned high, int power, int count, uint64_t* powers)
 bool SearchForFactors(int power, int count, unsigned hiFactor)
 {
 	constexpr int MAX_COUNT = 50;
-	constexpr unsigned MAX_FACTOR = 9999;
+	constexpr unsigned MAX_FACTOR = 49999;
 
 	if (power < 2 || power > 9 || count < 2 || count > MAX_COUNT)
 		return false;
@@ -119,8 +119,8 @@ bool SearchForFactors(int power, int count, unsigned hiFactor)
 int DiophantineMain(int argCount, const wchar_t* args[])
 {
 	// Программа принимает 2 обязательных и 1 опциональный аргумент командной строки: 1) степень уравнения,
-	// 2) количество слагаемых в его правой части, 3) опциональное значение самого старшего коэффициента, с
-	// которого будет начат поиск (если аргумент не указан, то будет использовано значение 2)
+	// 2) количество слагаемых в его правой части, 3) опциональное значение самого старшего коэффициента
+	// (в левой части), с которого будет начат поиск (при его отсутствии будет использовано значение 2)
 
 	if (argCount == 3 || argCount == 4)
 	{
