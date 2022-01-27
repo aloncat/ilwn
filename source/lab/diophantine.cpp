@@ -44,6 +44,30 @@ protected:
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------
+static void UpdateConsoleTitle(int power, int count, size_t solutionsFound = 0)
+{
+	util::SystemConsole::Instance().SetTitle(util::Format("Searching for factors (%i.1.%i):"
+		" %u solutions found", power, count, solutionsFound));
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+static bool UpdateProgress(int count, const unsigned* factors)
+{
+	if (util::SystemConsole::Instance().IsCtrlCPressed())
+		return true;
+
+	static uint32_t lastTick;
+	if (uint32_t tick = ::GetTickCount(); tick - lastTick >= 500)
+	{
+		lastTick = tick;
+		aux::Printf((count > 2) ? "\rTesting %u=%u+%u+...    \b\b\b\b" : "\rTesting %u=%u+...    \b\b\b\b",
+			factors[0], factors[1], factors[2]);
+	}
+
+	return false;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 static std::vector<unsigned> GetPrimes(unsigned limit)
 {
 	std::vector<unsigned> primes;
@@ -248,6 +272,7 @@ static bool SearchForFactors(int power, int count, unsigned hiFactor)
 		return false;
 	}
 
+	UpdateConsoleTitle(power, count);
 	aux::Printf("Searching for factors (%i.1.%i)\n", power, count);
 
 	uint64_t* powers = new uint64_t[MAX_FACTOR + 1];
@@ -263,7 +288,6 @@ static bool SearchForFactors(int power, int count, unsigned hiFactor)
 		k[i] = 1;
 
 	size_t itCount = 0;
-	uint32_t lastTick = 0;
 	bool isCancelled = false;
 
 	Solutions solutions;
@@ -318,20 +342,14 @@ static bool SearchForFactors(int power, int count, unsigned hiFactor)
 			// Если нашли 100 решений, заканчиваем работу
 			if (solutions.Count() >= 100)
 				break;
+
+			UpdateConsoleTitle(power, count, solutions.Count());
 		}
 
-		if (!(++itCount & 0x7fff))
+		if (!(++itCount & 0x7fff) && UpdateProgress(count, k))
 		{
-			if (util::SystemConsole::Instance().IsCtrlCPressed())
-			{
-				isCancelled = true;
-				break;
-			}
-			if (uint32_t tick = ::GetTickCount(); tick - lastTick >= 500)
-			{
-				lastTick = tick;
-				aux::Printf("\rTesting %u=%u+%u...    \b\b\b\b", k[0], k[1], k[2]);
-			}
+			isCancelled = true;
+			break;
 		}
 
 		// Переходим к следующему набору коэффициентов правой части, перебирая все возможные
