@@ -229,12 +229,12 @@ static unsigned CalcPowers(unsigned high, int power, int count, uint64_t* powers
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-bool SearchForFactors(int power, int count, unsigned hiFactor)
+static bool SearchForFactors(int power, int count, unsigned hiFactor)
 {
 	constexpr int MAX_COUNT = 50;
 	constexpr unsigned MAX_FACTOR = 49999;
 
-	if (power < 2 || power > 9 || count < 2 || count > MAX_COUNT)
+	if (power < 1 || power > 9 || count < 2 || count > MAX_COUNT)
 		return false;
 
 	util::BinaryFile log;
@@ -351,7 +351,7 @@ int DiophantineMain(int argCount, const wchar_t* args[])
 		int count = wcstol(args[2], nullptr, 10);
 		int hiFactor = (argCount >= 4) ? wcstol(args[3], nullptr, 10) : 2;
 
-		if (power >= 2 && power <= 9 && count >= 2 && count <= 50 && hiFactor >= 1)
+		if (power >= 1 && power <= 9 && count >= 2 && count <= 50 && hiFactor >= 0)
 		{
 			// Ищем коэффициенты. При ошибке функция вернёт false
 			if (SearchForFactors(power, count, hiFactor))
