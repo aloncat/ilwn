@@ -232,7 +232,7 @@ static unsigned CalcPowers(unsigned high, int power, int count, uint64_t* powers
 static bool SearchForFactors(int power, int count, unsigned hiFactor)
 {
 	constexpr int MAX_COUNT = 50;
-	constexpr unsigned MAX_FACTOR = 49999;
+	constexpr unsigned MAX_FACTOR = 59999;
 
 	if (power < 1 || power > 9 || count < 2 || count > MAX_COUNT)
 		return false;
@@ -251,7 +251,9 @@ static bool SearchForFactors(int power, int count, unsigned hiFactor)
 	aux::Printf("Searching for factors (%i.1.%i)\n", power, count);
 
 	uint64_t* powers = new uint64_t[MAX_FACTOR + 1];
-	const unsigned maxFactor = CalcPowers(MAX_FACTOR, power, count, powers);
+	// NB: т.к. сумма слагаемых правой части уравнения не включает последний коэффициент, мы можем передать
+	// в функцию значение (count - 1) вместо count, увеличив этим максимально допустимое значение maxFactor
+	const unsigned maxFactor = CalcPowers(MAX_FACTOR, power, count - 1, powers);
 	aux::Printf("Factor limit is set to #10#%u\n", maxFactor);
 
 	// Массив k хранит коэффициенты правой части уравнения, начиная с индекса 1.
@@ -270,13 +272,35 @@ static bool SearchForFactors(int power, int count, unsigned hiFactor)
 	while (k[0] <= maxFactor)
 	{
 		uint64_t sum = 0;
-		// Вычисляем сумму в правой части
-		for (int i = 1; i <= count; ++i)
+		// Вычисляем сумму в правой части без последнего коэффициента
+		for (int i = 1; i < count; ++i)
 			sum += powers[k[i]];
 
-		// Если сумма в правой части равна степени коэффициента в левой,
-		// то значит, мы нашли подходящий набор коэффициентов (решение)
-		if (sum == powers[k[0]] && solutions.Insert(Solution(k[0], k + 1, count)))
+		// Вычисляем значение степени последнего коэффициента правой
+		// части, при котором может существовать решение уравнения
+		const uint64_t lastFP = powers[k[0]] - sum;
+
+		k[count] = 0;
+		// Так как массив степеней отсортирован по возрастанию, используем бинарный поиск,
+		// чтобы проверить существование числа, соответствующего значению степени lastFP.
+		// Искомое значение не может превышать значения предпоследнего коэффициента
+		for (unsigned lo = 1, hi = k[count - 1]; lo <= hi;)
+		{
+			unsigned mid = (lo + hi) >> 1;
+			if (auto v = powers[mid]; v < lastFP)
+				lo = mid + 1;
+			else if (v > lastFP)
+				hi = mid - 1;
+			else
+			{
+				k[count] = mid;
+				break;
+			}
+		}
+
+		// Если значение k[count] != 0, значит, коэффициент для значения степени
+		// lastFP существует и мы нашли подходящий набор коэффициентов (решение)
+		if (k[count] && solutions.Insert(Solution(k[0], k + 1, count)))
 		{
 			// Формируем строку с коэффициентами
 			auto s = std::to_string(k[0]);
@@ -312,7 +336,7 @@ static bool SearchForFactors(int power, int count, unsigned hiFactor)
 
 		// Переходим к следующему набору коэффициентов правой части, перебирая все возможные
 		// комбинации так, чтобы коэффициенты всегда располагались в невозрастающем порядке
-		for (int i = count; i > 0; --i)
+		for (int i = count - 1; i > 0; --i)
 		{
 			if (k[i] < k[i - 1])
 			{
