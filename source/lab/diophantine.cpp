@@ -357,14 +357,17 @@ static bool SearchForFactors(int power, int count, unsigned hiFactor)
 
 			// Переходим к следующему набору коэффициентов правой части, перебирая все возможные
 			// комбинации так, чтобы коэффициенты всегда располагались в невозрастающем порядке
-			for (int i = count - 1; i > 0; --i)
+			for (int i = count - 1;; --i)
 			{
 				sum -= powers[k[i]];
 				if (k[i - 1] > k[i])
 				{
 					const auto f = ++k[i];
-					sum += powers[f];
-					break;
+					if (auto n = sum + powers[f]; n < z || i == 1)
+					{
+						sum = n;
+						break;
+					}
 				}
 				sum += k[i] = 1;
 			}
