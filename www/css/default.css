@@ -7,6 +7,13 @@ body {
 	color: #242424;
 }
 
+/* Gists classes */
+
+.gist-data {
+	max-height: 550px; /* 25 lines */
+	overflow-y: auto;
+}
+
 /* Built-in classes */
 
 a:link {
@@ -99,6 +106,17 @@ li {
 ul > li::marker {
 	font-size: 95%;
 	color: #666;
+}
+
+pre.output {
+	padding: 2px 6px;
+	font-family: Consolas, monospace;
+	font-size: 87.5%; /* Equals to 14.0px */
+	line-height: 1.429; /* 20.0px */
+	overflow-x: auto;
+	background: #f8f8f8;
+	border: 1px solid #d6d6d6;
+	border-radius: 5px;
 }
 
 input {
