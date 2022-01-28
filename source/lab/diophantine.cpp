@@ -352,13 +352,20 @@ static bool SearchForFactors(int power, int count, unsigned hiFactor)
 	bool isCancelled = false;
 	bool isDone = false;
 
+	// Основной цикл: перебираем коэффициент в левой части
 	for (size_t it = 0; !isDone && k[0] <= maxFactor; ++k[0])
 	{
-		const uint64_t z = powers[k[0]];
-		uint64_t sum = count - 1;
 		hiFactor = k[0];
+		// Значение левой части
+		const uint64_t z = powers[k[0]];
+		// Пропускаем значения 1-го коэффициента в правой
+		// части, при которых набор не может дать решение
+		for (k[1] = 1; z > powers[k[1]] * count; ++k[1]);
+		// Сумма всех членов правой части, кроме последнего
+		uint64_t sum = powers[k[1]] + count - 2;
 
-		for (k[1] = 1; k[0] > k[1];)
+		// Внутренний цикл: перебираем коэффициенты правой части
+		while (k[0] > k[1])
 		{
 			// Вычисляем значение степени последнего коэффициента правой
 			// части, при котором может существовать решение уравнения
@@ -402,6 +409,7 @@ static bool SearchForFactors(int power, int count, unsigned hiFactor)
 				break;
 			}
 
+			int idx = 0;
 			// Переходим к следующему набору коэффициентов правой части, перебирая все возможные
 			// комбинации так, чтобы коэффициенты всегда располагались в невозрастающем порядке
 			for (int i = count - 1;; --i)
@@ -417,6 +425,29 @@ static bool SearchForFactors(int power, int count, unsigned hiFactor)
 					}
 				}
 				sum += k[i] = 1;
+				idx = i;
+			}
+
+			if (idx == 0)
+				continue;
+
+			// Каждый раз, когда мы сбрасываем в 1 коэффициент в правой части, увеличивая на 1 коэффициент слева от него,
+			// переменная idx будет содержать индекс самого левого единичного коэффициента. Единичное и многие следующие
+			// значения коэффициента не смогут дать решений, так как для них сумма в правой части будет меньше значения
+			// левой. Поэтому мы будем пропускать такие значения, сразу переходя к тем, которые могут дать решение
+			unsigned hi = k[idx - 1];
+			for (int rem = count - idx + 1; rem > 1; --rem)
+			{
+				const uint64_t s = sum - rem + 1;
+				for (unsigned step = hi >> 1; step; step >>= 1)
+				{
+					auto f = k[idx] + step;
+					if (hi >= f && z > s + powers[f - 1] * rem)
+						k[idx] = f;
+				}
+
+				hi = k[idx++];
+				sum = sum + powers[hi] - 1;
 			}
 		}
 	}
