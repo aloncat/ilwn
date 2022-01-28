@@ -17,7 +17,7 @@ namespace lab {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//   Поиск коэффициентов Диофантова уравнения вида p.1.n (наивное решение)
+//   Поиск коэффициентов Диофантова уравнения вида p.1.n
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -42,6 +42,26 @@ public:
 protected:
 	LARGE_INTEGER m_Start;
 };
+
+//--------------------------------------------------------------------------------------------------------------------------------
+static bool OpenLogFile(util::File& file, int power, int count)
+{
+	if (file.Open(util::Format(L"log-%i.1.%i.txt", power, count),
+		util::FILE_OPEN_ALWAYS | util::FILE_OPEN_READWRITE))
+	{
+		if (auto fileSize = file.GetSize(); fileSize > 0)
+		{
+			if (file.SetPosition(fileSize) && file.Write("---\n", 4))
+				return true;
+		}
+		else if (fileSize == 0)
+			return true;
+
+		file.Close();
+	}
+
+	return false;
+}
 
 //--------------------------------------------------------------------------------------------------------------------------------
 static void UpdateConsoleTitle(int power, int count, size_t solutionsFound = 0)
@@ -253,6 +273,36 @@ static unsigned CalcPowers(unsigned high, int power, int count, uint64_t* powers
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+static bool OnSolutionFound(util::File& log, Solutions& solutions,
+	int power, int count, unsigned left, const unsigned* right)
+{
+	// Формируем решение и пытаемся его добавить в набор. Если
+	// решение непримитивное, то функция Insert вернёт false
+	if (solutions.Insert(Solution(left, right, count)))
+	{
+		// Формируем строку с коэффициентами
+		auto s = std::to_string(left);
+		s += "=" + std::to_string(*right);
+		for (int i = 1; i < count; ++i)
+		{
+			s += "+" + std::to_string(right[i]);
+		}
+
+		s += "\n";
+		// Выводим строку с решением на экран и в файл
+		aux::Printf("\rSolution found: %s", s.c_str());
+		log.Write(s.c_str(), s.size());
+
+		// Обновляем строку заголовка консольного окна
+		UpdateConsoleTitle(power, count, solutions.Count());
+
+		return true;
+	}
+
+	return false;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 static bool SearchForFactors(int power, int count, unsigned hiFactor)
 {
 	constexpr int MAX_COUNT = 50;
@@ -262,12 +312,8 @@ static bool SearchForFactors(int power, int count, unsigned hiFactor)
 		return false;
 
 	util::BinaryFile log;
-	log.Open(util::Format(L"log-%i.1.%i.txt", power, count),
-		util::FILE_OPEN_ALWAYS | util::FILE_OPEN_READWRITE);
-
-	if (auto fileSize = log.GetSize(); fileSize < 0 || !log.SetPosition(fileSize))
+	if (!OpenLogFile(log, power, count))
 	{
-		log.Close();
 		aux::Printf("Error: failed to open log file\n");
 		return false;
 	}
@@ -324,32 +370,19 @@ static bool SearchForFactors(int power, int count, unsigned hiFactor)
 
 			// Если значение k[count] != 0, значит, коэффициент для значения степени
 			// lastFP существует и мы нашли подходящий набор коэффициентов (решение)
-			if (k[count] && solutions.Insert(Solution(k[0], k + 1, count)))
+			if (k[count] && OnSolutionFound(log, solutions, power, count, k[0], k + 1))
 			{
-				// Формируем строку с коэффициентами
-				auto s = std::to_string(k[0]);
-				s += "=" + std::to_string(k[1]);
-				for (int i = 2; i <= count; ++i)
-				{
-					s += "+" + std::to_string(k[i]);
-				}
-
-				s += "\n";
-				// И выводим её на экран и в файл
-				aux::Printf("\rSolution found: %s", s.c_str());
-				log.Write(s.c_str(), s.size());
-
 				// Если нашли 100 решений, заканчиваем работу
 				if (solutions.Count() >= 100)
 				{
 					isDone = true;
 					break;
 				}
-
-				UpdateConsoleTitle(power, count, solutions.Count());
 			}
 
-			if (!(++it & 0x7fff) && UpdateProgress(count, k))
+			// Периодически выводим текущий прогресс. Если пользователь
+			// нажмёт Ctrl-C, то функция вернёт true, мы завершим работу
+			if (!(++it & 0x1fffff) && UpdateProgress(count, k))
 			{
 				isDone = isCancelled = true;
 				break;
