@@ -281,11 +281,25 @@ static bool OnSolutionFound(util::File& log, Solutions& solutions,
 	if (solutions.Insert(Solution(left, right, count)))
 	{
 		// Формируем строку с коэффициентами
-		auto s = std::to_string(left);
-		s += "=" + std::to_string(*right);
-		for (int i = 1; i < count; ++i)
+		auto s = std::to_string(left) + '=';
+
+		for (int i = 0, k; i < count; i += k)
 		{
-			s += "+" + std::to_string(right[i]);
+			k = 1;
+			const unsigned f = right[i];
+			while (i + k < count && f == right[i + k])
+				++k;
+
+			if (i)
+			{
+				s += '+';
+			}
+			if (k > 1)
+			{
+				s += std::to_string(k);
+				s += '*';
+			}
+			s += std::to_string(f);
 		}
 
 		s += "\n";
