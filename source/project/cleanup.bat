@@ -2,6 +2,7 @@
 
 if exist "%~dp0.vs" rd /s/q "%~dp0.vs"
 
+call :clean eslp
 call :clean lab
 call ..\aml\project\cleanup.bat
 exit /b
