@@ -367,7 +367,7 @@ static bool OnSolutionFound(util::File& log, Solutions& solutions,
 static bool SearchForFactors(int power, int count, unsigned hiFactor)
 {
 	constexpr int MAX_COUNT = 50;
-	constexpr unsigned MAX_FACTOR = 59999;
+	constexpr unsigned MAX_FACTOR = 99999;
 
 	if (power < 1 || power > 9 || count < 2 || count > MAX_COUNT)
 		return false;
@@ -383,9 +383,7 @@ static bool SearchForFactors(int power, int count, unsigned hiFactor)
 	aux::Printf("Searching for factors (%i.1.%i)\n", power, count);
 
 	uint64_t* powers = new uint64_t[MAX_FACTOR + 1];
-	// NB: т.к. сумма слагаемых правой части уравнения не включает последний коэффициент, мы можем передать
-	// в функцию значение (count - 1) вместо count, увеличив этим максимально допустимое значение maxFactor
-	const unsigned maxFactor = CalcPowers(MAX_FACTOR, power, count - 1, powers);
+	const unsigned maxFactor = CalcPowers(MAX_FACTOR, power, count, powers);
 	aux::Printf("Factor limit is set to #10#%u\n", maxFactor);
 
 	// Инициализируем хеш-таблицу
@@ -511,8 +509,11 @@ static bool SearchForFactors(int power, int count, unsigned hiFactor)
 
 	delete[] powers;
 
-	auto s = util::Format("Highest factor: %u\n", hiFactor);
-	log.Write(s.c_str(), s.size());
+	if (hiFactor <= maxFactor)
+	{
+		auto s = util::Format("Highest factor: %u\n", hiFactor);
+		log.Write(s.c_str(), s.size());
+	}
 	log.Close();
 
 	return true;
