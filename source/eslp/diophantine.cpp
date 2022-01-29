@@ -5,6 +5,8 @@
 #include "pch.h"
 #include "diophantine.h"
 
+#include "uint128.h"
+
 #include <auxlib/print.h>
 #include <core/console.h>
 #include <core/file.h>

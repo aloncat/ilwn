@@ -8,6 +8,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\eslp\pch.h" />
     <ClInclude Include="..\..\eslp\diophantine.h" />
+    <ClInclude Include="..\..\eslp\uint128.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\eslp\prefix.cpp">
