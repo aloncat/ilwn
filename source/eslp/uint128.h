@@ -27,6 +27,7 @@ public:
 	{
 		loPart = value;
 		hiPart = 0;
+
 		return *this;
 	}
 
@@ -110,11 +111,30 @@ public:
 		return *this;
 	}
 
-	//UInt128 operator *(uint64_t rhs) const noexcept
-	//UInt128& operator *=(uint64_t rhs) noexcept
+	UInt128 operator *(uint64_t rhs) const noexcept
+	{
+		UInt128 result;
 
-	//UInt128 operator /(uint64_t rhs) const
-	//UInt128& operator /=(uint64_t rhs)
+		uint64_t hi, t;
+		result.loPart = _umul128(rhs, loPart, &hi);
+		result.hiPart = hi + _umul128(rhs, hiPart, &t);
+
+		return result;
+	}
+
+	UInt128& operator *=(uint64_t rhs) noexcept
+	{
+		uint64_t hi, t;
+		loPart = _umul128(rhs, loPart, &hi);
+		hiPart = hi + _umul128(rhs, hiPart, &t);
+
+		return *this;
+	}
+
+	UInt128 operator /(uint32_t rhs) const;
+	//UInt128& operator /=(uint32_t rhs)
+
+	uint32_t operator %(uint32_t rhs) const;
 
 	//UInt128 operator <<(size_t bits) const noexcept
 	//UInt128& operator <<=(size_t bits) noexcept
@@ -171,11 +191,5 @@ public:
 	//bool operator >=(const UInt128& rhs) const noexcept
 
 protected:
-	static void Divide32(uint32_t* dividend, uint32_t divisor, uint32_t* rest) noexcept
-	{
-		uint64_t u64Dividend = *rest;
-		u64Dividend = (u64Dividend << 32) + *dividend;
-		*dividend = static_cast<uint32_t>(u64Dividend / divisor);
-		*rest = static_cast<uint32_t>(u64Dividend % divisor);
-	}
+	static void Divide32(uint32_t* dividend, uint32_t divisor, uint32_t* rest) noexcept;
 };
