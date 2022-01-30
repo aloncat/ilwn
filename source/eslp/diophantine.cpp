@@ -11,6 +11,7 @@
 #include <core/console.h>
 #include <core/file.h>
 #include <core/strformat.h>
+#include <core/util.h>
 #include <core/winapi.h>
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -201,6 +202,11 @@ public:
 		return m_Solutions.size();
 	}
 
+	void Clear()
+	{
+		m_Solutions.clear();
+	}
+
 protected:
 	bool IsPrimitive(const Solution& s)
 	{
@@ -247,12 +253,13 @@ protected:
 //--------------------------------------------------------------------------------------------------------------------------------
 static unsigned CalcPowers(unsigned high, int power, int count, uint64_t* powers)
 {
-	memset(powers, 0, 8 * (high + 1));
+	memset(powers, 0, sizeof(powers[0]) * (high + 1));
 
+	high = std::min(high, ~0u / count);
 	for (unsigned i = 1; i <= high; ++i)
 	{
-		uint64_t o, p = 1, c = i * count;
-
+		uint64_t o, p = 1;
+		const unsigned c = i * count;
 		for (int j = 0; j < power; ++j)
 		{
 			o = p;
@@ -276,40 +283,38 @@ static unsigned CalcPowers(unsigned high, int power, int count, uint64_t* powers
 class HashTable
 {
 public:
-	HashTable(unsigned maxFactor, const uint64_t* powers)
+	~HashTable()
 	{
-		m_Table = new uint32_t[16 * 1024];
-		memset(m_Table, 0, 4 * 16 * 1024);
+		AML_SAFE_DELETEA(m_Table);
+	}
+
+	void Init(unsigned maxFactor, const uint64_t* powers)
+	{
+		AML_SAFE_DELETEA(m_Table);
+		m_Table = new uint8_t[32 * 1024];
+		memset(m_Table, 0, 32 * 1024);
 
 		for (unsigned i = 1; i <= maxFactor; ++i)
 		{
 			auto hash = GetHash(powers[i]);
-			m_Table[hash >> 5] |= 1 << (hash & 31);
-		}
-	}
-
-	~HashTable()
-	{
-		if (m_Table)
-		{
-			delete[] m_Table;
+			m_Table[hash >> 3] |= 1 << (hash & 7);
 		}
 	}
 
 	bool Exists(uint64_t value) const
 	{
 		auto hash = GetHash(value);
-		return m_Table[hash >> 5] & (1 << (hash & 31));
+		return m_Table[hash >> 3] & (1 << (hash & 7));
 	}
 
 protected:
 	static unsigned GetHash(uint64_t value)
 	{
-		// 19 младших бит
-		return value & 0x7ffff;
+		// 18 младших бит
+		return value & 0x3ffff;
 	}
 
-	uint32_t* m_Table = nullptr;
+	uint8_t* m_Table = nullptr;
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -357,152 +362,91 @@ static bool OnSolutionFound(util::File& log, Solutions& solutions,
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-static bool SearchForFactors(int power, int count, unsigned hiFactor)
+class FactorSearch
 {
-	constexpr int MAX_COUNT = 50;
-	constexpr unsigned MAX_FACTOR = 99999;
+public:
+	~FactorSearch();
 
+	bool DoSearch(int power, int count, unsigned hiFactor);
+
+protected:
+	static constexpr int MAX_COUNT = 50;
+	static constexpr unsigned MAX_FACTOR = 99999;
+
+	void SearchFactors(unsigned k0, const std::function<bool(const unsigned*)>& progressCb);
+	void OnSolutionFound(unsigned left, const unsigned* right);
+
+protected:
+	uint64_t* m_Powers = nullptr;
+	HashTable m_Hashes;
+
+	Solutions m_Solutions;
+	util::BinaryFile m_Log;
+
+	int m_Power = 0;
+	int m_Count = 0;
+	bool m_IsFinished = false;
+};
+
+//--------------------------------------------------------------------------------------------------------------------------------
+FactorSearch::~FactorSearch()
+{
+	AML_SAFE_DELETEA(m_Powers);
+	m_Log.Close();
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool FactorSearch::DoSearch(int power, int count, unsigned hiFactor)
+{
 	if (power < 1 || power > 9 || count < 2 || count > MAX_COUNT)
 		return false;
 
-	util::BinaryFile log;
-	if (!OpenLogFile(log, power, count))
+	if (!OpenLogFile(m_Log, power, count))
 	{
 		aux::Printf("#12Error: failed to open log file\n");
 		return false;
 	}
 
+	m_Power = power;
+	m_Count = count;
+	m_Solutions.Clear();
+
 	UpdateConsoleTitle(power, count);
 	aux::Printf("Searching for factors (%i.1.%i equation)\n", power, count);
 
-	uint64_t* powers = new uint64_t[MAX_FACTOR + 1];
-	const unsigned maxFactor = CalcPowers(MAX_FACTOR, power, count, powers);
+	m_Powers = new uint64_t[MAX_FACTOR + 1];
+	const unsigned maxFactor = CalcPowers(MAX_FACTOR, power, count, m_Powers);
 	aux::Printf("Factor limit is set to #10#%u #8(64 bits)\n", maxFactor);
 
 	// Инициализируем хеш-таблицу
-	HashTable hashes(maxFactor, powers);
-
-	// Массив k хранит коэффициенты правой части уравнения, начиная с индекса 1.
-	// В элементе с индексом 0 будем хранить коэффициент левой части уравнения
-	unsigned k[1 + MAX_COUNT] = { (hiFactor > 1) ? hiFactor : 2 };
-	for (int i = 1; i <= count; ++i)
-		k[i] = 1;
+	m_Hashes.Init(maxFactor, m_Powers);
 
 	Timer timer;
-	Solutions solutions;
+	m_IsFinished = false;
 	bool isCancelled = false;
-	bool isDone = false;
 
-	// Основной цикл: перебираем коэффициент в левой части
-	for (size_t it = 0; !isDone && k[0] <= maxFactor; ++k[0])
+	// Перебираем коэффициент в левой части
+	hiFactor = (hiFactor > 2) ? hiFactor : 2;
+	for (unsigned k0 = hiFactor; k0 <= maxFactor && !m_IsFinished; ++k0)
 	{
-		hiFactor = k[0];
-		// Значение левой части
-		const uint64_t z = powers[k[0]];
-		// Пропускаем значения 1-го коэффициента в правой
-		// части, при которых набор не может дать решение
-		for (k[1] = 1; z > powers[k[1]] * count; ++k[1]);
-		// Сумма всех членов правой части, кроме последнего
-		uint64_t sum = powers[k[1]] + count - 2;
-
-		// Внутренний цикл: перебираем коэффициенты правой части
-		while (k[0] > k[1])
-		{
-			// Вычисляем значение степени последнего коэффициента правой части, при котором может существовать
-			// решение уравнения, и проверяем значение в хеш-таблице. Если значение не будет найдено, то значит
-			// не существует такого целого числа, степень которого равна lastFP и можно пропустить этот набор
-			if (const uint64_t lastFP = z - sum; hashes.Exists(lastFP))
+		hiFactor = k0;
+		SearchFactors(k0, [&](const unsigned* factors) {
+			if (UpdateProgress(count, factors))
 			{
-				k[count] = 0;
-				// Хеш был обнаружен. Теперь нужно найти число, соответствующее значению степени lastFP. Так
-				// как массив степеней powers упорядочен по возрастанию, то используем бинарный поиск. Если
-				// коллизии хешей не было, то мы обнаружим значение в массиве, а его индекс будет искомым
-				// числом. Искомое значение не может превышать значения предпоследнего коэффициента
-				for (unsigned lo = 1, hi = k[count - 1]; lo <= hi;)
-				{
-					unsigned mid = (lo + hi) >> 1;
-					if (auto v = powers[mid]; v < lastFP)
-						lo = mid + 1;
-					else if (v > lastFP)
-						hi = mid - 1;
-					else
-					{
-						k[count] = mid;
-						break;
-					}
-				}
-
-				// Если значение k[count] != 0, значит, коэффициент для значения степени
-				// lastFP существует и мы нашли подходящий набор коэффициентов (решение)
-				if (k[count] && OnSolutionFound(log, solutions, power, count, k[0], k + 1))
-				{
-					// Если нашли 100 решений, заканчиваем работу
-					if (solutions.Count() >= 100)
-					{
-						isDone = true;
-						break;
-					}
-				}
+				m_IsFinished = true;
+				isCancelled = true;
 			}
-
-			// Периодически выводим текущий прогресс. Если пользователь
-			// нажмёт Ctrl-C, то функция вернёт true, мы завершим работу
-			if (!(++it & 0x3fffff) && UpdateProgress(count, k))
-			{
-				isDone = isCancelled = true;
-				break;
-			}
-
-			int idx = 0;
-			// Переходим к следующему набору коэффициентов правой части, перебирая все возможные
-			// комбинации так, чтобы коэффициенты всегда располагались в невозрастающем порядке
-			for (int i = count - 1;; --i)
-			{
-				sum -= powers[k[i]];
-				if (k[i - 1] > k[i])
-				{
-					const auto f = ++k[i];
-					if (auto n = sum + powers[f]; n < z || i == 1)
-					{
-						sum = n;
-						break;
-					}
-				}
-				sum += k[i] = 1;
-				idx = i;
-			}
-
-			if (idx)
-			{
-				// Каждый раз, когда мы сбрасываем в 1 коэффициент в правой части, увеличивая на 1 коэффициент слева от него,
-				// переменная idx будет содержать индекс самого левого единичного коэффициента. Единичное и многие следующие
-				// значения коэффициента не смогут дать решений, так как для них сумма в правой части будет меньше значения
-				// левой. Поэтому мы будем пропускать такие значения, сразу переходя к тем, которые могут дать решение
-				unsigned hi = k[idx - 1];
-				for (int rem = count - idx + 1; rem > 1; --rem)
-				{
-					const uint64_t s = sum - rem + 1;
-					for (unsigned step = hi >> 1; step; step >>= 1)
-					{
-						auto f = k[idx] + step;
-						if (hi >= f && z > s + powers[f - 1] * rem)
-							k[idx] = f;
-					}
-
-					hi = k[idx++];
-					sum += powers[hi] - 1;
-				}
-			}
-		}
+			return m_IsFinished;
+		});
 	}
 
 	aux::Printf("\rTask %s#7, solutions found: #6#%u\n", isCancelled ?
-		"#12cancelled" : "finished", solutions.Count());
+		"#12cancelled" : "finished", m_Solutions.Count());
 
 	if (hiFactor <= maxFactor)
 	{
 		auto s = util::Format("hiFactor: %u\n", hiFactor);
-		log.Write(s.c_str(), s.size());
+		m_Log.Write(s.c_str(), s.size());
 
 		if (isCancelled)
 		{
@@ -511,50 +455,124 @@ static bool SearchForFactors(int power, int count, unsigned hiFactor)
 	}
 
 	const float timeElapsed = timer.Elapsed();
-	aux::Printf((timeElapsed < 90) ? "Running time: %.2f#8s\n" : "Running time: %.0f#8s\n",
-		timeElapsed);
+	aux::Printf((timeElapsed < 90) ? "Running time: %.2f#8s\n" : "Running time: %.0f#8s\n", timeElapsed);
 
-	delete[] powers;
-	log.Close();
+	AML_SAFE_DELETEA(m_Powers);
+	m_Log.Close();
 
 	return true;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-int DiophantineMain(int argCount, const wchar_t* args[])
+void FactorSearch::SearchFactors(unsigned k0, const std::function<bool(const unsigned*)>& progressCb)
 {
-	aux::Printc(L"Equal Sums of Like Powers (ESLP)/iLWN. Standalone app. Ver. 0.10\n"
-		"#8For more information, please visit us at #9https://dmaslov.me/eslp/\n");
+	if (k0 < 2)
+		return;
 
-	// Программа принимает 2 обязательных и 1 опциональный аргумент командной строки: 1) степень уравнения,
-	// 2) количество слагаемых в его правой части, 3) опциональное значение самого старшего коэффициента
-	// (в левой части), с которого будет начат поиск (при его отсутствии будет использовано значение 2)
+	// Массив k хранит коэффициенты правой части уравнения, начиная с индекса 1.
+	// В элементе с индексом 0 будем хранить коэффициент левой части уравнения
+	unsigned k[1 + MAX_COUNT] = { k0 };
+	for (int i = 1; i <= m_Count; ++i)
+		k[i] = 1;
 
-	if (argCount <= 1)
+	// Значение левой части
+	const uint64_t z = m_Powers[k0];
+	// Пропускаем значения 1-го коэффициента в правой
+	// части, при которых набор не может дать решение
+	for (k[1] = 1; z > m_Powers[k[1]] * m_Count; ++k[1]);
+	// Сумма всех членов правой части, кроме последнего
+	uint64_t sum = m_Powers[k[1]] + m_Count - 2;
+
+	const int count = m_Count;
+	// Перебираем коэффициенты правой части
+	for (size_t it = 0; k[0] > k[1];)
 	{
-		// Справка для пустой командной строки
-		aux::Printc("#15Usage: #6eslp.exe#7 power count [factor]\n");
-		return 0;
-	}
-
-	if (argCount == 3 || argCount == 4)
-	{
-		int power = wcstol(args[1], nullptr, 10);
-		int count = wcstol(args[2], nullptr, 10);
-		int hiFactor = (argCount >= 4) ? wcstol(args[3], nullptr, 10) : 2;
-
-		if (power >= 1 && power <= 9 && count >= 2 && count <= 50 && hiFactor >= 0)
+		// Вычисляем значение степени последнего коэффициента правой части, при котором может существовать
+		// решение уравнения, и проверяем значение в хеш-таблице. Если значение не будет найдено, то значит
+		// не существует такого целого числа, степень которого равна lastFP и можно пропустить этот набор
+		if (const auto lastFP = z - sum; m_Hashes.Exists(lastFP))
 		{
-			// Ищем коэффициенты. При ошибке функция вернёт false
-			if (SearchForFactors(power, count, hiFactor))
-				return 0;
+			// Хеш был обнаружен. Теперь нужно найти число, соответствующее значению степени lastFP. Так
+			// как массив степеней powers упорядочен по возрастанию, то используем бинарный поиск. Если
+			// коллизии хешей не было, то мы обнаружим значение в массиве, а его индекс будет искомым
+			// числом. Искомое значение не может превышать значения предпоследнего коэффициента
+			for (unsigned lo = 1, hi = k[count - 1]; lo <= hi;)
+			{
+				unsigned mid = (lo + hi) >> 1;
+				if (auto v = m_Powers[mid]; v < lastFP)
+					lo = mid + 1;
+				else if (v > lastFP)
+					hi = mid - 1;
+				else
+				{
+					k[count] = mid;
+					OnSolutionFound(k[0], k + 1);
+					break;
+				}
+			}
+		}
 
-			// Что-то пошло не так. Сообщение об ошибке уже выведено
-			return 1;
+		// Периодически выводим текущий прогресс. Если пользователь
+		// нажмёт Ctrl-C, то функция вернёт true, мы завершим работу
+		if (!(++it & 0xfffff) && progressCb && progressCb(k))
+			break;
+
+		int idx = 0;
+		// Переходим к следующему набору коэффициентов правой части, перебирая все возможные
+		// комбинации так, чтобы коэффициенты всегда располагались в невозрастающем порядке
+		for (int i = count - 1;; --i)
+		{
+			sum -= m_Powers[k[i]];
+			if (k[i - 1] > k[i])
+			{
+				const auto f = ++k[i];
+				if (auto n = sum + m_Powers[f]; n < z || i == 1)
+				{
+					sum = n;
+					break;
+				}
+			}
+			sum += k[i] = 1;
+			idx = i;
+		}
+
+		if (idx)
+		{
+			// Каждый раз, когда мы сбрасываем в 1 коэффициент в правой части, увеличивая на 1 коэффициент слева от него,
+			// переменная idx будет содержать индекс самого левого единичного коэффициента. Единичное и многие следующие
+			// значения коэффициента не смогут дать решений, так как для них сумма в правой части будет меньше значения
+			// левой. Поэтому мы будем пропускать такие значения, сразу переходя к тем, которые могут дать решение
+			unsigned hi = k[idx - 1];
+			for (int rem = count - idx + 1; rem > 1; --rem)
+			{
+				const uint64_t s = sum - (rem - 1);
+				for (unsigned step = hi >> 1; step; step >>= 1)
+				{
+					auto f = k[idx] + step;
+					if (hi >= f && z > s + m_Powers[f - 1] * rem)
+						k[idx] = f;
+				}
+
+				hi = k[idx++];
+				sum += m_Powers[hi] - 1;
+			}
 		}
 	}
+}
 
-	// Аргументы в командной строке некорректны
-	aux::Printc("#12Error: invalid command line\n");
-	return 1;
+//--------------------------------------------------------------------------------------------------------------------------------
+void FactorSearch::OnSolutionFound(unsigned left, const unsigned* right)
+{
+	if (::OnSolutionFound(m_Log, m_Solutions, m_Power, m_Count, left, right))
+	{
+		if (m_Solutions.Count() >= 100)
+			m_IsFinished = true;
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool SearchForFactors(int power, int count, unsigned hiFactor)
+{
+	FactorSearch search;
+	return search.DoSearch(power, count, hiFactor);
 }

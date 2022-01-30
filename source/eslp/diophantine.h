@@ -4,4 +4,4 @@
 
 #pragma once
 
-int DiophantineMain(int argCount, const wchar_t* args[]);
+bool SearchForFactors(int power, int count, unsigned hiFactor);
