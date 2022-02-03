@@ -401,6 +401,29 @@ table.basic td.txtright {
 	color: #08f;
 }
 
+.mathtext {
+	font-family: 'Noto Sans Math', sans-serif;
+	font-size: 114.29%; /* Equals to 16.0px */
+	line-height: 1.375; /* 22.0px */
+	text-align: center;
+	color: #333;
+}
+
+.mathtext > sup {
+	font-size: 75%;
+	position: relative;
+	top: -1px;
+}
+
+.mathtext > .ref {
+	float: right;
+	color: #666;
+}
+
+.mathtext:hover > .ref {
+	color: #f33;
+}
+
 /* Custom classes: blog */
 
 .column .blognav {
