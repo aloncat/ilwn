@@ -153,9 +153,9 @@ table.navbar {
 }
 
 .navbar div.flexitems {
+	margin: 0 auto;
 	display: flex;
 	flex-flow: row wrap;
-	margin: 0 auto;
 }
 
 .navbar div.flexitem {
@@ -727,7 +727,7 @@ div.newsheader {
 	border-bottom: 1px solid #aaa;
 }
 
-span.newsupdate {
+span.update {
 	margin-right: 3px;
 	padding: 0 4px 1px;
 	font-weight: bold;
@@ -758,6 +758,8 @@ div.allterms {
 	margin: 15px auto;
 	padding: 4px 0;
 	max-width: 700px;
+	font-size: 85.71%; /* 12.0px */
+	line-height: 1.75; /* 21.0px */
 	text-align: center;
 	border-top: 2px dotted #d4d4d4;
 	border-bottom: 2px dotted #d4d4d4;
@@ -765,9 +767,8 @@ div.allterms {
 }
 
 div.allterms > div {
-	display: inline-block;
 	margin: 0 10px;
-	margin-bottom: 2px;
+	display: inline-block;
 	white-space: nowrap;
 }
 

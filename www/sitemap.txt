@@ -1,10 +1,12 @@
 https://dmaslov.me/
+https://dmaslov.me/about.html
 https://dmaslov.me/alsn/
 https://dmaslov.me/app/eslp-changelog.html
 https://dmaslov.me/blog/
 https://dmaslov.me/blog/articles.html
 https://dmaslov.me/contacts.html
 https://dmaslov.me/downloads.html
+https://dmaslov.me/eslp/
 https://dmaslov.me/hardware.html
 https://dmaslov.me/map.html
 https://dmaslov.me/mdpn/
@@ -14,6 +16,7 @@ https://dmaslov.me/mdpn/records.html
 https://dmaslov.me/news.html
 https://dmaslov.me/p196/
 https://dmaslov.me/patrons.html
+https://dmaslov.me/ru/about.html
 https://dmaslov.me/ru/blog/
 https://dmaslov.me/ru/blog/article/about-new-p196-project.html
 https://dmaslov.me/ru/blog/article/choosing-proper-search-depth.html
