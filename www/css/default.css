@@ -54,32 +54,28 @@ h1, h2, h3 {
 
 h1, h2 {
 	text-align: center;
-	background: #e8e8e8;
-	border: 1px solid #ccc;
-	border-radius: 5px;
 }
 
 h1 {
-	margin: 36px auto 30px;
-	padding: 4px 20px 6px;
-	max-width: 420px; /* for IE */
-	max-width: max-content;
-	font-size: 128.57%; /* 18.0px */
-	line-height: 1.444; /* 26.0px */
-}
-
-h1.blogpost {
-	margin-bottom: 2px;
+	margin: 20px auto;
 	padding: 0 15px;
 	max-width: auto;
-	background: unset;
-	border: none;
+	font-size: 157.14%; /* 22.0px */
+	line-height: 1.364; /* 30.0px */
+	text-align: center;
+}
+
+h1.blog {
+	margin-bottom: 8px;
 }
 
 h2 {
 	margin: 36px auto 8px;
 	padding: 1px 15px 2px;
 	max-width: 768px;
+	background: #e8e8e8;
+	border: 1px solid #ccc;
+	border-radius: 5px;
 }
 
 h3 {
@@ -140,7 +136,7 @@ table.navbar {
 
 .navbar td.logo {
 	padding: 2px;
-	width: 215px;
+	width: 120px;
 	font-family: Tahoma, Arial, sans-serif;
 	font-size: 142.9%; /* 20.0px */
 	line-height: 1.2; /* 24.0px */
@@ -236,7 +232,7 @@ a.nodecor {
 
 a.jsanchor {
 	cursor: pointer;
-	color: #36f;
+	color: #04f;
 }
 
 table.nospacing {
@@ -426,59 +422,30 @@ table.basic td.txtright {
 
 /* Custom classes: blog */
 
-.column .blognav {
-	text-align: center;
-}
-
-.column .blognav > hr {
-	margin: 8px auto;
-	width: 235px;
-	background: #d0d0d0;
-}
-
-.column .blognav > div {
-	margin: 8px auto;
-	cursor: default;
-}
-
-.column .blognav span.date {
-	padding: 4px 9px;
-	font-weight: bold;
-	background: #f0f0f0; /* Unselected color */
-	color: #c8c8c8; /* Inactive color */
-	border-radius: 12px;
-	transition: background 0.12s, color 0.12s;
-}
-
-.column .blognav span.date:hover {
-	background: #d4d4d4;
-	color: #acacac;
-}
-
-.column .blogpostheader {
-	padding: 1px 8px 3px;
-	border: 1px solid #e8f0ff;
-	border-left: 4px solid #6af;
-	background: #f6f9ff;
-	border-radius: 3px;
-}
-
-.column .blogpostheader .title {
-	font-size: 107.14%; /* 15.0px */
-	line-height: 1.333; /* 20.0px */
+div.articletitle,
+div.blogposttitle {
+	padding-bottom: 2px;
 	font-weight: bold;
 }
 
-.column .blogpostheader .title > a {
+div.articletitle {
+	border-bottom: 1px solid #f96;
+}
+
+div.articletitle a {
+	text-decoration: none;
 	color: inherit;
 }
 
-.column .blogpostheader span.date {
-	font-style: italic;
-	color: #808080;
+div.articletitle a:hover {
+	color: #26f;
 }
 
-.column div.blogpostdate {
+div.blogposttitle {
+	border-bottom: 1px solid #7af;
+}
+
+div.articledate {
 	margin-top: 6px;
 	font-style: italic;
 	color: #808080;
@@ -486,7 +453,7 @@ table.basic td.txtright {
 
 div.bloglinks-top,
 div.bloglinks-bottom {
-	color: #b8b8b8; /* Inactive link color */
+	color: #b8b8b8; /* Inactive link */
 }
 
 div.bloglinks-top {
@@ -507,14 +474,14 @@ div.bloglinks-bottom span.divider {
 	margin-right: 10px;
 }
 
-div.bloglinks-top span.postlink,
-div.bloglinks-bottom span.postlink {
+div.bloglinks-top span.link,
+div.bloglinks-bottom span.link {
 	cursor: pointer;
-	color: #36f;
+	color: #04f;
 }
 
-div.bloglinks-top span.postlink:hover,
-div.bloglinks-bottom span.postlink:hover {
+div.bloglinks-top span.link:hover,
+div.bloglinks-bottom span.link:hover {
 	text-decoration: underline;
 }
 
@@ -1024,7 +991,7 @@ h3.fact > span {
 	}
 
 	.navbar td.logo {
-		width: 27.5%;
+		width: 15.3%;
 	}
 
 	.navbar div.flexitems {
@@ -1118,7 +1085,8 @@ h3.fact > span {
 }
 
 @media screen and (max-width: 330px) {
-	.navbar td.logo, .navbar td.divider {
+	.navbar td.logo,
+	.navbar td.divider {
 		display: none;
 	}
 }

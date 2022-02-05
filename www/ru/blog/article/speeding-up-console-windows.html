@@ -1,14 +1,13 @@
 ﻿<!DOCTYPE html>
 <html lang="ru"><head>
-  <title>Ускоряем работу консольных окон в Windows - блог iLWN</title>
+  <title>Ускоряем работу консольных окон в Windows – Блог iLWN</title>
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
   <meta name="description" content="О скорости вывода текста в консольных
 	окнах ОС Windows, от чего она зависит, и как её повысить">
   <meta name="keywords" content="консоль, Windows, программирование">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" type="text/css" href="/css/default.css">
-  <link rel="canonical" href="https://dmaslov.me/blog/speeding-up-the-console-window.html">
-  <script defer src="/js/blognav.js"></script>
+  <link rel="canonical" href="https://dmaslov.me/ru/blog/article/speeding-up-console-windows.html">
   <!-- Global site tag (gtag.js) - Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-B65M23L0K6"></script>
   <script>
@@ -20,21 +19,16 @@
 	  window['ga-disable-G-B65M23L0K6'] = true;
   </script>
 </head>
-<body onload="setPostLinks()">
+<body onload="setupBlogLinks()">
 
 <!-- Navigation bar -->
 <script src="/js/pageheader.js"></script>
 
-<!-- Title, tags, date -->
+<!-- Title & date -->
+<h1 class="blog">Ускоряем работу консольных окон в Windows</h1>
 
-<h1 class="blogpost">Ускоряем работу консольных окон в Windows</h1>
-
-<div class="column" style="text-align: center">
-  <div class="small">Теги:
-	<span class="blogtag">#console</span>
-	<span class="blogtag">#programming</span>
-  </div>
-  <div class="blogpostdate tiny">
+<div class="column txtcenter">
+  <div class="articledate small">
 	3 декабря 2021
   </div>
 </div>
@@ -43,7 +37,6 @@
 <script>insertTopLinks()</script>
 
 <!-- Content -->
-
 <div class="column readingtime">
   Время на чтение: 5 минут
 </div>
@@ -53,7 +46,7 @@
 </p>
 
 <p class="column text">
-  То, что я выяснил, меня несколько удивило. И поэтому я решил поделиться этой информацией, так как думаю, что она может быть полезной кому-то ещё. В этом посте я расскажу о том, как можно сделать работу консольных окон (и некоторых консольных приложений) в ОС Windows немного быстрее.
+  То, что я выяснил, меня несколько удивило. И поэтому я решил поделиться этой информацией, так как думаю, что она может быть полезной кому-то ещё. В этой статье я расскажу о том, как можно сделать работу консольных окон (и некоторых консольных приложений) в ОС Windows немного быстрее.
 </p>
 
 <div class="column divider">&bull; &bull; &bull;</div>
@@ -75,7 +68,7 @@
 </p>
 
 <p class="column text">
-  В таблицах ниже можно увидеть, как влияет выбор значения этих параметров на скорость вывода. В качестве теста я написал простой цикл, в котором в окно консоли подряд выводятся 10,000 строк &laquo;This is a text&raquo;. Причем длина строки практически не влияла на скорость вывода (я пробовал выводить несколько строк разной длины). Для первой таблицы значение высоты окна было равно 30, для второй &mdash; значение высоты буфера было равно 5000.
+  В таблицах ниже можно увидеть, как влияет выбор значения этих параметров на скорость вывода. В качестве теста я написал простой цикл, в котором в окно консоли подряд выводятся 10,000 строк &laquo;This is a text&raquo;. Причём длина строки практически не влияла на скорость вывода (я пробовал выводить несколько строк разной длины). Для первой таблицы значение высоты окна было равно 30, для второй &mdash; значение высоты буфера было равно 5000.
 </p>
 
 <div class="column">
@@ -151,22 +144,16 @@
 </p>
 
 <p class="column text">
-  Если программе требуется периодически выводить на экран статус длительной операции или её прогресс, то лучше делать это с определённой заранее заданной периодичностью, например всего 1 или 2 раза в секунду. Этот подход используется во всех консольных приложениях <a href="/termsdefs.html#ilwn"><b>iLWN</b></a>.
+  Если программе требуется периодически выводить на экран статус длительной операции или её прогресс, то лучше делать это с определённой заранее заданной периодичностью, например, всего 1 или 2 раза в секунду. Этот подход используется во всех консольных приложениях <a href="/termsdefs.html#ilwn"><b>iLWN</b></a>.
 </p>
 
 <!-- Navigation links -->
 <script>insertBottomLinks()</script>
+<div id="prevLink" data-url-path="/ru/blog/article/quantity-of-numbers-to-test-for-delay.html"></div>
+<div id="nextLink" data-url-path=""></div>
 
 <!-- Footer -->
-<div id="pageFooter" data-lang="ru" data-url-path="/blog/speeding-up-the-console-window.html"></div>
-
-<!-- Links to other posts -->
-<script>
-  function setPostLinks() {
-	setPrevBlogPostUrl("/blog/about-new-p196-project.html");
-	setNextBlogPostUrl("");
-  }
-</script>
+<div id="pageFooter" data-lang="ru" data-url-path="/ru/blog/article/speeding-up-console-windows.html"></div>
 
 </body>
 </html>

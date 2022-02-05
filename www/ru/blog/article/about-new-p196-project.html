@@ -1,15 +1,14 @@
 ﻿<!DOCTYPE html>
 <html lang="ru"><head>
-  <title>О новом проекте P196 - блог iLWN</title>
+  <title>О новом проекте P196 – Блог iLWN</title>
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
-  <meta name="description" content="Статья о новом проекте P196, цель которого -
+  <meta name="description" content="Статья о новом проекте P196, цель которого –
 	проверить, смогут ли какие-то из базовых чисел Лишрел стать палиндромами">
   <meta name="keywords" content="проект P196, число Лишрел, отложенный палиндром,
 	196, 879, проверка базовых чисел, перевернуть-и-сложить">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" type="text/css" href="/css/default.css">
-  <link rel="canonical" href="https://dmaslov.me/blog/about-new-p196-project.html">
-  <script defer src="/js/blognav.js"></script>
+  <link rel="canonical" href="https://dmaslov.me/ru/blog/article/about-new-p196-project.html">
   <!-- Global site tag (gtag.js) - Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-B65M23L0K6"></script>
   <script>
@@ -21,22 +20,16 @@
 	  window['ga-disable-G-B65M23L0K6'] = true;
   </script>
 </head>
-<body onload="setPostLinks()">
+<body onload="setupBlogLinks()">
 
 <!-- Navigation bar -->
 <script src="/js/pageheader.js"></script>
 
-<!-- Title, tags, date -->
+<!-- Title & date -->
+<h1 class="blog">О новом проекте P196</h1>
 
-<h1 class="blogpost">О новом проекте P196</h1>
-
-<div class="column" style="text-align: center">
-  <div class="small">Теги:
-	<span class="blogtag">#lychrel</span>
-	<span class="blogtag">#p196</span>
-	<span class="blogtag">#seed</span>
-  </div>
-  <div class="blogpostdate tiny">
+<div class="column txtcenter">
+  <div class="articledate small">
 	19 сентября 2021
   </div>
 </div>
@@ -45,17 +38,16 @@
 <script>insertTopLinks()</script>
 
 <!-- Content -->
-
 <div class="column readingtime">
   Время на чтение: 12 минут
 </div>
 
 <p class="column text">
-  Как мы уже знаем, не все натуральные числа являются <a href="/termsdefs.html#delayed-palindrome"><i>отложенными палиндромами</i></a>, то есть такими числами, которые в результате одной или нескольких операций <a href="/termsdefs.html#reverse-and-add-ru">Перевернуть-И-Сложить</a> становятся <a href="/termsdefs.html#palindrome">палиндромами</a>. И первое такое число в десятичной системе счисления &mdash; это число <a href="/ru/mdpn/checkpal.html?n=196">196</a>.
+  Как мы уже знаем, не все натуральные числа являются <a href="/termsdefs.html#delayed-palindrome"><i>отложенными палиндромами</i></a>, то есть такими числами, которые в результате одной или нескольких операций <a href="/termsdefs.html#reverse-and-add-ru"><i>Перевернуть-И-Сложить</i></a> становятся <a href="/termsdefs.html#palindrome"><i>палиндромами</i></a>. И первое такое число в десятичной системе счисления &mdash; это число <a href="/ru/mdpn/checkpal.html?n=196">196</a>.
 </p>
 
 <p class="column text">
-  Сколько бы раз мы не применяли к числу 196 операцию <a href="/termsdefs.html#raa-op">RAA</a> (Перевернуть-И-Сложить), в палиндром оно не превращается. Точнее, за всё то время, в течение которого разные люди пытались это делать, палиндром ими получен так и не был. По известным мне данным одним из исследователей было получено число длиной более одного миллиарда знаков (что соответствует примерно 2.4 миллиарда <a href="/termsdefs.html#iteration">итераций</a>)!
+  Сколько бы раз мы не применяли к числу 196 операцию <a href="/termsdefs.html#raa-op"><i>RAA</i></a> (Перевернуть-И-Сложить), в палиндром оно не превращается. Точнее, за всё то время, в течение которого разные исследователи пытались это делать, палиндром ими получен так и не был. По известным мне данным одним из них было получено число длиной более одного миллиарда знаков (что соответствует примерно 2.4 миллиарда <a href="/termsdefs.html#iteration"><i>итераций</i></a>)!
 </p>
 
 <p class="column text">
@@ -69,11 +61,11 @@
 <div class="column divider">&bull; &bull; &bull;</div>
 
 <p class="column text">
-  Интересно, что <a href="/ru/mdpn/checkpal.html?n=196">196</a> не является единственным подобным числом. В действительности таких чисел бесконечно много. Вот, например, ещё несколько: <a href="/ru/mdpn/checkpal.html?n=879">879</a>, <a href="/ru/mdpn/checkpal.html?n=1997">1,997</a>, <a href="/ru/mdpn/checkpal.html?n=7059">7,059</a>, <a href="/ru/mdpn/checkpal.html?n=9999">9,999</a>. Более того, по данным, полученным в проекте <a href="/mdpn/"><b>MDPN</b></a>, чем длиннее числа, тем среди них больше таких чисел.
+  Интересно, что <a href="/ru/mdpn/checkpal.html?n=196">196</a> не является единственным подобным числом. В действительности таких чисел бесконечно много. Вот, например, ещё несколько: <a href="/ru/mdpn/checkpal.html?n=879">879</a>, <a href="/ru/mdpn/checkpal.html?n=1997">1,997</a>, <a href="/ru/mdpn/checkpal.html?n=7059">7,059</a>, <a href="/ru/mdpn/checkpal.html?n=9999">9,999</a>. Более того, по данным, полученным в проекте <a href="/mdpn/"><b>MDPN</b></a>, чем длиннее числа, тем среди них больше &laquo;таких&raquo; чисел.
 </p>
 
 <p class="column text">
-  Например, все одно- и двузначные числа являются отложенными палиндромами. Среди всех 3-значных таких чисел всего 13 (примерно 1.4%). Среди 5-значных их уже 5,842 (или 6.5%). Среди 10-значных &mdash; более 4 миллиардов (или 48.3%). А среди 22-значных их очень много: 96.059%, то есть примерно 24 из каждых 25 чисел!
+  Например, все одно- и двузначные числа являются отложенными палиндромами. Среди всех 3-значных таких чисел всего 13 (примерно 1.4%). Среди 5-значных их уже 5,842 (или 6.5%). Среди 10-значных &mdash; более 4 миллиардов (или 48.3%, то есть почти каждое второе). А среди 22-значных их очень много: 96.059%, то есть примерно 24 из каждых 25 чисел!
 </p>
 
 <p class="column text">
@@ -181,7 +173,7 @@
 </p>
 
 <p id="footnote-1" class="column footnote small">
-  1. <i>На момент написания этого поста страница проекта ещё не готова (я добавлю её в ближайшее время). Файлы для скачивания будут добавляться по мере их верификации. Для экономии места и трафика их формат будет бинарным (сжатым), а не текстовым. Но для преобразования будет доступна консольная утилита под Windows.</i>
+  1. <i>На момент написания этой статьи страница проекта ещё не готова (я добавлю её в ближайшее время). Файлы для скачивания будут добавляться по мере их верификации. Для экономии места и трафика их формат будет бинарным (сжатым), а не текстовым. Но для преобразования будет доступна консольная утилита под Windows.</i>
 </p>
 
 <p id="footnote-2" class="column footnote small">
@@ -190,17 +182,11 @@
 
 <!-- Navigation links -->
 <script>insertBottomLinks()</script>
+<div id="prevLink" data-url-path="/ru/blog/article/choosing-proper-search-depth.html"></div>
+<div id="nextLink" data-url-path="/ru/blog/article/quantity-of-numbers-to-test-for-delay.html"></div>
 
 <!-- Footer -->
-<div id="pageFooter" data-lang="ru" data-url-path="/blog/about-new-p196-project.html"></div>
-
-<!-- Links to other posts -->
-<script>
-  function setPostLinks() {
-	setPrevBlogPostUrl("/blog/choosing-the-proper-search-depth.html");
-	setNextBlogPostUrl("/blog/speeding-up-the-console-window.html");
-  }
-</script>
+<div id="pageFooter" data-lang="ru" data-url-path="/ru/blog/article/about-new-p196-project.html"></div>
 
 </body>
 </html>

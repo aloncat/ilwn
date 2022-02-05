@@ -1,0 +1,108 @@
+﻿<!DOCTYPE html>
+<html lang="ru"><head>
+  <title>Блог проекта – Влюблённые в числа (iLWN)</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="description" content="Статьи в блоге проекта iLWN. Значимые
+	события в жизни проектов. Возникающие проблемы и их решения">
+  <meta name="keywords" content="проект iLWN, блог, отложенный палиндром,
+	число Лишрел, Дмитрий Маслов, программирование, код, C, C++">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="/css/default.css">
+  <link rel="canonical" href="https://dmaslov.me/ru/blog/articles.html">
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-B65M23L0K6"></script>
+  <script>
+	window.dataLayer = window.dataLayer || [];
+	function gtag() { dataLayer.push(arguments); }
+	gtag('js', new Date());
+	gtag('config', 'G-B65M23L0K6');
+	if (window.location.hostname === 'localhost')
+	  window['ga-disable-G-B65M23L0K6'] = true;
+  </script>
+</head>
+<body>
+
+<!-- Navigation bar -->
+<script src="/js/pageheader.js"></script>
+
+<h1 class="blog">Блог проекта iLWN</h1>
+
+<div class="column txtcenter" style="margin-bottom: 25px">
+  <a href="/ru/blog/"><b>Дневник</b></a>
+  <span class="lightgrey">&ensp;&bull;&ensp;</span>
+  <span style="color: #333"><b>Список статей</b></span>
+</div>
+
+<!-- Article -->
+<div class="column">
+  <span class="newsdate small">3 декабря 2021</span>
+  <div class="articletitle">
+	<a href="/ru/blog/article/speeding-up-console-windows.html">
+	  Ускоряем работу консольных окон в Windows
+	</a>
+  </div>
+  <p class="text">
+	Одной из потенциальных проблем производительности консольных приложений Windows является вывод текста в окно. Не беря во внимание оптимальность способов вывода, использованных разработчиком, есть два параметра в настройках окна, выбираемые пользователем, которые имеют значительное влияние на скорость вывода текста приложением в окно консоли.
+	<a href="/ru/blog/article/speeding-up-console-windows.html">Читать далее...</a>
+  </p>
+</div>
+
+<div class="column divider">&bull; &bull; &bull;</div>
+
+<!-- Article -->
+<div class="column">
+  <span class="date small">26 октября 2021</span>
+  <span class="lightgrey small">&middot;</span>
+  <span class="prjtag-mdpn tiny">MDPN</span>
+  <div class="articletitle">
+	<a href="/ru/blog/article/quantity-of-numbers-to-test-for-delay.html">
+	  О количестве проверяемых чисел при поиске отложенных палиндромов
+	</a>
+  </div>
+  <p class="text">
+	Единственный известный метод поиска <a href="/termsdefs.html#delayed-palindrome"><i>отложенных палиндромов</i></a> &mdash; это полный перебор, то есть проверка каждого натурального числа. Но существует способ значительно сократить количество проверяемых кандидатов. В этой статье подробно описывается оптимизация перебора и приводятся данные о её влиянии на скорость поиска.
+	<a href="/ru/blog/article/quantity-of-numbers-to-test-for-delay.html">Читать далее...</a>
+  </p>
+</div>
+
+<div class="column divider">&bull; &bull; &bull;</div>
+
+<!-- Article -->
+<div class="column">
+  <span class="date small">19 сентября 2021</span>
+  <span class="lightgrey small">&middot;</span>
+  <span class="prjtag-p196 tiny">P196</span>
+  <div class="articletitle">
+	<a href="/ru/blog/article/about-new-p196-project.html">
+	  О новом проекте P196
+	</a>
+  </div>
+  <p class="text">
+	Как мы уже знаем, не все натуральные числа являются <a href="/termsdefs.html#delayed-palindrome"><i>отложенными палиндромами</i></a>, то есть такими числами, которые в результате одной или нескольких операций <a href="/termsdefs.html#reverse-and-add-ru"><i>Перевернуть-И-Сложить</i></a> становятся <a href="/termsdefs.html#palindrome"><i>палиндромами</i></a>. И первое такое число в десятичной системе счисления — это число <a href="/ru/mdpn/checkpal.html?n=196">196</a>. Сегодня официально был дан старт проекту с кодовым названием <a href="/p196/"><b>P196</b></a>! Цель проекта — проверить, смогут ли какие-либо из <a href="/termsdefs.html#lychrel-seed-number"><i>базовых чисел Лишрел</i></a> стать палиндромами в результате многократного выполнения над ними операции Перевернуть-И-Сложить.
+	<a href="/ru/blog/article/about-new-p196-project.html">Читать далее...</a>
+  </p>
+</div>
+
+<div class="column divider">&bull; &bull; &bull;</div>
+
+<!-- Article -->
+<div class="column">
+  <span class="date small">25 ноября 2020</span>
+  <span class="lightgrey small">&middot;</span>
+  <span class="prjtag-mdpn tiny">MDPN</span>
+  <div class="articletitle">
+	<a href="/ru/blog/article/choosing-proper-search-depth.html">
+	  Выбор глубины при поиске отложенных палиндромов
+	</a>
+  </div>
+  <p class="text">
+	При поиске <a href="/termsdefs.html#delayed-palindrome"><i>отложенных палиндромов</i></a> мы проверяем все числа диапазона, выполняя над каждым из них некоторое количество операций <a href="/termsdefs.html#reverse-and-add-ru"><i>Перевернуть-И-Сложить</i></a>. С одной стороны, чтобы поиск был быстрее, мы хотим делать меньше операций. А с другой, недостаточное их количество может привести к тому, что мы ошибочно примем отложенный палиндром за <a href="/termsdefs.html#lychrel-number"><i>число Лишрел</i></a>. Каким же должно быть правильное количество <a href="/termsdefs.html#iteration"><i>итераций</i></a>, чтобы поиск был достаточно быстрым, и чтобы не был пропущен ни один отложенный палиндром?
+	<a href="/ru/blog/article/choosing-proper-search-depth.html">Читать далее...</a>
+  </p>
+</div>
+
+<!-- Footer -->
+<div id="pageFooter" data-lang="en" data-url-path="/blog/articles.html"></div>
+
+</body>
+</html>

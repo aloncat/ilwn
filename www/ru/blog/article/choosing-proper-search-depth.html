@@ -1,15 +1,14 @@
 ﻿<!DOCTYPE html>
 <html lang="ru"><head>
-  <title>Выбор глубины при поиске отложенных палиндромов - блог iLWN</title>
+  <title>Выбор глубины при поиске отложенных палиндромов – Блог iLWN</title>
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
-  <meta name="description" content="Пост о том, сколько итераций нужно выполнить над
+  <meta name="description" content="Статья о количестве итераций, которые нужно выполнить над
 	проверяемым числом, чтобы сказать, является оно отложенным палиндромом или числом Лишрел">
   <meta name="keywords" content="отложенный палиндром, число Лишрел, глубина поиска,
 	проект MDPN, перевернуть-и-сложить">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" type="text/css" href="/css/default.css">
-  <link rel="canonical" href="https://dmaslov.me/blog/choosing-the-proper-search-depth.html">
-  <script defer src="/js/blognav.js"></script>
+  <link rel="canonical" href="https://dmaslov.me/ru/blog/article/choosing-proper-search-depth.html">
   <!-- Global site tag (gtag.js) - Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-B65M23L0K6"></script>
   <script>
@@ -21,23 +20,18 @@
 	  window['ga-disable-G-B65M23L0K6'] = true;
   </script>
 </head>
-<body onload="setPostLinks()">
+<body onload="setupBlogLinks()">
 
 <!-- Navigation bar -->
 <script src="/js/pageheader.js"></script>
 
-<!-- Title, tags, date -->
+<!-- Title & date -->
+<h1 class="blog">Выбор глубины при поиске отложенных палиндромов</h1>
 
-<h1 class="blogpost">Выбор глубины при поиске отложенных палиндромов</h1>
-
-<div class="column" style="text-align: center">
-  <div class="small">Теги:
-	<span class="blogtag">#delayed-palindrome</span>
-	<span class="blogtag">#mdpn</span>
-  </div>
-  <div class="blogpostdate tiny">
+<div class="column txtcenter">
+  <div class="articledate small">
 	25 ноября 2020
-	<br>(обновлено 2 апреля 2021)
+	<br>(обновлено 5 февраля 2022)
   </div>
 </div>
 
@@ -45,17 +39,16 @@
 <script>insertTopLinks()</script>
 
 <!-- Content -->
-
 <div class="column readingtime">
   Время на чтение: 6 минут
 </div>
 
 <p class="column text">
-  При поиске <a href="/termsdefs.html#delayed-palindrome">отложенных палиндромов</a> мы проверяем по очереди каждое <a href="/termsdefs.html#canonical-number">каноническое число</a> в заданном диапазоне. Суть проверки заключается в выполнении над числами некоторого количества операций <a href="/termsdefs.html#reverse-and-add-ru">Перевернуть-И-Сложить</a>. В результате этого процесса число может стать <a href="/termsdefs.html#palindrome">палиндромом</a> в одной из <a href="/termsdefs.html#iteration">итераций</a> цикла, и тогда оно будет считаться отложенным палиндромом, разрешающимся за <i>N</i> <a href="/termsdefs.html#raa-step">шагов</a>, где <i>N</i> равно количеству выполненных итераций.
+  При поиске <a href="/termsdefs.html#delayed-palindrome"><i>отложенных палиндромов</i></a> мы проверяем по очереди каждое <a href="/termsdefs.html#canonical-number"><i>каноническое число</i></a> в заданном диапазоне (подробнее об этих числах можно <a href="/ru/blog/article/quantity-of-numbers-to-test-for-delay.html">прочитать здесь</a>). Суть проверки заключается в выполнении над числами некоторого количества операций <a href="/termsdefs.html#reverse-and-add-ru"><i>Перевернуть-И-Сложить</i></a>. В результате этого процесса число может стать <a href="/termsdefs.html#palindrome"><i>палиндромом</i></a> в одной из <a href="/termsdefs.html#iteration"><i>итераций</i></a> цикла, и тогда оно будет считаться отложенным палиндромом, разрешающимся за <i>N</i> <a href="/termsdefs.html#raa-step"><i>шагов</i></a>, где <i>N</i> равно количеству выполненных итераций.
 </p>
 
 <p class="column text">
-  Но как мы уже знаем, не все числа становятся палиндромами. Такие числа называют <a href="/termsdefs.html#lychrel-number">числами Лишрел</a>. Их особенность в том, что они не становятся палиндромами, сколько бы операций Перевернуть-И-Сложить мы над ними ни сделали. И поэтому для таких чисел количество итераций нужно как-то ограничивать.
+  Но как мы уже знаем, не все числа становятся палиндромами. Такие числа называют <a href="/termsdefs.html#lychrel-number"><i>числами Лишрел</i></a>. Их особенность в том, что они не становятся палиндромами, сколько бы операций Перевернуть-И-Сложить мы над ними ни сделали. И поэтому для таких чисел количество итераций нужно как-то ограничивать.
 </p>
 
 <p class="column text">
@@ -63,7 +56,7 @@
 </p>
 
 <p class="column text nobottommargin">
-  Ниже в таблице приведены данные для каждого диапазона о наибольшем количестве итераций, которое требуется его числам для того, чтобы стать палиндромами (*23-значный диапазон проверен частично).
+  Ниже в таблице приведены данные для каждого диапазона о наибольшем количестве итераций, которое требуется его числам для того, чтобы стать палиндромами (*&nbsp;диапазоны 23-, 24-, 25- и 26-значных чисел проверены не полностью).
 </p>
 
 <div class="column">
@@ -71,63 +64,67 @@
 	<tr style="text-align: center; hyphens: auto">
 	  <td style="width: 110px">Номер<br>диапазона</td>
 	  <td style="width: 110px">Наибольший<br>шаг</td>
-	  <td rowspan=13 style="padding: 0px"></td>
+	  <td rowspan=14 style="padding: 0px"></td>
 	  <td style="width: 110px">Номер<br>диапазона</td>
 	  <td style="width: 110px">Наибольший<br>шаг</td>
 	</tr>
 	<tr>
 	  <td>1</td><td>2</td>
-	  <td>13</td><td>188</td>
-	</tr>
-	<tr>
-	  <td>2</td><td>24</td>
 	  <td>14</td><td>186</td>
 	</tr>
 	<tr>
-	  <td>3</td><td>23</td>
+	  <td>2</td><td>24</td>
 	  <td>15</td><td>201</td>
 	</tr>
 	<tr>
-	  <td>4</td><td>21</td>
+	  <td>3</td><td>23</td>
 	  <td>16</td><td>197</td>
 	</tr>
 	<tr>
-	  <td>5</td><td>55</td>
+	  <td>4</td><td>21</td>
 	  <td>17</td><td>236</td>
 	</tr>
 	<tr>
-	  <td>6</td><td>64</td>
+	  <td>5</td><td>55</td>
 	  <td>18</td><td>232</td>
 	</tr>
 	<tr>
-	  <td>7</td><td>96</td>
+	  <td>6</td><td>64</td>
 	  <td>19</td><td>261</td>
 	</tr>
 	<tr>
-	  <td>8</td><td>96</td>
+	  <td>7</td><td>96</td>
 	  <td>20</td><td>258</td>
 	</tr>
 	<tr>
-	  <td>9</td><td>98</td>
+	  <td>8</td><td>96</td>
 	  <td>21</td><td>256</td>
 	</tr>
 	<tr>
-	  <td>10</td><td>109</td>
+	  <td>9</td><td>98</td>
 	  <td>22</td><td>252</td>
 	</tr>
 	<tr>
-	  <td>11</td><td>149</td>
+	  <td>10</td><td>109</td>
 	  <td>23</td><td style="padding-left:13px">289*</td>
 	</tr>
 	<tr>
+	  <td>11</td><td>149</td>
+	  <td>24</td><td style="padding-left:13px">285*</td>
+	</tr>
+	<tr>
 	  <td>12</td><td>149</td>
-	  <td></td><td></td>
+	  <td>25</td><td style="padding-left:13px">293*</td>
+	</tr>
+	<tr>
+	  <td>13</td><td>188</td>
+	  <td>26</td><td style="padding-left:13px">289*</td>
 	</tr>
   </table>
 </div>
 
 <p class="column text nobottommargin">
-  Проанализировав эти данные, мы можем прийти к выводу, что номер диапазона и наибольший шаг внутри него находятся в линейной зависимости. И проведя расчёты, выяснить, что коэффициент корреляции равен 98.9%, что является очень высоким показателем! Поэтому, используя линейную регрессию, можно получить следующую формулу, приблизительно описывающую зависимость наибольшего количества итераций от номера диапазона:
+  Проанализировав эти данные, мы можем прийти к выводу, что номер диапазона и наибольший шаг внутри него находятся в линейной зависимости. И проведя расчёты (используя данные диапазонов с 1 по 23), выяснить, что коэффициент корреляции равен 98.9%, что является очень высоким показателем! Поэтому, используя линейную регрессию, можно получить следующую формулу, приблизительно описывающую зависимость наибольшего количества итераций от номера диапазона:
 </p>
 
 <p class="column text txtcenter">
@@ -176,17 +173,11 @@
 
 <!-- Navigation links -->
 <script>insertBottomLinks()</script>
+<div id="prevLink" data-url-path=""></div>
+<div id="nextLink" data-url-path="/ru/blog/article/about-new-p196-project.html"></div>
 
 <!-- Footer -->
-<div id="pageFooter" data-lang="ru" data-url-path="/blog/choosing-the-proper-search-depth.html"></div>
-
-<!-- Links to other posts -->
-<script>
-  function setPostLinks() {
-	setPrevBlogPostUrl("");
-	setNextBlogPostUrl("/blog/about-new-p196-project.html");
-  }
-</script>
+<div id="pageFooter" data-lang="ru" data-url-path="/ru/blog/article/choosing-proper-search-depth.html"></div>
 
 </body>
 </html>

@@ -32,7 +32,7 @@
 	insertNavigationBar(navBarId, offsetId);
 	resizeHandler();
 
-	window.addEventListener("resize", resizeThrottler, false);
+	window.addEventListener("resize", resizeThrottler);
 	document.addEventListener("DOMContentLoaded", insertFooter);
 })();
 
@@ -41,10 +41,12 @@
 function insertNavigationBar(navBarId, offsetId) {
 	let urlPrefix = "";
 	let blogTitle = "Blog";
+	let logoTitle = "iLWN project (Dmitry Maslov)";
 
 	if (document.documentElement.lang === "ru") {
-		//urlPrefix = "ru/";
+		urlPrefix = "ru/";
 		blogTitle = "Блог";
+		logoTitle = "Проект iLWN (Дмитрий Маслов)";
 	}
 
 	const section = getCurrentSection();
@@ -53,8 +55,8 @@ function insertNavigationBar(navBarId, offsetId) {
 		'<div id="' + offsetId + '"></div>' +
 		'<table id="' + navBarId + '" class="navbar">' +
 		  '<tr>' +
-			'<td class="logo">' +
-			  '<a class="nodecor" href="https://dmaslov.me">Dmitry Maslov</a>' +
+			'<td class="logo" title="' + logoTitle + '">' +
+			  '<a class="nodecor" href="/' + urlPrefix + 'about.html">iLWN</a>' +
 			'</td>' +
 			'<td class="divider"></td>' +
 			'<td style="padding: 0">' +
@@ -74,17 +76,17 @@ function insertNavigationBar(navBarId, offsetId) {
 				  '</a>' +
 				'</div>' +
 				'<div class="flexitem">' +
-				  '<a class="nodecor" href="/' + urlPrefix + 'alsn/">' +
+				  '<a class="nodecor" href="/' + /*urlPrefix +*/ 'alsn/">' +
 					'<div class="navitem' + (section === "alsn" ? ' active' : '') + '">ALSN</div>' +
 				  '</a>' +
 				'</div>' +
 				'<div class="flexitem">' +
-				  '<a class="nodecor" href="/' + urlPrefix + 'mdpn/">' +
+				  '<a class="nodecor" href="/' + /*urlPrefix +*/ 'mdpn/">' +
 					'<div class="navitem' + (section === "mdpn" ? ' active' : '') + '">MDPN</div>' +
 				  '</a>' +
 				'</div>' +
 				'<div class="flexitem">' +
-				  '<a class="nodecor" href="/' + urlPrefix + 'p196/">' +
+				  '<a class="nodecor" href="/' + /*urlPrefix +*/ 'p196/">' +
 					'<div class="navitem' + (section === "p196" ? ' active' : '') + '">P196</div>' +
 				  '</a>' +
 				'</div>' +
@@ -163,15 +165,15 @@ function insertFooter() {
 		'</table>';
 }
 
-// Blog's posts: links
+// Blog: links to articles
 
 function insertTopLinks() {
-	let prevText = "Previous post";
-	let nextText = "Next post";
+	let prevText = "Previous article";
+	let nextText = "Next article";
 
 	if (document.documentElement.lang === "ru") {
-		prevText = "Предыдущий пост";
-		nextText = "Следующий пост";
+		prevText = "Предыдущая статья";
+		nextText = "Следующая статья";
 	}
 
 	document.write(
@@ -191,13 +193,13 @@ function insertTopLinks() {
 }
 
 function insertBottomLinks() {
-	let prevText = "Previous post";
-	let nextText = "Next post";
+	let prevText = "Previous article";
+	let nextText = "Next article";
 	let topText = "To the top";
 
 	if (document.documentElement.lang === "ru") {
-		prevText = "Предыдущий пост";
-		nextText = "Следующий пост";
+		prevText = "Предыдущая статья";
+		nextText = "Следующая статья";
 		topText = "Наверх";
 	}
 
@@ -216,4 +218,30 @@ function insertBottomLinks() {
 		  '</span>' +
 		'</div>'
 	);
+}
+
+function setupBlogLinks() {
+	const prevUrl = GetBlogLinkUrl("prevLink");
+	setBlogLink("link-prev-top", prevUrl);
+	setBlogLink("link-prev-bottom", prevUrl);
+
+	const nextUrl = GetBlogLinkUrl("nextLink");
+	setBlogLink("link-next-top", nextUrl);
+	setBlogLink("link-next-bottom", nextUrl);
+}
+
+function GetBlogLinkUrl(elementId) {
+	const e = document.getElementById(elementId);
+	return e && e.getAttribute("data-url-path");
+}
+
+function setBlogLink(elementId, url) {
+	const navElement = document.getElementById(elementId);
+
+	if (navElement && url) {
+		navElement.classList.add("link");
+		navElement.onclick = function() {
+			window.location.href = url;
+		};
+	}
 }
