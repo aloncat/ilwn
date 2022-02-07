@@ -739,6 +739,16 @@ span.update {
 	border-radius: 5px;
 }
 
+div.contentsbox {
+	float: right;
+	max-width: 320px;
+	margin-left: 15px;
+	padding: 3px 8px 5px;
+	background: #ffc;
+	border: 1px solid #a96;
+	border-radius: 5px;
+}
+
 div#mapLinks {
 	color: #666;
 }
@@ -1049,6 +1059,12 @@ div.termheader {
 
 	table.dpal td:nth-child(2) {
 		width: 75px;
+	}
+
+	div.contentsbox {
+		float: none;
+		max-width: 100%;
+		margin-left: 0;
 	}
 
 	div#mapLinks div {
