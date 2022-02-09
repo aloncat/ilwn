@@ -41,5 +41,10 @@ exports.handler = (event, context, callback) => {
 		}];
 	}
 
+	headers["cache-control"] = [{
+		key: "Cache-Control",
+		value: "public, max-age=3600"
+	}];
+
 	return callback(null, response);
 };
