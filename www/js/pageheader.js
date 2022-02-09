@@ -56,7 +56,7 @@ function insertNavigationBar(navBarId, offsetId) {
 		'<table id="' + navBarId + '" class="navbar">' +
 		  '<tr>' +
 			'<td class="logo" title="' + logoTitle + '">' +
-			  '<a class="nodecor" href="/' + urlPrefix + 'about.html">iLWN</a>' +
+			  '<a href="/' + urlPrefix + 'about.html">iLWN</a>' +
 			'</td>' +
 			'<td class="divider"></td>' +
 			'<td style="padding: 0">' +

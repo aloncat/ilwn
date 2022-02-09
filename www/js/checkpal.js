@@ -54,14 +54,14 @@ function onNumberInput() {
 	const isCorrect = isCorrectNumber(numberInput.value);
 
 	if (!numberInput.value.length || isCorrect) {
-		numberInput.classList.remove("errorcolor");
+		numberInput.classList.remove("errorred");
 		if (currentData && isCorrect && getNumberString(numberInput.value) === currentData.number)
 			numberInput.style.color = "#39e";
 		else
 			numberInput.style.removeProperty("color");
 	} else {
 		numberInput.style.removeProperty("color");
-		numberInput.classList.add("errorcolor");
+		numberInput.classList.add("errorred");
 	}
 
 	checkButton.disabled = !isCorrect;
@@ -126,7 +126,7 @@ function getNumberString(value) {
 }
 
 function getErrorContent(language, number) {
-	let result = '<span class="errorcolor">' + ((language === "ru") ?
+	let result = '<span class="errorred">' + ((language === "ru") ?
 		'Ошибка' : 'Error') + ':</span> ';
 
 	if (!number || number === "0") {
@@ -400,12 +400,12 @@ function getBasicContent(language, data) {
 		}
 	} else {
 		if (language === "ru") {
-			result += 'Указанное число записано <b><span class="errorcolor">не</span> в каноническом виде</b>. ' +
+			result += 'Указанное число записано <b><span class="errorred">не</span> в каноническом виде</b>. ' +
 				'То есть существует меньшее число, которое можно получить из указанного путём изменения ' +
 				'симметричных пар его цифр при условии сохранения их сумм, такое, что результаты одной ' +
 				'операции Перевернуть-И-Сложить для обоих чисел будут совпадать.';
 		} else {
-			result += 'The specified number is written in <b><span class="errorcolor">non</span></b>-canonical ' +
+			result += 'The specified number is written in <b><span class="errorred">non</span></b>-canonical ' +
 				'form. That is, there is a smaller number that can be obtained from the specified one by changing ' +
 				'the symmetric pairs of its digits, provided that their sums are preserved, such that the results ' +
 				'of one Reverse-And-Add operation for both numbers will be equal.';
@@ -556,8 +556,8 @@ function getStepDetailsContent(language, data) {
 }
 
 function getFooterContent(language, data) {
-	let result = '<div class="footer"><a class="jsanchor" onclick="copyStepsToClipboard()">' +
-		((language === "ru") ? 'Скопировать в буфер обмена' : 'Copy to clipboard') + '</a>';
+	let result = '<div class="footer"><span><a class="jsanchor" onclick="copyStepsToClipboard()">' +
+		((language === "ru") ? 'Скопировать в буфер обмена' : 'Copy to clipboard') + '</a></span>';
 
 	if (data.showMoreAnchor) {
 		result += '<span class="divider">&middot;</span>' +

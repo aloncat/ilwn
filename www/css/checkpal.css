@@ -1,0 +1,142 @@
+/* Test a delayed palindrome page */
+
+.column input#numberInput {
+	margin: 0 auto;
+	padding: 3px;
+	width: calc(100% - 14px);
+	text-align: center;
+}
+
+.column div#loadingText {
+	margin: 25px auto 8px;
+	font-style: italic;
+	font-weight: bold;
+}
+
+.column input#checkButton {
+	margin: 25px auto 8px;
+	padding: 3px 20px 5px;
+}
+
+#resultsBlock > hr {
+	margin-bottom: 8px;
+	border-top: 2px dotted #ccc;
+	background: transparent;
+}
+
+#resultsBlock #contents span.specnum {
+	font-style: italic;
+	color: #e3a;
+}
+
+#resultsBlock #contents span.numlen {
+	color: #b00;
+}
+
+#resultsBlock #contents span.record {
+	font-weight: bold;
+	color: #f00;
+}
+
+#resultsBlock #contents #newNumber {
+	margin: 16px auto;
+	padding: 5px 8px 6px;
+	max-width: 630px;
+	text-align: center;
+	background: #ffc;
+	border: 1px solid #d90;
+	border-radius: 5px;
+}
+
+#resultsBlock #contents span.rsnum {
+	font-style: italic;
+	color: #080;
+}
+
+#resultsBlock #contents span.sknum {
+	font-style: italic;
+	color: #60c;
+}
+
+#resultsBlock #contents input#pageLink {
+	margin: 2px 0 16px;
+	padding: 0 6px 1px;
+	width: 520px;
+	font-family: Consolas, monospace;
+	background: #f4f4f4;
+	color: #242424;
+	border: 1px solid #e0e0e0;
+	border-radius: 5px;
+}
+
+#resultsBlock #contents .scrollable {
+	margin: 4px auto;
+	width: 100%;
+	overflow-x: auto;
+	background: #fafafa;
+	border: 1px solid #e8e8e8;
+	border-radius: 5px;
+}
+
+#resultsBlock #contents .stepHint {
+	position: absolute;
+	margin: 6px 15px;
+	font-family: Tahoma, sans-serif;
+	line-height: 1.0;
+	font-size: 72px;
+	font-weight: bold;
+	color: #ccc;
+}
+
+#resultsBlock #contents .palsteps {
+	padding: 2px 5px;
+	min-width: 1320px; /* for IE */
+	min-width: max-content;
+	font-family: 'Courier New', monospace;
+	font-size: 92.86%; /* 13.0px */
+	line-height: 1.231; /* 16.0px */
+	text-align: right;
+}
+
+#resultsBlock #contents .stepmarker {
+	padding: 1px 5px 0;
+	background: #fff;
+	color: #7be;
+	border: 1px solid #e8e8e8;
+	border-radius: 4px;
+}
+
+#resultsBlock #contents .footer {
+	text-align: center;
+}
+
+#resultsBlock #contents .footer span {
+	display: inline-block;
+}
+
+#resultsBlock #contents .footer span.divider {
+	margin: 0 10px;
+}
+
+/* Adaptive design */
+
+@media screen and (max-width: 830px) {
+	#resultsBlock #contents input#pageLink {
+		width: calc(100% - 14px);
+	}
+}
+
+@media screen and (max-width: 540px) {
+	#resultsBlock #contents .footer span {
+		margin-left: 15px;
+		margin-right: 15px;
+	}
+
+	#resultsBlock #contents .footer span.divider {
+		display: none;
+	}
+
+	#resultsBlock #contents .stepHint {
+		font-size: 52px;
+	}
+}
