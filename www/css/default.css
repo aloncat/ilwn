@@ -402,10 +402,14 @@ table.basic td.txtright {
 	color: #333;
 }
 
-.mathtext > sup {
+.mathtext sup {
 	font-size: 75%;
 	position: relative;
 	top: -1px;
+}
+
+.mathtext sub {
+	font-size: 65%;
 }
 
 .mathtext > .ref {
@@ -415,6 +419,10 @@ table.basic td.txtright {
 
 .mathtext:hover > .ref {
 	color: #f33;
+}
+
+.hover-gbg:hover {
+	background: linear-gradient(90deg, #fff0, #0001, #fff0);
 }
 
 /* Custom classes: site map */
