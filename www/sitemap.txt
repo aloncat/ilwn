@@ -20,6 +20,7 @@ https://dmaslov.me/ru/about.html
 https://dmaslov.me/ru/blog/
 https://dmaslov.me/ru/blog/article/about-new-p196-project.html
 https://dmaslov.me/ru/blog/article/choosing-proper-search-depth.html
+https://dmaslov.me/ru/blog/article/equal-sums-of-like-powers.html
 https://dmaslov.me/ru/blog/article/quantity-of-numbers-to-test-for-delay.html
 https://dmaslov.me/ru/blog/article/speeding-up-console-windows.html
 https://dmaslov.me/ru/blog/articles.html
