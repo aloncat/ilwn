@@ -10,6 +10,9 @@
     <Filter Include="search">
       <UniqueIdentifier>{20936959-e66d-4012-bd80-295307a8f5c1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="util">
+      <UniqueIdentifier>{44753c3c-029a-4e03-bc85-922cf36e65d9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\eslp\pch.h" />
@@ -18,6 +21,21 @@
     </ClInclude>
     <ClInclude Include="..\..\eslp\diophantine.h">
       <Filter>search</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\eslp\threadtimer.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\eslp\hashtable.h">
+      <Filter>search</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\eslp\powers.h">
+      <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\eslp\solution.h">
+      <Filter>search</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\eslp\util.h">
+      <Filter>util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -32,5 +50,17 @@
     <ClCompile Include="..\..\eslp\diophantine.cpp">
       <Filter>search</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\eslp\threadtimer.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\eslp\solution.cpp">
+      <Filter>search</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\eslp\util.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\eslp\history.txt" />
   </ItemGroup>
 </Project>

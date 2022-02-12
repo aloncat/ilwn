@@ -1,0 +1,11 @@
+=== Version 0.10 ===
+Released: 2022-01-29
+
+== Features ==
+ * First release.
+
+== Known issues ==
+ * Equation degree is limited to 9.
+ * Number of coefficients is limited to 50.
+ * 64-bit arithmetic is used (low values).
+ * Utilizes only 1 CPU thread (slow).

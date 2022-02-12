@@ -1,5 +1,5 @@
 ﻿//∙ESLP/iLWN
-// Copyright (C) 2022-2022 Dmitry Maslov
+// Copyright (C) 2022 Dmitry Maslov
 // For conditions of distribution and use, see readme.txt
 
 #include "pch.h"
@@ -14,7 +14,7 @@ int wmain(int argCount, const wchar_t* args[], const wchar_t* envVars[])
 {
 	util::CheckMinimalRequirements();
 
-	aux::Printc(L"Equal Sums of Like Powers (ESLP)/iLWN. Standalone app. Ver. 0.11a\n"
+	aux::Printc(L"Equal Sums of Like Powers (ESLP)/iLWN. Standalone app. Ver. 0.12a\n"
 		"#8For more information, please visit us at #9https://dmaslov.me/eslp/\n");
 
 	// Программа принимает 2 обязательных и 1 опциональный аргумент командной строки: 1) степень уравнения,
@@ -34,10 +34,12 @@ int wmain(int argCount, const wchar_t* args[], const wchar_t* envVars[])
 		int count = wcstol(args[2], nullptr, 10);
 		int hiFactor = (argCount >= 4) ? wcstol(args[3], nullptr, 10) : 2;
 
-		if (power >= 1 && power <= 9 && count >= 2 && count <= 50 && hiFactor >= 0)
+		if (power >= 1 && power <= FactorSearch::MAX_POWER && count >= 2 &&
+			count <= FactorSearch::MAX_FACTOR_COUNT && hiFactor >= 0)
 		{
+			FactorSearch search;
 			// Ищем коэффициенты. При ошибке функция вернёт false
-			if (SearchForFactors(power, count, hiFactor))
+			if (search.Run(power, count, hiFactor))
 				return 0;
 
 			// Что-то пошло не так. Сообщение об ошибке уже выведено

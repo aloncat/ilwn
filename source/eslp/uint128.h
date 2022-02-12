@@ -1,5 +1,5 @@
 ﻿//∙ESLP/iLWN
-// Copyright (C) 2022-2022 Dmitry Maslov
+// Copyright (C) 2022 Dmitry Maslov
 // For conditions of distribution and use, see readme.txt
 
 #pragma once
@@ -132,9 +132,10 @@ public:
 	}
 
 	UInt128 operator /(uint32_t rhs) const;
-	//UInt128& operator /=(uint32_t rhs)
+	//UInt128& operator /=(uint32_t rhs);
 
 	uint32_t operator %(uint32_t rhs) const;
+	//UInt128& operator %=(uint32_t rhs);
 
 	//UInt128 operator <<(size_t bits) const noexcept
 	//UInt128& operator <<=(size_t bits) noexcept
