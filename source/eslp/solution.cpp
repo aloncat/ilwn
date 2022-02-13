@@ -18,11 +18,13 @@
 Solution::Solution(const unsigned* allFactors, int leftCount, int rightCount)
 {
 	Assert(leftCount > 0);
+	left.reserve(leftCount);
 	for (int i = 0; i < leftCount; ++i)
 		left.push_back(allFactors[i]);
 
 	Assert(rightCount > 0);
 	allFactors += leftCount;
+	right.reserve(rightCount);
 	for (int i = 0; i < rightCount; ++i)
 		right.push_back(allFactors[i]);
 }
@@ -31,10 +33,12 @@ Solution::Solution(const unsigned* allFactors, int leftCount, int rightCount)
 Solution::Solution(const unsigned* leftFactors, const unsigned* rightFactors, int leftCount, int rightCount)
 {
 	Assert(leftCount > 0);
+	left.reserve(leftCount);
 	for (int i = 0; i < leftCount; ++i)
 		left.push_back(leftFactors[i]);
 
 	Assert(rightCount > 0);
+	right.reserve(rightCount);
 	for (int i = 0; i < rightCount; ++i)
 		right.push_back(rightFactors[i]);
 }
@@ -131,6 +135,18 @@ bool Solutions::Insert(const Solution& s)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+bool Solutions::Insert(Solution&& s)
+{
+	if (!IsPrimitive(s))
+		return false;
+
+	s.SortFactors();
+
+	auto result = m_Solutions.insert(std::move(s));
+	return result.second;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 bool Solutions::IsPrimitive(const Solution& s)
 {
 	const size_t leftCount = s.left.size();
@@ -147,28 +163,19 @@ bool Solutions::IsPrimitive(const Solution& s)
 	for (auto f : s.left)
 	{
 		allFactors[k++] = f;
-		if (f < lowest)
-			lowest = f;
+		lowest = (f < lowest) ? f : lowest;
 	}
 	for (auto f : s.right)
 	{
 		allFactors[k++] = f;
-		if (f < lowest)
-			lowest = f;
+		lowest = (f < lowest) ? f : lowest;
 	}
 
-	if (m_Primes.empty() || m_Primes.back() < lowest)
-	{
-		constexpr unsigned add = 10000;
-		m_Primes = std::vector<unsigned>();
-		m_Primes = GetPrimes(std::min(lowest, UINT_MAX - add) + add);
-	}
+	m_Factors.clear();
+	GetFactors(m_Factors, lowest);
 
-	for (unsigned p : m_Primes)
+	for (unsigned p : m_Factors)
 	{
-		if (p > lowest)
-			break;
-
 		bool allDivisible = true;
 		for (size_t i = 0; i < total; ++i)
 		{
@@ -187,8 +194,53 @@ bool Solutions::IsPrimitive(const Solution& s)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+void Solutions::GetFactors(std::vector<unsigned>& factors, unsigned value)
+{
+	if (value > 1)
+	{
+		if (m_Primes.empty())
+		{
+			// NB: для максимального значения value 2^32-1 достаточно проверки делимости на простые
+			// числа, не превышающие округлённого вниз до целого корня квадратного из этого значения
+			m_Primes = GetPrimes(65535);
+		}
+
+		const unsigned count = static_cast<unsigned>(m_Primes.size());
+		const unsigned limit = static_cast<unsigned>(sqrt(value));
+
+		for (unsigned lastPrime = 0, i = 0; i < count;)
+		{
+			const unsigned prime = m_Primes[i];
+			if (prime > limit)
+				break;
+
+			if (auto reminder = value % prime)
+				++i;
+			else
+			{
+				value /= prime;
+				if (prime > lastPrime)
+				{
+					lastPrime = prime;
+					factors.push_back(prime);
+				}
+
+				if (value == 1)
+					return;
+			}
+		}
+
+		// NB: если мы вышли из цикла, то value > 1 и это последний
+		// простой множитель, поэтому также добавим его в список
+		factors.push_back(value);
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 std::vector<unsigned> Solutions::GetPrimes(unsigned limit)
 {
+	static const uint8_t mask[16] = { 4, 3, 3, 2, 3, 2, 2, 1, 3, 2, 2, 1, 2, 1, 1, 0 };
+
 	std::vector<unsigned> primes;
 
 	if (limit > 1)
@@ -218,10 +270,10 @@ std::vector<unsigned> Solutions::GetPrimes(unsigned limit)
 			}
 
 			auto total = primes.size();
-			for (unsigned i = k + 1; i <= lastBit; ++i)
+			for (size_t i = (k + 1) >> 3; i < bufferSize; ++i)
 			{
-				if (!(bits[i >> 3] & (1 << (i & 7))))
-					++total;
+				auto v = bits[i];
+				total += mask[v & 15] + mask[v >> 4];
 			}
 
 			primes.reserve(total);

@@ -38,15 +38,23 @@ public:
 	// Добавляет решение в контейнер. Если решение не примитивное, или если такое
 	// решение уже существует, то оно добавлено не будет, и функция вернёт false
 	bool Insert(const Solution& s);
+	bool Insert(Solution&& s);
 
 	void Clear() { m_Solutions.clear(); }
 
 	size_t Count() const { return m_Solutions.size(); }
 
 protected:
+	// Возвращает true, если решение s примитивно
 	bool IsPrimitive(const Solution& s);
+
+	// Добавляет в factors все уникальные простые множители value
+	void GetFactors(std::vector<unsigned>& factors, unsigned value);
+
+	// Генерирует все простые числа до limit включительно
 	static std::vector<unsigned> GetPrimes(unsigned limit);
 
 	std::set<Solution> m_Solutions;		// Все найденные решения уравнения
 	std::vector<unsigned> m_Primes;		// Набор простых чисел (начиная с 2)
+	std::vector<unsigned> m_Factors;	// Множители наименьшего коэффициента
 };
