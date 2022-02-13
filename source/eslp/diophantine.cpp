@@ -152,7 +152,7 @@ void FactorSearch::Search(unsigned hiFactor)
 	m_MaxWorkerCount = util::SystemInfo::Instance().GetCoreCount().logical;
 	m_ActiveWorkers = m_MaxWorkerCount - ((m_MaxWorkerCount <= 4) ? 0 : 1);
 
-	CreateWorkers(m_ActiveWorkers);
+	CreateWorkers(m_MaxWorkerCount);
 
 	while (hiFactor && !m_IsCancelled)
 		hiFactor = Compute(hiFactor);
@@ -357,8 +357,9 @@ unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 
 		if (tick - lastTitleUpdateTick >= 250)
 		{
-			lastTitleUpdateTick = tick;
+			UpdateActiveThreads();
 			UpdateConsoleTitle(1, m_FactorCount);
+			lastTitleUpdateTick = tick;
 		}
 
 		if (bool userBreak = util::SystemConsole::Instance().IsCtrlCPressed(true);
@@ -731,15 +732,42 @@ void FactorSearch::UpdateConsoleTitle(int leftCount, int rightCount)
 	fmt << "Searching for factors (" << m_Power << '.' << leftCount << '.' << rightCount << "): ";
 	fmt << m_SolutionsFound << ((m_SolutionsFound == 1) ? " solution" : " solutions") << " found";
 
-	if (auto activeCount = m_IsCancelled ? GetActiveThreads() : m_ActiveWorkers)
+	if (auto activeCount = GetActiveThreads(true))
 	{
-		fmt << " (" << activeCount << " active threads)";
+		fmt << " -- MT: ";
+		if (!m_IsCancelled && activeCount != m_ActiveWorkers)
+			fmt << m_ActiveWorkers << " (" << activeCount << ')';
+		else
+			fmt << activeCount;
 
 		if (m_IsCancelled)
 		{
-			fmt << " -- STOPPING...";
+			fmt << " -- stopping...";
 		}
 	}
 
 	util::SystemConsole::Instance().SetTitle(fmt.ToString());
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void FactorSearch::UpdateActiveThreads()
+{
+	auto& console = util::SystemConsole::Instance();
+	for (util::Console::KeyEvent event; console.GetInputEvent(event);)
+	{
+		// Клавиши - и + на малой клавиатуре
+		if (event.isKeyDown && event.vkey == util::Console::KEY_PADSUB)
+		{
+			if (m_ActiveWorkers > 1)
+				--m_ActiveWorkers;
+		}
+		else if (event.isKeyDown && event.vkey == util::Console::KEY_PADADD)
+		{
+			if (m_ActiveWorkers < m_MaxWorkerCount)
+				++m_ActiveWorkers;
+		}
+	}
+
+	if (!m_IsCancelled && m_ActiveWorkers != GetActiveThreads())
+		SetActiveThreads(m_ActiveWorkers);
 }

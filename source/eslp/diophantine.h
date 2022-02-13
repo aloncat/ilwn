@@ -90,6 +90,7 @@ protected:
 
 	void ShowProgress(const unsigned* factors, int leftCount, int rightCount);
 	void UpdateConsoleTitle(int leftCount, int rightCount);
+	void UpdateActiveThreads();
 
 protected:
 	int m_Power = 0;							// Степень уравнения (от 1 до MAX_POWER)

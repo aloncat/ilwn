@@ -1,3 +1,23 @@
+=== Version 0.20 ===
+Released: 2022-02-xx
+
+== Changes ==
+ * Use the +/- keys to change active threads.
+
+== Bug fixes ==
+ * Optimized memory consumption.
+
+== Features ==
+ * Multi-threaded computation.
+ * Support for 128-bit arithmetic.
+ * Max. equation degree increased to 20.
+ * Max. number of coefficients is now 160.
+
+== Known issues ==
+ * No more than 1 coefficient on the left side.
+ * Specialized (optimal) algorithms are not supported.
+
+
 === Version 0.10 ===
 Released: 2022-01-29
 
