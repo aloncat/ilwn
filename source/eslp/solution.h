@@ -23,6 +23,8 @@ public:
 
 	void SortFactors();
 
+	void Swap(Solution& that);
+
 	bool operator ==(const Solution& rhs) const;
 	bool operator <(const Solution& rhs) const;
 };

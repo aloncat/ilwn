@@ -287,7 +287,7 @@ unsigned FactorSearch::Compute(unsigned hiFactor)
 
 	// TODO: в зависимости от степени уравнения и количества коэффициентов, мы
 	// бы хотели проверять различное количество старших коэффициентов за раз
-	unsigned toCheck = 10000;
+	const unsigned toCheck = 10000;
 
 	// Если можем, то выполняем вычисления в 64-битах (так как это быстрее)
 	if (unsigned upper64 = Powers<uint64_t>::CalcUpperValue(m_Power, m_FactorCount); hiFactor < upper64)
@@ -300,10 +300,12 @@ unsigned FactorSearch::Compute(unsigned hiFactor)
 template<class NumberT>
 unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 {
+	Assert(toCheck && "Nothing to test");
 	Assert(!GetActiveThreads(true) && "All threads must be suspended");
 
 	const unsigned upperLimit = std::min(hiFactor + std::min(UINT_MAX - hiFactor,
 		toCheck - 1), Powers<NumberT>::CalcUpperValue(m_Power, m_FactorCount));
+	Assert(hiFactor <= upperLimit);
 
 	Powers<NumberT> powers;
 	powers.Init(m_Power, m_FactorCount, upperLimit);
@@ -326,14 +328,12 @@ unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 	m_NeedUpdateTitle = true;
 
 	// Активируем рабочие потоки
-	Assert(!GetActiveThreads(true));
 	SetActiveThreads(m_ActiveWorkers);
 
 	uint32_t lastProgressTick = 0;
 	while (!m_NoTasks || GetActiveThreads(true))
 	{
-		const uint32_t tick = ::GetTickCount();
-		if ((m_ForceShowProgress || tick - lastProgressTick >= 500) && m_IsProgressReady)
+		if ((m_ForceShowProgress || ::GetTickCount() - lastProgressTick >= 500) && m_IsProgressReady)
 		{
 			unsigned factors[8];
 			GetProgress(factors);
@@ -372,7 +372,7 @@ unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 	m_Pow64 = nullptr;
 	m_Powers = nullptr;
 
-	Assert(!GetActiveThreads(true));
+	Assert(!GetActiveThreads(true) && "Some threads are still active");
 	Assert(m_IsCancelled || m_NextHiFactor == upperLimit + 1);
 
 	if (m_LastProgressLength)
@@ -444,15 +444,17 @@ void FactorSearch::SearchFactors(Worker* worker, const NumberT* powers)
 {
 	// Массив k хранит коэффициенты правой части уравнения, начиная с индекса 1.
 	// В элементе с индексом 0 будем хранить коэффициент левой части уравнения
-	unsigned k[1 + MAX_FACTOR_COUNT] = { worker->factors[0] };
-	for (int i = 1; i <= m_FactorCount; ++i)
+	unsigned k[1 + MAX_FACTOR_COUNT];
+
+	k[0] = worker->factors[0];
+	for (int i = 1; i <= MAX_FACTOR_COUNT; ++i)
 		k[i] = 1;
 
 	// Значение левой части
 	const auto z = powers[k[0]];
 	// Пропускаем значения 1-го коэффициента в правой
 	// части, при которых набор не может дать решение
-	for (k[1] = 1; z > powers[k[1]] * m_FactorCount; ++k[1]);
+	for (; z > powers[k[1]] * m_FactorCount; ++k[1]);
 	// Сумма всех членов правой части, кроме последнего
 	auto sum = powers[k[1]] + m_FactorCount - 2;
 
@@ -660,40 +662,57 @@ void FactorSearch::ProcessPendingSolutions()
 		// NB: при форсированном выходе потоки не завершают задания, поэтому мы
 		// не можем гарантировать, что в вывод попадут все промежуточные решения
 		m_PendingSolutions.clear();
-		return;
 	}
-
-	// Сортируем накопленные решения
-	std::sort(m_PendingSolutions.begin(), m_PendingSolutions.end());
-
-	// Обработаем готовые решения
-	bool hadReadySolutions = false;
-	while (!m_PendingSolutions.empty())
+	else if (size_t count = m_PendingSolutions.size())
 	{
-		auto& s = m_PendingSolutions.front();
-		if (m_LoPendingTask && s.left[0] >= m_LoPendingTask)
-			break;
-
-		// Формируем решение и пытаемся его добавить в набор. Если
-		// решение непримитивное, то функция Insert вернёт false
-		if (m_Solutions.Insert(s))
+		size_t ready = count;
+		if (const unsigned lowest = m_LoPendingTask)
 		{
-			hadReadySolutions = true;
-			++m_SolutionsFound;
+			ready = 0;
+			// NB: если имеются ожидаемые задания (результаты которых ещё не полностью готовы), то мы можем
+			// обработать только часть решений, соответствующих полностью завершённым заданиям. Поэтому для
+			// эффективности (решений может быть довольно много) предварительно переместим все подходящие
+			// решения в начало контейнера, а затем отсортируем только эту его часть
+			for (size_t i = 0; i < count; ++i)
+			{
+				if (auto& s = m_PendingSolutions[i]; s.left[0] < lowest)
+					s.Swap(m_PendingSolutions[ready++]);
+			}
 
-			// Выведем решение
-			OnSolutionReady(s);
+			if (!ready)
+				return;
 		}
 
-		m_PendingSolutions.pop_front();
-	}
+		// Сортируем готовые решения
+		auto itEnd = m_PendingSolutions.begin() + ready;
+		std::sort(m_PendingSolutions.begin(), itEnd);
 
-	// Если готовые решения были, то они были выведены на экран.
-	// Нужно немедленно вывести прогресс и обновить заголовок окна
-	if (hadReadySolutions)
-	{
-		m_ForceShowProgress = true;
-		m_NeedUpdateTitle = true;
+		// Обрабатываем
+		bool hadGoodSolutions = false;
+		for (auto it = m_PendingSolutions.begin(); it != itEnd; ++it)
+		{
+			// Пытаемся добавить решение в набор. Если решение
+			// непримитивное, то функция Insert вернёт false
+			if (m_Solutions.Insert(*it))
+			{
+				hadGoodSolutions = true;
+				++m_SolutionsFound;
+
+				// Выведем решение
+				OnSolutionReady(*it);
+			}
+		}
+
+		// Удаляем все обработанные решения из контейнера
+		m_PendingSolutions.erase(m_PendingSolutions.begin(), itEnd);
+
+		// Если непримитивные решения были, то они были выведены на экран.
+		// Нам нужно немедленно вывести прогресс и обновить заголовок окна
+		if (hadGoodSolutions)
+		{
+			m_ForceShowProgress = true;
+			m_NeedUpdateTitle = true;
+		}
 	}
 }
 

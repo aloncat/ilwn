@@ -62,6 +62,16 @@ void Solution::SortFactors()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+void Solution::Swap(Solution& that)
+{
+	if (this != &that)
+	{
+		left.swap(that.left);
+		right.swap(that.right);
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 bool Solution::operator ==(const Solution& rhs) const
 {
 	if (size_t count = left.size(); Verify(count && count == rhs.left.size()))

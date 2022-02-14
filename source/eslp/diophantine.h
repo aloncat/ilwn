@@ -14,7 +14,6 @@
 #include <core/threadsync.h>
 #include <core/util.h>
 
-#include <deque>
 #include <vector>
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30,7 +29,7 @@ class FactorSearch
 
 public:
 	static constexpr int MAX_POWER = 20;
-	static constexpr int MAX_FACTOR_COUNT = 160;
+	static constexpr int MAX_FACTOR_COUNT = 159;
 
 	FactorSearch();
 	~FactorSearch();
@@ -112,7 +111,7 @@ protected:
 
 	Solutions m_Solutions;						// Найденные примитивные решения
 	volatile size_t m_SolutionsFound = 0;		// Количество найденных примитивных решений
-	std::deque<Solution> m_PendingSolutions;	// Найденные решения, ожидающие проверки
+	std::vector<Solution> m_PendingSolutions;	// Найденные решения, ожидающие проверки
 
 	const uint64_t* m_Pow64 = nullptr;			// Массив степеней (64 бита)
 	const UInt128* m_Powers = nullptr;			// Массив степеней (128 бит)
