@@ -91,7 +91,7 @@ protected:
 	void ShowProgress(const unsigned* factors, int leftCount, int rightCount);
 	void UpdateConsoleTitle(int leftCount, int rightCount);
 	bool OpenLogFile(int leftCount, int rightCount);
-	void UpdateActiveThreads();
+	void UpdateActiveThreadCount();
 
 protected:
 	int m_Power = 0;							// Степень уравнения (от 1 до MAX_POWER)
@@ -129,6 +129,7 @@ protected:
 	size_t m_LastProgressLength = 0;			// Количество символов в последнем выводе прогресса
 	volatile bool m_IsProgressReady = false;	// true, если данные о прогрессе можно использовать
 	volatile bool m_ForceShowProgress = false;	// true, если прогресс нужно вывести немедленно
+	volatile bool m_NeedUpdateTitle = false;	// true, если нужно обновить заголовок окна
 
 	volatile bool m_NoTasks = false;			// true, если заданий для потоков больше нет
 	volatile bool m_IsCancelled = false;		// true, если работа была прервана пользователем

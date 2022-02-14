@@ -74,8 +74,13 @@ bool FactorSearch::Run(int power, int count, unsigned hiFactor)
 	m_Power = power;
 	m_FactorCount = count;
 
+	m_ActiveWorkers = 0;
+	m_MainThreadTimer.Reset();
 	m_StartTick = ::GetTickCount();
 	m_WorkTime = 0;
+
+	m_Solutions.Clear();
+	m_SolutionsFound = 0;
 
 	UpdateConsoleTitle(1, m_FactorCount);
 	aux::Printf("Searching for factors of equation #6#%i.1.%i#7, #2[Z]#7 starts from #10#%u\n",
@@ -86,7 +91,7 @@ bool FactorSearch::Run(int power, int count, unsigned hiFactor)
 
 	if (hiFactor > maxFactor)
 	{
-		aux::Printc("Noting to do, exitting...");
+		aux::Print("Noting to do, exiting...\n");
 		return false;
 	}
 
@@ -111,15 +116,13 @@ bool FactorSearch::Run(int power, int count, unsigned hiFactor)
 //--------------------------------------------------------------------------------------------------------------------------------
 void FactorSearch::Search(unsigned hiFactor)
 {
-	m_Solutions.Clear();
-	m_SolutionsFound = 0;
 	m_PendingSolutions.clear();
+	m_LastDoneFactor = 0;
 
-	m_MainThreadTimer.Reset();
 	m_IsCancelled = false;
 	m_ForceQuit = false;
 
-	m_LastProgressLength = 16;
+	m_LastProgressLength = 15;
 	aux::Print("Initializing...");
 	util::SystemConsole::Instance().ShowCursor(false);
 
@@ -138,8 +141,11 @@ void FactorSearch::Search(unsigned hiFactor)
 	aux::Printf("\rTask %s#7, solutions found: #6#%u\n", m_IsCancelled ?
 		"#12cancelled" : "finished", m_SolutionsFound);
 
-	auto s = util::Format("nextHiFactor: %u\n", m_LastDoneFactor + 1);
-	m_Log.Write(s.c_str(), s.size());
+	if (m_LastDoneFactor < UINT_MAX)
+	{
+		auto s = util::Format("nextHiFactor: %u\n", m_LastDoneFactor + 1);
+		m_Log.Write(s.c_str(), s.size());
+	}
 
 	const float timeElapsed = m_WorkTime + .001f * (::GetTickCount() - m_StartTick);
 	aux::Printf((timeElapsed < 90) ? "Running time: %.2f#8s\n" : "Running time: %.0f#8s\n", timeElapsed);
@@ -150,20 +156,26 @@ void FactorSearch::CreateWorkers(size_t threadCount)
 {
 	Assert(threadCount && m_Workers.empty());
 
-	m_Workers.reserve(64);
+	m_Workers.reserve(32);
 	for (size_t id = 0; id < threadCount; ++id)
 	{
 		auto worker = new Worker;
 		m_Workers.push_back(worker);
 
 		worker->workerId = static_cast<int>(id);
+
+		worker->isActive = true;
 		worker->shouldPause = true;
 
 		worker->threadObj = std::thread([this, worker]() {
+			worker->timer = new ThreadTimer;
 			WorkerMainFn(worker);
 		});
 	}
 
+	// NB: ждём пока все потоки войдут в главные функции и приостановятся. Т.к.
+	// оба флага isActive и shouldPause были установлены, то потоки считаются
+	// активными, не зависимо от того, начали они работу или ещё нет
 	while (GetActiveThreads(true))
 		::Sleep(1);
 }
@@ -171,11 +183,20 @@ void FactorSearch::CreateWorkers(size_t threadCount)
 //--------------------------------------------------------------------------------------------------------------------------------
 void FactorSearch::KillWorkers()
 {
+	// Если по какой-то причине некоторые потоки сейчас активны, установим
+	// флаги и подождём, пока они либо закончат работу либо приостановятся
 	for (Worker* worker : m_Workers)
 	{
+		worker->shouldPause = true;
 		worker->shouldQuit = true;
-		worker->shouldPause = false;
+	}
+	while (GetActiveThreads(true))
+		::Sleep(1);
 
+	// Завершаем оставшиеся потоки
+	for (Worker* worker : m_Workers)
+	{
+		worker->shouldPause = false;
 		if (worker->threadObj.joinable())
 		{
 			if (void* handle = worker->threadObj.native_handle())
@@ -211,32 +232,29 @@ size_t FactorSearch::GetActiveThreads(bool ignorePending) const
 void FactorSearch::SetActiveThreads(size_t activeCount)
 {
 	activeCount = util::Clamp(activeCount, size_t(1), m_Workers.size());
-	if (auto current = GetActiveThreads(); current < activeCount)
+	if (auto current = GetActiveThreads(); current != activeCount)
 	{
-		// Пробуждаем потоки
 		for (Worker* worker : m_Workers)
 		{
 			Assert(worker && !worker->isFinished);
-			if (!worker->shouldQuit && (!worker->isActive || worker->shouldPause))
+
+			if (current < activeCount)
 			{
-				worker->shouldPause = false;
-				if (!worker->isActive && worker->threadObj.joinable())
+				// Пробуждаем поток (только если есть доступные задачи)
+				if (!m_NoTasks && !worker->shouldQuit && (!worker->isActive || worker->shouldPause))
 				{
-					if (void* handle = worker->threadObj.native_handle())
-						::ResumeThread(handle);
+					worker->shouldPause = false;
+					if (!worker->isActive && worker->threadObj.joinable())
+					{
+						if (void* handle = worker->threadObj.native_handle())
+							::ResumeThread(handle);
+					}
+					if (++current == activeCount)
+						break;
 				}
-				if (++current == activeCount)
-					break;
 			}
-		}
-	}
-	else if (current > activeCount)
-	{
-		// Приостанавливаем потоки
-		for (Worker* worker : m_Workers)
-		{
-			Assert(worker && !worker->isFinished);
-			if (worker->isActive && !worker->shouldPause)
+			// Приостанавливаем поток
+			else if (worker->isActive && !worker->shouldPause)
 			{
 				worker->shouldPause = true;
 				if (--current == activeCount)
@@ -305,13 +323,13 @@ unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 
 	m_IsProgressReady = false;
 	m_ForceShowProgress = true;
+	m_NeedUpdateTitle = true;
 
 	// Активируем рабочие потоки
 	Assert(!GetActiveThreads(true));
 	SetActiveThreads(m_ActiveWorkers);
 
 	uint32_t lastProgressTick = 0;
-	uint32_t lastTitleUpdateTick = 0;
 	while (!m_NoTasks || GetActiveThreads(true))
 	{
 		const uint32_t tick = ::GetTickCount();
@@ -329,11 +347,10 @@ unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 			m_WorkTime += secElapsed;
 		}
 
-		if (tick - lastTitleUpdateTick >= 250)
+		if (m_NeedUpdateTitle || m_IsCancelled)
 		{
-			UpdateActiveThreads();
 			UpdateConsoleTitle(1, m_FactorCount);
-			lastTitleUpdateTick = tick;
+			m_NeedUpdateTitle = false;
 		}
 
 		if (bool userBreak = util::SystemConsole::Instance().IsCtrlCPressed(true);
@@ -348,6 +365,7 @@ unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 				m_ForceQuit = true;
 		}
 
+		UpdateActiveThreadCount();
 		::Sleep(m_ForceShowProgress ? 1 : 20);
 	}
 
@@ -357,14 +375,10 @@ unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 	Assert(!GetActiveThreads(true));
 	Assert(m_IsCancelled || m_NextHiFactor == upperLimit + 1);
 
-	// Очищаем последнюю строку на экране, в которой выводился прогресс
 	if (m_LastProgressLength)
 	{
-		std::string s("\r");
-		s.append(m_LastProgressLength, ' ');
-		s.append(m_LastProgressLength, '\b');
-
-		aux::Print(s);
+		// Очистим строку на экране, в которой выводился прогресс
+		aux::Print("\r" + std::string(m_LastProgressLength, ' '));
 		m_LastProgressLength = 0;
 	}
 
@@ -374,9 +388,6 @@ unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 //--------------------------------------------------------------------------------------------------------------------------------
 void FactorSearch::WorkerMainFn(Worker* worker)
 {
-	worker->isActive = true;
-	worker->timer = new ThreadTimer;
-
 	HANDLE threadHandle = ::GetCurrentThread();
 	::SetThreadPriority(threadHandle, THREAD_PRIORITY_IDLE);
 
@@ -528,20 +539,25 @@ void FactorSearch::SearchFactors(Worker* worker, const NumberT* powers)
 //--------------------------------------------------------------------------------------------------------------------------------
 bool FactorSearch::GetNextTask(Worker* worker)
 {
-	thread::Lock lock(m_TaskCS);
-
-	if (!m_NoTasks && !m_IsCancelled && m_NextHiFactor && m_NextHiFactor <= m_LastHiFactor)
+	if (!m_NoTasks)
 	{
-		auto task = m_NextHiFactor++;
-		m_PendingTasks.push_back(task);
-		m_LoPendingTask = m_PendingTasks.front();
+		thread::Lock lock(m_TaskCS);
 
-		worker->factors[0] = task;
-		worker->factorCount = 1;
-		return true;
+		if (!m_IsCancelled && m_NextHiFactor && m_NextHiFactor <= m_LastHiFactor)
+		{
+			auto task = m_NextHiFactor++;
+
+			m_PendingTasks.push_back(task);
+			m_LoPendingTask = m_PendingTasks.front();
+
+			worker->factors[0] = task;
+			worker->factorCount = 1;
+			return true;
+		}
+
+		m_NoTasks = true;
 	}
 
-	m_NoTasks = true;
 	return false;
 }
 
@@ -576,6 +592,7 @@ void FactorSearch::OnTaskDone(Worker* worker)
 //--------------------------------------------------------------------------------------------------------------------------------
 AML_NOINLINE bool FactorSearch::OnProgress(Worker* worker, const unsigned* factors)
 {
+	// NB: прогресс обновляется только для самого младшего задания
 	if (worker->factors[0] == m_LoPendingTask)
 	{
 		thread::Lock lock(m_ProgressCS);
@@ -595,10 +612,8 @@ AML_NOINLINE void FactorSearch::OnSolutionFound(const unsigned* factors)
 	Solution s(factors, 1, m_FactorCount);
 	s.SortFactors();
 
-	{
-		thread::Lock lock(m_TaskCS);
-		m_PendingSolutions.push_back(std::move(s));
-	}
+	thread::Lock lock(m_TaskCS);
+	m_PendingSolutions.push_back(std::move(s));
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -606,7 +621,7 @@ void FactorSearch::OnSolutionReady(const Solution& solution)
 {
 	util::Formatter<char> fmt;
 
-	auto fn = [&fmt](const std::vector<unsigned>& factors) {
+	auto fn = [&](const std::vector<unsigned>& factors) {
 		for (size_t i = 0, k, count = factors.size(); i < count; i += k)
 		{
 			k = 1;
@@ -651,7 +666,7 @@ void FactorSearch::ProcessPendingSolutions()
 	// Сортируем накопленные решения
 	std::sort(m_PendingSolutions.begin(), m_PendingSolutions.end());
 
-	// Обработаем готовые решения (до m_LoPendingTask)
+	// Обработаем готовые решения
 	bool hadReadySolutions = false;
 	while (!m_PendingSolutions.empty())
 	{
@@ -666,16 +681,20 @@ void FactorSearch::ProcessPendingSolutions()
 			hadReadySolutions = true;
 			++m_SolutionsFound;
 
+			// Выведем решение
 			OnSolutionReady(s);
 		}
 
 		m_PendingSolutions.pop_front();
 	}
 
-	// Если готовые решения были, то они были выведены
-	// на экран. Потребуем немедленно вывести прогресс
+	// Если готовые решения были, то они были выведены на экран.
+	// Нужно немедленно вывести прогресс и обновить заголовок окна
 	if (hadReadySolutions)
+	{
 		m_ForceShowProgress = true;
+		m_NeedUpdateTitle = true;
+	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -685,7 +704,7 @@ void FactorSearch::ShowProgress(const unsigned* factors, int leftCount, int righ
 	const int desiredCount = (factorCount < 5) ? 2 : std::min(8, 3 + (factorCount - 1) / 8);
 
 	util::Formatter<char> fmt;
-	fmt << (m_IsCancelled ? "#12" : "") << "\rTesting " << factors[0];
+	fmt << (m_IsCancelled ? "#12" : "#07") << "\rTesting " << factors[0];
 	for (int i = 1, j = std::min(leftCount, desiredCount); i < j; ++i)
 		fmt << '+' << factors[i];
 
@@ -696,7 +715,7 @@ void FactorSearch::ShowProgress(const unsigned* factors, int leftCount, int righ
 		fmt << factors[i] << '+';
 
 	fmt << "...";
-	auto newSize = fmt.GetSize() - 1;
+	auto newSize = fmt.GetSize() - 4;
 	if (newSize < m_LastProgressLength)
 	{
 		auto k = m_LastProgressLength - newSize;
@@ -756,7 +775,7 @@ bool FactorSearch::OpenLogFile(int leftCount, int rightCount)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void FactorSearch::UpdateActiveThreads()
+void FactorSearch::UpdateActiveThreadCount()
 {
 	auto& console = util::SystemConsole::Instance();
 	for (util::Console::KeyEvent event; console.GetInputEvent(event);)
@@ -775,6 +794,11 @@ void FactorSearch::UpdateActiveThreads()
 		}
 	}
 
-	if (!m_IsCancelled && m_ActiveWorkers != GetActiveThreads())
+	// NB: если флаг m_IsCancelled установлен, то нет смысла менять количество активных потоков, т.к.
+	// работающие потоки, завершив текущее задание, не получат нового и автоматически приостановятся
+	if (!m_IsCancelled && m_ActiveWorkers != GetActiveThreads(true))
+	{
 		SetActiveThreads(m_ActiveWorkers);
+		m_NeedUpdateTitle = true;
+	}
 }
