@@ -19,7 +19,7 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//   FactorSearch - поиск коэффициентов уравнения
+//   FactorSearch - поиск коэффициентов уравнения p.1.n
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -42,7 +42,7 @@ public:
 protected:
 	struct Worker;
 
-	// Ищет решения
+	// Выполняет поиск решений
 	void Search(unsigned hiFactor);
 
 	// Создаёт указанное количество рабочих потоков в приостановленном состоянии
@@ -53,7 +53,7 @@ protected:
 	// Возвращает количество активных (работающих) потоков. Если ignorePending == false, то
 	// активные потоки, для которых установлен флаг shouldPause, не включаются в результат
 	size_t GetActiveThreads(bool ignorePending = false) const;
-	// Запускает (приостанавливает) часть рабочих потоков так, чтобы
+	// Запускает или приостанавливает часть рабочих потоков так, чтобы
 	// количество активных стало равно указанному значению activeCount
 	void SetActiveThreads(size_t activeCount);
 	// Возвращает количество затраченного всеми потоками времени CPU (в
@@ -90,6 +90,7 @@ protected:
 
 	void ShowProgress(const unsigned* factors, int leftCount, int rightCount);
 	void UpdateConsoleTitle(int leftCount, int rightCount);
+	bool OpenLogFile(int leftCount, int rightCount);
 	void UpdateActiveThreads();
 
 protected:
@@ -100,9 +101,8 @@ protected:
 	thread::CriticalSection m_ProgressCS;		// Критическая секция (прогресс)
 	thread::CriticalSection m_ConsoleCS;		// Критическая секция (вывод в консоль)
 
-	std::vector<Worker*> m_Workers;				// Рабочие потоки
-	size_t m_MaxWorkerCount = 0;				// Максимальное количество активных потоков
-	size_t m_ActiveWorkers = 0;					// Установленное количество активных потоков
+	std::vector<Worker*> m_Workers;				// Состояния рабочих потоков
+	size_t m_ActiveWorkers = 0;					// Желаемое количество активных потоков
 
 	ThreadTimer m_MainThreadTimer;				// Счётчик времени CPU для главного потока
 	uint32_t m_StartTick = 0;					// Тик начала работы программы (обновляется)
@@ -115,22 +115,22 @@ protected:
 	std::deque<Solution> m_PendingSolutions;	// Найденные решения, ожидающие проверки
 
 	const uint64_t* m_Pow64 = nullptr;			// Массив степеней (64 бита)
-	const UInt128* m_Powers = nullptr;			// Массив степеней (128+ бит)
+	const UInt128* m_Powers = nullptr;			// Массив степеней (128 бит)
 	HashTable m_Hashes;							// Хеш-таблица значений степеней
 
 	volatile unsigned m_NextHiFactor = 0;		// Следующий старший коэффициент (задание)
-	volatile unsigned m_LastDoneFactor = 0;		// Последний проверенный коэффициент (задание)
+	unsigned m_LastDoneFactor = 0;				// Последний проверенный коэффициент (задание)
 	unsigned m_LastHiFactor = 0;				// Последний старший коэффициент в блоке заданий
 
-	std::vector<unsigned> m_PendingTasks;		// Текущие выполняемые задания
-	volatile unsigned m_LoPendingTask = 0;		// Самое младшее (старое задание)
+	std::vector<unsigned> m_PendingTasks;		// Выполняемые и ожидающие проверки задания
+	volatile unsigned m_LoPendingTask = 0;		// Самое младшее (старое) ожидаемое задание
 
 	unsigned m_Progress[8];						// Первые коэффициенты для вывода прогресса
 	size_t m_LastProgressLength = 0;			// Количество символов в последнем выводе прогресса
 	volatile bool m_IsProgressReady = false;	// true, если данные о прогрессе можно использовать
 	volatile bool m_ForceShowProgress = false;	// true, если прогресс нужно вывести немедленно
 
-	volatile bool m_NoTasks = false;			// true, если задач для потоков больше нет
+	volatile bool m_NoTasks = false;			// true, если заданий для потоков больше нет
 	volatile bool m_IsCancelled = false;		// true, если работа была прервана пользователем
 	volatile bool m_ForceQuit = false;			// true, если нужно прервать работу немедленно
 };

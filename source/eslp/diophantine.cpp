@@ -19,32 +19,6 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//   Вспомогательные функции
-//
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//--------------------------------------------------------------------------------------------------------------------------------
-static bool OpenLogFile(util::File& file, int power, int leftCount, int rightCount)
-{
-	if (file.Open(util::Format(L"log-%i.%i.%i.txt", power, leftCount, rightCount),
-		util::FILE_OPEN_ALWAYS | util::FILE_OPEN_READWRITE))
-	{
-		if (auto fileSize = file.GetSize(); fileSize > 0)
-		{
-			if (file.SetPosition(fileSize) && file.Write("---\n", 4))
-				return true;
-		}
-		else if (!fileSize)
-			return true;
-
-		file.Close();
-	}
-
-	return false;
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
 //   FactorSearch::Worker - состояние рабочего потока
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -52,7 +26,7 @@ static bool OpenLogFile(util::File& file, int power, int leftCount, int rightCou
 //--------------------------------------------------------------------------------------------------------------------------------
 struct FactorSearch::Worker
 {
-	int workerId = 0;					// Уникальный ID рабочего потока (от 0)
+	int workerId = 0;					// Уникальный ID рабочего потока
 	std::thread threadObj;				// Объект потока
 
 	volatile bool isActive = false;		// true, если поток выполняет вычисления
@@ -65,7 +39,7 @@ struct FactorSearch::Worker
 	unsigned factors[8];				// Заданные коэффициенты для начала поиска
 	unsigned factorCount = 0;			// Количество заданных коэффициентов
 
-	unsigned progressCounter = 0;		// Вспомогательный счётчик прогреса
+	unsigned progressCounter = 0;		// Вспомогательный счётчик прогресса
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -116,7 +90,7 @@ bool FactorSearch::Run(int power, int count, unsigned hiFactor)
 		return false;
 	}
 
-	if (!OpenLogFile(m_Log, power, 1, count))
+	if (!OpenLogFile(1, count))
 	{
 		aux::Printc("#12Error: failed to open log file\n");
 		return false;
@@ -149,10 +123,10 @@ void FactorSearch::Search(unsigned hiFactor)
 	aux::Print("Initializing...");
 	util::SystemConsole::Instance().ShowCursor(false);
 
-	m_MaxWorkerCount = util::SystemInfo::Instance().GetCoreCount().logical;
-	m_ActiveWorkers = m_MaxWorkerCount - ((m_MaxWorkerCount <= 4) ? 0 : 1);
+	size_t maxWorkerCount = util::SystemInfo::Instance().GetCoreCount().logical;
+	m_ActiveWorkers = maxWorkerCount - ((maxWorkerCount <= 4) ? 0 : 1);
 
-	CreateWorkers(m_MaxWorkerCount);
+	CreateWorkers(maxWorkerCount);
 
 	while (hiFactor && !m_IsCancelled)
 		hiFactor = Compute(hiFactor);
@@ -162,7 +136,7 @@ void FactorSearch::Search(unsigned hiFactor)
 
 	util::SystemConsole::Instance().ShowCursor(true);
 	aux::Printf("\rTask %s#7, solutions found: #6#%u\n", m_IsCancelled ?
-		"#12cancelled" : "finished", m_Solutions.Count());
+		"#12cancelled" : "finished", m_SolutionsFound);
 
 	auto s = util::Format("nextHiFactor: %u\n", m_LastDoneFactor + 1);
 	m_Log.Write(s.c_str(), s.size());
@@ -236,7 +210,7 @@ size_t FactorSearch::GetActiveThreads(bool ignorePending) const
 //--------------------------------------------------------------------------------------------------------------------------------
 void FactorSearch::SetActiveThreads(size_t activeCount)
 {
-	activeCount = util::Clamp(activeCount, size_t(1), m_MaxWorkerCount);
+	activeCount = util::Clamp(activeCount, size_t(1), m_Workers.size());
 	if (auto current = GetActiveThreads(); current < activeCount)
 	{
 		// Пробуждаем потоки
@@ -365,9 +339,13 @@ unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 		if (bool userBreak = util::SystemConsole::Instance().IsCtrlCPressed(true);
 			userBreak || m_SolutionsFound >= 100000)
 		{
-			m_ForceShowProgress |= !m_IsCancelled;
-			m_ForceQuit = m_IsCancelled && userBreak;
-			m_IsCancelled = true;
+			if (!m_IsCancelled)
+			{
+				m_IsCancelled = true;
+				m_ForceShowProgress = true;
+			}
+			else if (userBreak)
+				m_ForceQuit = true;
 		}
 
 		::Sleep(m_ForceShowProgress ? 1 : 20);
@@ -379,6 +357,7 @@ unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 	Assert(!GetActiveThreads(true));
 	Assert(m_IsCancelled || m_NextHiFactor == upperLimit + 1);
 
+	// Очищаем последнюю строку на экране, в которой выводился прогресс
 	if (m_LastProgressLength)
 	{
 		std::string s("\r");
@@ -656,7 +635,6 @@ void FactorSearch::OnSolutionReady(const Solution& solution)
 
 	thread::Lock lock(m_ConsoleCS);
 	aux::Print("\rSolution found: " + fmt.ToString());
-	m_ForceShowProgress = true;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -674,6 +652,7 @@ void FactorSearch::ProcessPendingSolutions()
 	std::sort(m_PendingSolutions.begin(), m_PendingSolutions.end());
 
 	// Обработаем готовые решения (до m_LoPendingTask)
+	bool hadReadySolutions = false;
 	while (!m_PendingSolutions.empty())
 	{
 		auto& s = m_PendingSolutions.front();
@@ -684,12 +663,19 @@ void FactorSearch::ProcessPendingSolutions()
 		// решение непримитивное, то функция Insert вернёт false
 		if (m_Solutions.Insert(s))
 		{
+			hadReadySolutions = true;
 			++m_SolutionsFound;
+
 			OnSolutionReady(s);
 		}
 
 		m_PendingSolutions.pop_front();
 	}
+
+	// Если готовые решения были, то они были выведены
+	// на экран. Потребуем немедленно вывести прогресс
+	if (hadReadySolutions)
+		m_ForceShowProgress = true;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -750,20 +736,41 @@ void FactorSearch::UpdateConsoleTitle(int leftCount, int rightCount)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+bool FactorSearch::OpenLogFile(int leftCount, int rightCount)
+{
+	if (m_Log.Open(util::Format(L"log-%i.%i.%i.txt", m_Power, leftCount, rightCount),
+		util::FILE_OPEN_ALWAYS | util::FILE_OPEN_READWRITE))
+	{
+		if (auto fileSize = m_Log.GetSize(); fileSize > 0)
+		{
+			if (m_Log.SetPosition(fileSize) && m_Log.Write("---\n", 4))
+				return true;
+		}
+		else if (!fileSize)
+			return true;
+
+		m_Log.Close();
+	}
+
+	return false;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 void FactorSearch::UpdateActiveThreads()
 {
 	auto& console = util::SystemConsole::Instance();
 	for (util::Console::KeyEvent event; console.GetInputEvent(event);)
 	{
-		// Клавиши - и + на малой клавиатуре
+		// Клавиша - на малой клавиатуре
 		if (event.isKeyDown && event.vkey == util::Console::KEY_PADSUB)
 		{
 			if (m_ActiveWorkers > 1)
 				--m_ActiveWorkers;
 		}
+		// Клавиша + на малой клавиатуре
 		else if (event.isKeyDown && event.vkey == util::Console::KEY_PADADD)
 		{
-			if (m_ActiveWorkers < m_MaxWorkerCount)
+			if (m_ActiveWorkers < m_Workers.size())
 				++m_ActiveWorkers;
 		}
 	}
