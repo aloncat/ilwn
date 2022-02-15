@@ -80,6 +80,10 @@ protected:
 	bool GetNextTask(Worker* worker);
 	void OnTaskDone(Worker* worker);
 
+	// Проверяет, могут ли существовать решения для задания, содержащегося в worker.
+	// Если гарантируется, что решений быть не может, то функция вернёт false
+	bool MightHaveSolution(const Worker* worker);
+
 	// Функция врнёт true, если установлен флаг m_ForceQuit
 	bool OnProgress(Worker* worker, const unsigned* factors);
 

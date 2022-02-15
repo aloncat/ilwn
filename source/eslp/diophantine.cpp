@@ -307,7 +307,9 @@ unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 
 	const unsigned upperLimit = std::min(hiFactor + std::min(UINT_MAX - hiFactor,
 		toCheck - 1), Powers<NumberT>::CalcUpperValue(m_Power, m_FactorCount));
-	Assert(hiFactor <= upperLimit);
+
+	if (hiFactor > upperLimit)
+		return 0;
 
 	Powers<NumberT> powers;
 	powers.Init(m_Power, m_FactorCount, upperLimit);
@@ -323,7 +325,7 @@ unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 	m_NoTasks = false;
 
 	memset(m_Progress, 0, sizeof(m_Progress));
-	m_Progress[0] = hiFactor;
+	m_Progress[0] = m_NextHiFactor;
 
 	m_IsProgressReady = false;
 	m_ForceShowProgress = true;
@@ -547,16 +549,21 @@ bool FactorSearch::GetNextTask(Worker* worker)
 	{
 		thread::Lock lock(m_TaskCS);
 
-		if (!m_IsCancelled && m_NextHiFactor && m_NextHiFactor <= m_LastHiFactor)
+		if (!m_IsCancelled && m_NextHiFactor)
 		{
-			auto task = m_NextHiFactor++;
+			while (m_NextHiFactor <= m_LastHiFactor)
+			{
+				auto task = m_NextHiFactor++;
+				worker->factors[0] = task;
+				worker->factorCount = 1;
 
-			m_PendingTasks.push_back(task);
-			m_LoPendingTask = m_PendingTasks.front();
-
-			worker->factors[0] = task;
-			worker->factorCount = 1;
-			return true;
+				if (MightHaveSolution(worker))
+				{
+					m_PendingTasks.push_back(task);
+					m_LoPendingTask = m_PendingTasks.front();
+					return true;
+				}
+			}
 		}
 
 		m_NoTasks = true;
@@ -591,6 +598,25 @@ void FactorSearch::OnTaskDone(Worker* worker)
 			break;
 		}
 	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool FactorSearch::MightHaveSolution(const Worker* worker)
+{
+	const unsigned* factors = worker->factors;
+	if (worker->factorCount != 1)
+		return true;
+
+	// Уравнение 4.1.n, 2 <= n <= 15
+	if (m_Power == 4 && m_FactorCount <= 15)
+	{
+		if (!(factors[0] & 1))
+			return false;
+		if (m_FactorCount < 5 && !(factors[0] % 5))
+			return false;
+	}
+
+	return true;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -728,8 +754,7 @@ void FactorSearch::ProcessPendingSolutions()
 		}
 
 		// Обновляем значение последнего завершённого задания
-		auto lastSolution = m_PendingSolutions.begin() + (ready - 1);
-		m_LastDoneFactor = lastSolution->left[0];
+		m_LastDoneFactor = m_PendingSolutions[ready - 1].left[0];
 
 		// Удаляем все обработанные решения из контейнера
 		m_PendingSolutions.erase(m_PendingSolutions.begin(), itEnd);
@@ -784,13 +809,14 @@ void FactorSearch::UpdateConsoleTitle(int leftCount, int rightCount)
 	fmt << "Searching for factors (" << m_Power << '.' << leftCount << '.' << rightCount << "): ";
 	fmt << m_SolutionsFound << ((m_SolutionsFound == 1) ? " solution" : " solutions") << " found";
 
-	if (auto activeCount = GetActiveThreads(true))
+	const size_t activeThreads = GetActiveThreads(true);
+	if (activeThreads || (m_ActiveWorkers && !m_IsCancelled))
 	{
 		fmt << " -- MT: ";
-		if (!m_IsCancelled && activeCount != m_ActiveWorkers)
-			fmt << m_ActiveWorkers << " (" << activeCount << ')';
+		if (!m_IsCancelled && activeThreads != m_ActiveWorkers)
+			fmt << m_ActiveWorkers << " (" << activeThreads << ')';
 		else
-			fmt << activeCount;
+			fmt << activeThreads;
 
 		if (m_IsCancelled)
 		{
@@ -799,7 +825,7 @@ void FactorSearch::UpdateConsoleTitle(int leftCount, int rightCount)
 
 		// Если текущее количество активных потоков не совпадает с необходимым, то
 		// установим флаг обновления заголовка окна, чтобы снова обновить его позже
-		if (activeCount != m_ActiveWorkers)
+		if (activeThreads != m_ActiveWorkers)
 			m_NeedUpdateTitle = true;
 	}
 
