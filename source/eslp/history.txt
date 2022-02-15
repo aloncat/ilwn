@@ -12,6 +12,7 @@ Released: 2022-02-xx
  * Support for 128-bit arithmetic.
  * Max. equation degree increased to 20.
  * Max. number of coefficients is now 160.
+ * Generates at least 100K solutions.
 
 == Known issues ==
  * No more than 1 coefficient on the left side.

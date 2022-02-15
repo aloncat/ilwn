@@ -132,12 +132,12 @@ bool Solution::operator <(const Solution& rhs) const
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------------------------------------
-bool Solutions::Insert(const Solution& s)
+bool Solutions::Insert(const Solution& solution, bool verify)
 {
-	if (!IsPrimitive(s))
+	if (verify && !IsPrimitive(solution))
 		return false;
 
-	Solution sorted = s;
+	Solution sorted = solution;
 	sorted.SortFactors();
 
 	auto result = m_Solutions.insert(std::move(sorted));
@@ -145,22 +145,22 @@ bool Solutions::Insert(const Solution& s)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-bool Solutions::Insert(Solution&& s)
+bool Solutions::Insert(Solution&& solution, bool verify)
 {
-	if (!IsPrimitive(s))
+	if (verify && !IsPrimitive(solution))
 		return false;
 
-	s.SortFactors();
+	solution.SortFactors();
 
-	auto result = m_Solutions.insert(std::move(s));
+	auto result = m_Solutions.insert(std::move(solution));
 	return result.second;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-bool Solutions::IsPrimitive(const Solution& s)
+bool Solutions::IsPrimitive(const Solution& solution)
 {
-	const size_t leftCount = s.left.size();
-	const size_t rightCount = s.right.size();
+	const size_t leftCount = solution.left.size();
+	const size_t rightCount = solution.right.size();
 
 	if (!Verify(leftCount && rightCount))
 		return false;
@@ -170,12 +170,12 @@ bool Solutions::IsPrimitive(const Solution& s)
 	unsigned lowest = UINT_MAX;
 
 	size_t k = 0;
-	for (auto f : s.left)
+	for (auto f : solution.left)
 	{
 		allFactors[k++] = f;
 		lowest = (f < lowest) ? f : lowest;
 	}
-	for (auto f : s.right)
+	for (auto f : solution.right)
 	{
 		allFactors[k++] = f;
 		lowest = (f < lowest) ? f : lowest;

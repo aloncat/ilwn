@@ -131,6 +131,7 @@ void FactorSearch::Search(unsigned hiFactor)
 
 	CreateWorkers(maxWorkerCount);
 
+	m_PendingSolutions.reserve(100);
 	while (hiFactor && !m_IsCancelled)
 		hiFactor = Compute(hiFactor);
 
@@ -285,9 +286,10 @@ unsigned FactorSearch::Compute(unsigned hiFactor)
 {
 	aux::Print("\rRe-initializing...");
 
-	// TODO: в зависимости от степени уравнения и количества коэффициентов, мы
-	// бы хотели проверять различное количество старших коэффициентов за раз
-	const unsigned toCheck = 10000;
+	// В зависимости от количества коэффициентов в уравнении, мы бы
+	// хотели проверять различное количество старших коэффициентов за раз
+	static const unsigned countImpact[10] = { 0, 0, 300000, 35000, 8000, 4000, 1000, 800, 600, 300 };
+	const unsigned toCheck = (m_FactorCount >= 2 && m_FactorCount <= 9) ? countImpact[m_FactorCount] : 200;
 
 	// Если можем, то выполняем вычисления в 64-битах (так как это быстрее)
 	if (unsigned upper64 = Powers<uint64_t>::CalcUpperValue(m_Power, m_FactorCount); hiFactor < upper64)
@@ -349,19 +351,19 @@ unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 
 		if (m_NeedUpdateTitle || m_IsCancelled)
 		{
-			UpdateConsoleTitle(1, m_FactorCount);
 			m_NeedUpdateTitle = false;
+			UpdateConsoleTitle(1, m_FactorCount);
 		}
 
-		if (bool userBreak = util::SystemConsole::Instance().IsCtrlCPressed(true);
-			userBreak || m_SolutionsFound >= 100000)
+		const bool userBreak = util::SystemConsole::Instance().IsCtrlCPressed(true);
+		if (bool tooManySolutions = m_SolutionsFound >= 100000; userBreak || tooManySolutions)
 		{
 			if (!m_IsCancelled)
 			{
 				m_IsCancelled = true;
 				m_ForceShowProgress = true;
 			}
-			else if (userBreak)
+			else if (userBreak || tooManySolutions)
 				m_ForceQuit = true;
 		}
 
@@ -489,7 +491,7 @@ void FactorSearch::SearchFactors(Worker* worker, const NumberT* powers)
 
 		// Периодически выводим текущий прогресс. Если пользователь
 		// нажмёт Ctrl-C, то функция вернёт true, мы завершим работу
-		if (!(++it & 0x1fff) && !(++worker->progressCounter & 0x3f))
+		if (!(++it & 0xfff) && !(++worker->progressCounter & 0x7f))
 		{
 			if (OnProgress(worker, k))
 				break;
@@ -582,8 +584,8 @@ void FactorSearch::OnTaskDone(Worker* worker)
 			{
 				// Если список ожидаемых заданий не пуст, то последнее полностью завершённое - это то,
 				// которое было непосредственно перед первым ожидаемым, иначе - только что завершённое
-				m_LastDoneFactor = m_PendingTasks.empty() ?
-					f : m_PendingTasks.front() - 1;
+				m_LastDoneFactor = m_PendingTasks.empty() ? std::max(f, m_LastDoneFactor) :
+					m_PendingTasks.front() - 1;
 			}
 
 			break;
@@ -611,11 +613,33 @@ AML_NOINLINE bool FactorSearch::OnProgress(Worker* worker, const unsigned* facto
 //--------------------------------------------------------------------------------------------------------------------------------
 AML_NOINLINE void FactorSearch::OnSolutionFound(const unsigned* factors)
 {
-	Solution s(factors, 1, m_FactorCount);
-	s.SortFactors();
+	Solution solution(factors, 1, m_FactorCount);
+	solution.SortFactors();
 
-	thread::Lock lock(m_TaskCS);
-	m_PendingSolutions.push_back(std::move(s));
+	for (;;)
+	{
+		m_TaskCS.Enter();
+
+		// Если это решение самого младшего (старого) задания, то мы всегда добавляем его в контейнер.
+		// В ином случае проверяем, сколько решений в контейнере, и если он "переполнен", то остальные
+		// потоки (решения других заданий) должны подождать, когда освободится место
+		if (factors[0] <= m_LoPendingTask || m_PendingSolutions.size() < 25000)
+		{
+			// Отсеиваем непримитивные решения
+			if (m_Solutions.IsPrimitive(solution))
+			{
+				m_PendingSolutions.push_back(std::move(solution));
+			}
+
+			m_TaskCS.Leave();
+			return;
+		}
+
+		// Освобождаем критическую секцию, и ждём. Если поток, обрабатывающий младшее
+		// задание за это время его закончит, то место в контейнере освободится
+		m_TaskCS.Leave();
+		::Sleep(1);
+	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -691,9 +715,9 @@ void FactorSearch::ProcessPendingSolutions()
 		bool hadGoodSolutions = false;
 		for (auto it = m_PendingSolutions.begin(); it != itEnd; ++it)
 		{
-			// Пытаемся добавить решение в набор. Если решение
-			// непримитивное, то функция Insert вернёт false
-			if (m_Solutions.Insert(*it))
+			// Пытаемся добавить решение в набор. Непримитивные решения мы
+			// уже отбросили. Сейчас проверяем только уникальность решения
+			if (m_Solutions.Insert(*it, false))
 			{
 				hadGoodSolutions = true;
 				++m_SolutionsFound;
@@ -702,6 +726,10 @@ void FactorSearch::ProcessPendingSolutions()
 				OnSolutionReady(*it);
 			}
 		}
+
+		// Обновляем значение последнего завершённого задания
+		auto lastSolution = m_PendingSolutions.begin() + (ready - 1);
+		m_LastDoneFactor = lastSolution->left[0];
 
 		// Удаляем все обработанные решения из контейнера
 		m_PendingSolutions.erase(m_PendingSolutions.begin(), itEnd);
@@ -768,6 +796,11 @@ void FactorSearch::UpdateConsoleTitle(int leftCount, int rightCount)
 		{
 			fmt << " -- stopping...";
 		}
+
+		// Если текущее количество активных потоков не совпадает с необходимым, то
+		// установим флаг обновления заголовка окна, чтобы снова обновить его позже
+		if (activeCount != m_ActiveWorkers)
+			m_NeedUpdateTitle = true;
 	}
 
 	util::SystemConsole::Instance().SetTitle(fmt.ToString());
@@ -796,6 +829,7 @@ bool FactorSearch::OpenLogFile(int leftCount, int rightCount)
 //--------------------------------------------------------------------------------------------------------------------------------
 void FactorSearch::UpdateActiveThreadCount()
 {
+	const auto oldValue = m_ActiveWorkers;
 	auto& console = util::SystemConsole::Instance();
 	for (util::Console::KeyEvent event; console.GetInputEvent(event);)
 	{
@@ -815,7 +849,7 @@ void FactorSearch::UpdateActiveThreadCount()
 
 	// NB: если флаг m_IsCancelled установлен, то нет смысла менять количество активных потоков, т.к.
 	// работающие потоки, завершив текущее задание, не получат нового и автоматически приостановятся
-	if (!m_IsCancelled && m_ActiveWorkers != GetActiveThreads(true))
+	if (!m_IsCancelled && m_ActiveWorkers != oldValue)
 	{
 		SetActiveThreads(m_ActiveWorkers);
 		m_NeedUpdateTitle = true;

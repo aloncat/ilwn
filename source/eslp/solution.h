@@ -37,19 +37,21 @@ class Solutions
 public:
 	Solutions() = default;
 
-	// Добавляет решение в контейнер. Если решение не примитивное, или если такое
-	// решение уже существует, то оно добавлено не будет, и функция вернёт false
-	bool Insert(const Solution& s);
-	bool Insert(Solution&& s);
+	// Добавляет решение в контейнер. Если такое решение уже существует, то оно добавлено не будет.
+	// Если флаг verify установлен, то решение будет проверено на примитивность (не примитивное
+	// решение добавлено не будет). Функция вернёт true, если решение будет добавлено
+	bool Insert(const Solution& solution, bool verify = true);
+	bool Insert(Solution&& solution, bool verify = true);
 
 	void Clear() { m_Solutions.clear(); }
 
 	size_t Count() const { return m_Solutions.size(); }
 
-protected:
-	// Возвращает true, если решение s примитивно
-	bool IsPrimitive(const Solution& s);
+	// Возвращает true, если указанное решение solution примитивно, то
+	// есть если у его коэффициентов нет общего делителя больше единицы
+	bool IsPrimitive(const Solution& solution);
 
+protected:
 	// Добавляет в factors все уникальные простые множители value
 	void GetFactors(std::vector<unsigned>& factors, unsigned value);
 
