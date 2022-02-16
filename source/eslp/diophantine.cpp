@@ -604,15 +604,64 @@ void FactorSearch::OnTaskDone(Worker* worker)
 bool FactorSearch::MightHaveSolution(const Worker* worker)
 {
 	const unsigned* factors = worker->factors;
-	if (worker->factorCount != 1)
+	// NB: у нас нет оптимизаций для нечётных степеней
+	if (worker->factorCount != 1 || (m_Power & 1))
 		return true;
 
-	// Уравнение 4.1.n, 2 <= n <= 15
-	if (m_Power == 4 && m_FactorCount <= 15)
+	// Уравнения 2.1.n
+	if (m_Power == 2)
 	{
-		if (!(factors[0] & 1))
+		// Z не может быть чётным для n < 4
+		if (m_FactorCount < 4 && !(factors[0] & 1))
 			return false;
-		if (m_FactorCount < 5 && !(factors[0] % 5))
+	}
+	// Уравнение 4.1.n
+	else if (m_Power == 4)
+	{
+		// Для n < 16
+		if (m_FactorCount < 16)
+		{
+			// Z не может быть чётным
+			if (!(factors[0] & 1))
+				return false;
+			// Z не может быть кратным 5 для n < 5
+			if (m_FactorCount < 5 && !(factors[0] % 5))
+				return false;
+		}
+	}
+	// Уравнение 6.1.n
+	else if (m_Power == 6)
+	{
+		// Для n < 8
+		if (m_FactorCount < 8)
+		{
+			// Z не может быть чётным
+			if (!(factors[0] & 1))
+				return false;
+		}
+		// Для n < 9
+		if (m_FactorCount < 9)
+		{
+			// Z не может быть кратно 3
+			if (!(factors[0] % 3))
+				return false;
+			// Z не может быть кратным 7 для n < 7
+			if (m_FactorCount < 7 && !(factors[0] % 7))
+				return false;
+		}
+	}
+	// Уравнение 8.1.n
+	else if (m_Power == 8)
+	{
+		// Z не может быть чётным для n < 32
+		if (m_FactorCount < 32 && !(factors[0] & 1))
+			return false;
+	}
+	// Уравнение 10.1.n
+	else if (m_Power == 10)
+	{
+		// Z не может быть кратным 11 для n < 11
+		if (m_FactorCount < 11 && !(factors[0] % 11))
 			return false;
 	}
 

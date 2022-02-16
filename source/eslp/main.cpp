@@ -14,7 +14,7 @@ int wmain(int argCount, const wchar_t* args[], const wchar_t* envVars[])
 {
 	util::CheckMinimalRequirements();
 
-	aux::Printc(L"Equal Sums of Like Powers (ESLP)/iLWN. Standalone app. Ver. 0.20\n"
+	aux::Printc(L"Equal Sums of Like Powers (ESLP)/iLWN. Standalone app. Ver. 0.21a\n"
 		"#8For more information, please visit us at #9https://dmaslov.me/eslp/\n");
 
 	// Программа принимает 2 обязательных и 1 опциональный аргумент командной строки: 1) степень уравнения,
