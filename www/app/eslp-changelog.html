@@ -26,14 +26,68 @@
 <h1>ESLP software version history</h1>
 
 <p class="column text">
-  ESLP is a program for finding solutions to Diophantine equations of the form p.1.n. Searches for the first 100 solutions, starting from the optionally specified value of the leading coefficient. Only 64-bit OS Windows is supported. More details at project <a href="/eslp/">homepage</a>.
+  ESLP is a program for finding solutions to Diophantine equations of the form p.1.n. Searches for the first (not more than 100K) primitive solutions, starting from the optionally specified value of the leading coefficient. Only 64-bit OS Windows is supported. More details at project <a href="/eslp/">homepage</a>.
 </p>
+
+<div class="column divider">&bull; &bull; &bull;</div>
+
+<!-- Version 0.20 -->
+<p id="v0.20" class="column text small">
+  <b>Version 0.20</b> (the latest),
+  released on February 16, 2022.<br>
+  <a href="http://download.dmaslov.me/app/eslp-0.20.zip">Download</a> this version (zip archive, 214 Kb).
+</p>
+
+<p class="column text nobottommargin">
+  <b>Changes:</b>
+</p>
+
+<div class="column">
+  <ul class="notopmargin">
+	<li>Use the +/- keys to change active threads.</li>
+  <ul>
+</div>
+
+<p class="column text nobottommargin">
+  <b>Bug fixes:</b>
+</p>
+
+<div class="column">
+  <ul class="notopmargin">
+	<li>Optimized memory consumption.</li>
+  <ul>
+</div>
+
+<p class="column text nobottommargin">
+  <b>Features:</b>
+</p>
+
+<div class="column">
+  <ul class="notopmargin">
+	<li>Multi-threaded computation.</li>
+	<li>Support for 128-bit arithmetic.</li>
+	<li>Max. equation degree increased to 20.</li>
+	<li>Max. number of coefficients is now 160.</li>
+	<li>Generates at least 100K solutions.</li>
+  <ul>
+</div>
+
+<p class="column text nobottommargin">
+  <b>Known issues:</b>
+</p>
+
+<div class="column">
+  <ul class="notopmargin">
+	<li>No more than 1 coefficient on the left side.</li>
+	<li>Specialized (optimal) algorithms are not supported.</li>
+  </ul>
+</div>
 
 <div class="column divider">&bull; &bull; &bull;</div>
 
 <!-- Version 0.10 -->
 <p id="v0.10" class="column text small">
-  <b>Version 0.10</b> (the latest),
+  <b>Version 0.10</b>,
   released on January 29, 2022.<br>
   <a href="http://download.dmaslov.me/app/eslp-0.10.zip">Download</a> this version (zip archive, 102 Kb).
 </p>
