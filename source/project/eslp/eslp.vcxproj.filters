@@ -19,9 +19,6 @@
     <ClInclude Include="..\..\eslp\uint128.h">
       <Filter>math</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\eslp\diophantine.h">
-      <Filter>search</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\eslp\threadtimer.h">
       <Filter>util</Filter>
     </ClInclude>
@@ -37,6 +34,9 @@
     <ClInclude Include="..\..\eslp\util.h">
       <Filter>util</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\eslp\factorsearch.h">
+      <Filter>search</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\eslp\prefix.cpp">
@@ -47,9 +47,6 @@
     <ClCompile Include="..\..\eslp\uint128.cpp">
       <Filter>math</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\eslp\diophantine.cpp">
-      <Filter>search</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\eslp\threadtimer.cpp">
       <Filter>util</Filter>
     </ClCompile>
@@ -58,6 +55,9 @@
     </ClCompile>
     <ClCompile Include="..\..\eslp\util.cpp">
       <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\eslp\factorsearch.cpp">
+      <Filter>search</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -184,7 +184,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\eslp\diophantine.h" />
+    <ClInclude Include="..\..\eslp\factorsearch.h" />
     <ClInclude Include="..\..\eslp\hashtable.h" />
     <ClInclude Include="..\..\eslp\pch.h" />
     <ClInclude Include="..\..\eslp\powers.h" />
@@ -194,7 +194,7 @@
     <ClInclude Include="..\..\eslp\util.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\eslp\diophantine.cpp" />
+    <ClCompile Include="..\..\eslp\factorsearch.cpp" />
     <ClCompile Include="..\..\eslp\main.cpp" />
     <ClCompile Include="..\..\eslp\prefix.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
