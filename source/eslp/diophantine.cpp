@@ -579,20 +579,25 @@ void FactorSearch::OnTaskDone(Worker* worker)
 
 	for (size_t i = 0, count = m_PendingTasks.size(); i < count; ++i)
 	{
-		if (auto f = worker->factors[0]; m_PendingTasks[i] == f)
+		if (const auto f = worker->factors[0]; m_PendingTasks[i] == f)
 		{
 			m_PendingTasks.erase(m_PendingTasks.begin() + i);
-			m_LoPendingTask = m_PendingTasks.empty() ? 0 : m_PendingTasks.front();
 
-			if (!i && !m_PendingSolutions.empty())
-				ProcessPendingSolutions();
-
-			if (!i && !m_ForceQuit)
+			if (!i)
 			{
-				// Если список ожидаемых заданий не пуст, то последнее полностью завершённое - это то,
-				// которое было непосредственно перед первым ожидаемым, иначе - только что завершённое
-				m_LastDoneFactor = m_PendingTasks.empty() ? std::max(f, m_LastDoneFactor) :
-					m_PendingTasks.front() - 1;
+				m_LoPendingTask = (count > 1) ? m_PendingTasks.front() : 0;
+				m_IsProgressReady = false;
+
+				if (!m_PendingSolutions.empty())
+					ProcessPendingSolutions();
+
+				if (!m_ForceQuit)
+				{
+					// Если список ожидаемых заданий не пуст, то последнее полностью завершённое - это то,
+					// которое было непосредственно перед первым ожидаемым, иначе - только что завершённое
+					m_LastDoneFactor = m_PendingTasks.empty() ? std::max(f, m_LastDoneFactor) :
+						m_PendingTasks.front() - 1;
+				}
 			}
 
 			break;

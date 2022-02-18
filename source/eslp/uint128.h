@@ -137,6 +137,19 @@ public:
 	uint32_t operator %(uint32_t rhs) const;
 	//UInt128& operator %=(uint32_t rhs);
 
+	uint64_t operator &(uint64_t rhs) const noexcept
+	{
+		return loPart & rhs;
+	}
+
+	UInt128& operator &=(uint64_t rhs) noexcept
+	{
+		loPart &= rhs;
+		hiPart = 0;
+
+		return *this;
+	}
+
 	//UInt128 operator <<(size_t bits) const noexcept
 	//UInt128& operator <<=(size_t bits) noexcept
 
@@ -174,8 +187,16 @@ public:
 			(hiPart == rhs.hiPart && loPart < rhs.loPart);
 	}
 
-	//bool operator <=(uint64_t rhs) const noexcept
-	//bool operator <=(const UInt128& rhs) const noexcept
+	bool operator <=(uint64_t rhs) const noexcept
+	{
+		return !hiPart && loPart <= rhs;
+	}
+
+	bool operator <=(const UInt128& rhs) const noexcept
+	{
+		return hiPart < rhs.hiPart ||
+			(hiPart == rhs.hiPart && loPart <= rhs.loPart);
+	}
 
 	bool operator >(uint64_t rhs) const noexcept
 	{
@@ -188,8 +209,16 @@ public:
 			(hiPart == rhs.hiPart && loPart > rhs.loPart);
 	}
 
-	//bool operator >=(uint64_t rhs) const noexcept
-	//bool operator >=(const UInt128& rhs) const noexcept
+	bool operator >=(uint64_t rhs) const noexcept
+	{
+		return hiPart || loPart >= rhs;
+	}
+
+	bool operator >=(const UInt128& rhs) const noexcept
+	{
+		return hiPart > rhs.hiPart ||
+			(hiPart == rhs.hiPart && loPart >= rhs.loPart);
+	}
 
 protected:
 	static void Divide32(uint32_t* dividend, uint32_t divisor, uint32_t* rest) noexcept;
