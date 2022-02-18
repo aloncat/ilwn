@@ -18,7 +18,7 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//   FactorSearch - поиск коэффициентов уравнения p.1.n
+//   FactorSearch - поиск коэффициентов диофантова уравнения вида p.m.n
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -29,14 +29,14 @@ class FactorSearch
 
 public:
 	static constexpr int MAX_POWER = 20;
-	static constexpr int MAX_FACTOR_COUNT = 159;
+	static constexpr int MAX_FACTOR_COUNT = 160;
 
 	FactorSearch();
 	~FactorSearch();
 
 	// Выполняет поиск. Если произойдёт ошибка, то функция вернёт false.
 	// В этом случае сообщение об ошибке будет выведено в окно консоли
-	bool Run(int power, int count, unsigned hiFactor);
+	bool Run(int power, int leftCount, int rightCount);
 
 protected:
 	struct Worker;

@@ -3,7 +3,7 @@
 // For conditions of distribution and use, see readme.txt
 
 #include "pch.h"
-#include "diophantine.h"
+#include "factorsearch.h"
 
 #include "powers.h"
 #include "util.h"
@@ -63,9 +63,9 @@ FactorSearch::~FactorSearch()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-bool FactorSearch::Run(int power, int count, unsigned hiFactor)
+bool FactorSearch::Run(int power, int leftCount, int rightCount)
 {
-	if (power < 1 || power > MAX_POWER || count < 2 || count > MAX_FACTOR_COUNT)
+	/*if (power < 1 || power > MAX_POWER || count < 2 || count > MAX_FACTOR_COUNT)
 	{
 		aux::Printc("#12Error: parameters are incorrect");
 		return false;
@@ -108,7 +108,7 @@ bool FactorSearch::Run(int power, int count, unsigned hiFactor)
 	}
 
 	Search(hiFactor);
-	m_Log.Close();
+	m_Log.Close();*/
 
 	return true;
 }
