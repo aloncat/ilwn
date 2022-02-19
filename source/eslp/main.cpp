@@ -5,6 +5,7 @@
 #include "pch.h"
 
 #include "factorsearch.h"
+#include "searchbase.h"
 
 #include <auxlib/print.h>
 #include <core/util.h>
@@ -15,7 +16,7 @@ int wmain(int argCount, const wchar_t* args[], const wchar_t* envVars[])
 	util::CheckMinimalRequirements();
 
 	aux::Printc(L"Equal Sums of Like Powers (ESLP)/iLWN. Standalone app. Ver. 0.30a\n"
-		"#8For more information, please visit us at #9https://dmaslov.me/eslp/\n");
+		"#8For more information, please visit us at #3https://dmaslov.me/eslp/\n");
 
 	// Программа принимает 3 обязательных и 1 опциональный аргумент командной строки: 1) степень
 	// уравнения, 2) количество слагаемых в его левой части, 3) количество слагаемых в его правой
@@ -25,7 +26,8 @@ int wmain(int argCount, const wchar_t* args[], const wchar_t* envVars[])
 	if (argCount <= 1)
 	{
 		// Справка для пустой командной строки
-		aux::Printc("#15Usage: #6eslp.exe#7 power left right [factor]\n");
+		aux::Printc("#15Usage: #10eslp.exe#7 <power> <left> <right> [<factor>]\n");
+		SearchBase::PrintOptionsHelp();
 		return 0;
 	}
 

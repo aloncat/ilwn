@@ -12,6 +12,7 @@
 #include <core/console.h>
 #include <core/debug.h>
 #include <core/strformat.h>
+#include <core/strutil.h>
 #include <core/sysinfo.h>
 #include <core/winapi.h>
 
@@ -59,64 +60,18 @@ FactorSearch::FactorSearch()
 FactorSearch::~FactorSearch()
 {
 	KillWorkers();
-	m_Log.Close();
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-bool FactorSearch::Run(int power, int leftCount, int rightCount)
+void FactorSearch::Search(const std::vector<unsigned>& startFactors)
 {
-	/*if (power < 1 || power > MAX_POWER || count < 2 || count > MAX_FACTOR_COUNT)
-	{
-		aux::Printc("#12Error: parameters are incorrect");
-		return false;
-	}
-
-	m_Power = power;
-	m_FactorCount = count;
-
-	m_ActiveWorkers = 0;
 	m_MainThreadTimer.Reset();
-	m_StartTick = ::GetTickCount();
-	m_WorkTime = 0;
 
 	m_Solutions.Clear();
 	m_SolutionsFound = 0;
 
-	UpdateConsoleTitle(1, m_FactorCount);
-	aux::Printf("Searching for factors of equation #6#%i.1.%i#7, #2[Z]#7 starts from #10#%u\n",
-		m_Power, m_FactorCount, hiFactor);
-
-	const unsigned maxFactor = Powers<UInt128>::CalcUpperValue(m_Power, m_FactorCount);
-	aux::Printf("Factor limit is set to #10#%s #8(128 bits)\n", SeparateWithCommas(maxFactor).c_str());
-
-	if (hiFactor > maxFactor)
-	{
-		aux::Print("Noting to do, exiting...\n");
-		return false;
-	}
-
-	if (!OpenLogFile(1, count))
-	{
-		aux::Printc("#12Error: failed to open log file\n");
-		return false;
-	}
-
-	if (power > 2 && count == 2)
-	{
-		// Для уравнений вида p.1.2 при p > 2 просто предупреждаем
-		aux::Printc("#12WARNING: #3this equation has no solutions!\n");
-	}
-
-	Search(hiFactor);
-	m_Log.Close();*/
-
-	return true;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-void FactorSearch::Search(unsigned hiFactor)
-{
 	m_PendingSolutions.clear();
+	m_PendingSolutions.reserve(100);
 	m_LastDoneFactor = 0;
 
 	m_IsCancelled = false;
@@ -129,13 +84,19 @@ void FactorSearch::Search(unsigned hiFactor)
 	size_t maxWorkerCount = util::SystemInfo::Instance().GetCoreCount().logical;
 	m_ActiveWorkers = maxWorkerCount - ((maxWorkerCount <= 4) ? 0 : 1);
 
+	if (m_Options.HasOption(L"thread"))
+	{
+		m_ActiveWorkers = util::Clamp(m_Options[L"thread"].GetNumericValue(),
+			1, static_cast<int>(m_ActiveWorkers));
+	}
+
 	CreateWorkers(maxWorkerCount);
 
-	m_PendingSolutions.reserve(100);
+	unsigned hiFactor = startFactors[0];
 	while (hiFactor && !m_IsCancelled)
 		hiFactor = Compute(hiFactor);
 
-	UpdateConsoleTitle(1, m_FactorCount);
+	UpdateConsoleTitle();
 	KillWorkers();
 
 	util::SystemConsole::Instance().ShowCursor(true);
@@ -148,7 +109,7 @@ void FactorSearch::Search(unsigned hiFactor)
 		m_Log.Write(s.c_str(), s.size());
 	}
 
-	const float timeElapsed = m_WorkTime + .001f * (::GetTickCount() - m_StartTick);
+	const float timeElapsed = GetRunningTime();
 	aux::Printf((timeElapsed < 90) ? "Running time: %.2f#8s\n" : "Running time: %.0f#8s\n", timeElapsed);
 }
 
@@ -289,10 +250,10 @@ unsigned FactorSearch::Compute(unsigned hiFactor)
 	// В зависимости от количества коэффициентов в уравнении, мы бы
 	// хотели проверять различное количество старших коэффициентов за раз
 	static const unsigned countImpact[10] = { 0, 0, 300000, 35000, 8000, 4000, 1000, 800, 600, 300 };
-	const unsigned toCheck = (m_FactorCount >= 2 && m_FactorCount <= 9) ? countImpact[m_FactorCount] : 200;
+	const unsigned toCheck = (m_Info.rightCount >= 2 && m_Info.rightCount <= 9) ? countImpact[m_Info.rightCount] : 200;
 
 	// Если можем, то выполняем вычисления в 64-битах (так как это быстрее)
-	if (unsigned upper64 = Powers<uint64_t>::CalcUpperValue(m_Power, m_FactorCount); hiFactor < upper64)
+	if (unsigned upper64 = Powers<uint64_t>::CalcUpperValue(m_Info.power, m_Info.rightCount); hiFactor < upper64)
 		return Compute<uint64_t>(hiFactor, toCheck);
 
 	return Compute<UInt128>(hiFactor, toCheck);
@@ -306,13 +267,13 @@ unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 	Assert(!GetActiveThreads(true) && "All threads must be suspended");
 
 	const unsigned upperLimit = std::min(hiFactor + std::min(UINT_MAX - hiFactor,
-		toCheck - 1), Powers<NumberT>::CalcUpperValue(m_Power, m_FactorCount));
+		toCheck - 1), Powers<NumberT>::CalcUpperValue(m_Info.power, m_Info.rightCount));
 
 	if (hiFactor > upperLimit)
 		return 0;
 
 	Powers<NumberT> powers;
-	powers.Init(m_Power, m_FactorCount, upperLimit);
+	powers.Init(m_Info.power, m_Info.rightCount, upperLimit);
 	PowersArray<NumberT>() = powers.GetData();
 	m_Hashes.Init(upperLimit, powers);
 
@@ -341,20 +302,17 @@ unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 		{
 			unsigned factors[8];
 			GetProgress(factors);
-			ShowProgress(factors, 1, m_FactorCount);
+			ShowProgress(factors);
 
 			m_ForceShowProgress = false;
 			lastProgressTick = ::GetTickCount();
-
-			const auto secElapsed = (lastProgressTick - m_StartTick) / 1000;
-			m_StartTick += 1000 * secElapsed;
-			m_WorkTime += secElapsed;
+			UpdateRunningTime();
 		}
 
 		if (m_NeedUpdateTitle || m_IsCancelled)
 		{
 			m_NeedUpdateTitle = false;
-			UpdateConsoleTitle(1, m_FactorCount);
+			UpdateConsoleTitle();
 		}
 
 		const bool userBreak = util::SystemConsole::Instance().IsCtrlCPressed(true);
@@ -458,11 +416,11 @@ void FactorSearch::SearchFactors(Worker* worker, const NumberT* powers)
 	const auto z = powers[k[0]];
 	// Пропускаем значения 1-го коэффициента в правой
 	// части, при которых набор не может дать решение
-	for (; z > powers[k[1]] * m_FactorCount; ++k[1]);
+	for (; z > powers[k[1]] * m_Info.rightCount; ++k[1]);
 	// Сумма всех членов правой части, кроме последнего
-	auto sum = powers[k[1]] + m_FactorCount - 2;
+	auto sum = powers[k[1]] + m_Info.rightCount - 2;
 
-	const int count = m_FactorCount;
+	const int count = m_Info.rightCount;
 	// Перебираем коэффициенты правой части
 	for (size_t it = 0; k[0] > k[1];)
 	{
@@ -610,63 +568,63 @@ bool FactorSearch::MightHaveSolution(const Worker* worker)
 {
 	const unsigned* factors = worker->factors;
 	// NB: у нас нет оптимизаций для нечётных степеней
-	if (worker->factorCount != 1 || (m_Power & 1))
+	if (worker->factorCount != 1 || (m_Info.power & 1))
 		return true;
 
 	// Уравнения 2.1.n
-	if (m_Power == 2)
+	if (m_Info.power == 2)
 	{
 		// Z не может быть чётным для n < 4
-		if (m_FactorCount < 4 && !(factors[0] & 1))
+		if (m_Info.rightCount < 4 && !(factors[0] & 1))
 			return false;
 	}
 	// Уравнение 4.1.n
-	else if (m_Power == 4)
+	else if (m_Info.power == 4)
 	{
 		// Для n < 16
-		if (m_FactorCount < 16)
+		if (m_Info.rightCount < 16)
 		{
 			// Z не может быть чётным
 			if (!(factors[0] & 1))
 				return false;
 			// Z не может быть кратным 5 для n < 5
-			if (m_FactorCount < 5 && !(factors[0] % 5))
+			if (m_Info.rightCount < 5 && !(factors[0] % 5))
 				return false;
 		}
 	}
 	// Уравнение 6.1.n
-	else if (m_Power == 6)
+	else if (m_Info.power == 6)
 	{
 		// Для n < 8
-		if (m_FactorCount < 8)
+		if (m_Info.rightCount < 8)
 		{
 			// Z не может быть чётным
 			if (!(factors[0] & 1))
 				return false;
 		}
 		// Для n < 9
-		if (m_FactorCount < 9)
+		if (m_Info.rightCount < 9)
 		{
 			// Z не может быть кратно 3
 			if (!(factors[0] % 3))
 				return false;
 			// Z не может быть кратным 7 для n < 7
-			if (m_FactorCount < 7 && !(factors[0] % 7))
+			if (m_Info.rightCount < 7 && !(factors[0] % 7))
 				return false;
 		}
 	}
 	// Уравнение 8.1.n
-	else if (m_Power == 8)
+	else if (m_Info.power == 8)
 	{
 		// Z не может быть чётным для n < 32
-		if (m_FactorCount < 32 && !(factors[0] & 1))
+		if (m_Info.rightCount < 32 && !(factors[0] & 1))
 			return false;
 	}
 	// Уравнение 10.1.n
-	else if (m_Power == 10)
+	else if (m_Info.power == 10)
 	{
 		// Z не может быть кратным 11 для n < 11
-		if (m_FactorCount < 11 && !(factors[0] % 11))
+		if (m_Info.rightCount < 11 && !(factors[0] % 11))
 			return false;
 	}
 
@@ -693,7 +651,7 @@ AML_NOINLINE bool FactorSearch::OnProgress(Worker* worker, const unsigned* facto
 //--------------------------------------------------------------------------------------------------------------------------------
 AML_NOINLINE void FactorSearch::OnSolutionFound(const unsigned* factors)
 {
-	Solution solution(factors, 1, m_FactorCount);
+	Solution solution(factors, m_Info.leftCount, m_Info.rightCount);
 	solution.SortFactors();
 
 	for (;;)
@@ -824,20 +782,20 @@ void FactorSearch::ProcessPendingSolutions()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void FactorSearch::ShowProgress(const unsigned* factors, int leftCount, int rightCount)
+void FactorSearch::ShowProgress(const unsigned* factors)
 {
-	const int factorCount = leftCount + rightCount;
+	const int factorCount = m_Info.leftCount + m_Info.rightCount;
 	const int desiredCount = (factorCount < 5) ? 2 : std::min(8, 3 + (factorCount - 1) / 8);
 
 	util::Formatter<char> fmt;
 	fmt << (m_IsCancelled ? "#12" : "#07") << "\rTesting " << factors[0];
-	for (int i = 1, j = std::min(leftCount, desiredCount); i < j; ++i)
+	for (int i = 1, j = std::min(m_Info.leftCount, desiredCount); i < j; ++i)
 		fmt << '+' << factors[i];
 
-	if (desiredCount >= leftCount)
+	if (desiredCount >= m_Info.leftCount)
 		fmt << '=';
 
-	for (int i = leftCount; i < desiredCount; ++i)
+	for (int i = m_Info.leftCount; i < desiredCount; ++i)
 		fmt << factors[i] << '+';
 
 	fmt << "...";
@@ -857,10 +815,10 @@ void FactorSearch::ShowProgress(const unsigned* factors, int leftCount, int righ
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void FactorSearch::UpdateConsoleTitle(int leftCount, int rightCount)
+void FactorSearch::UpdateConsoleTitle()
 {
 	util::Formatter<char> fmt;
-	fmt << "Searching for factors (" << m_Power << '.' << leftCount << '.' << rightCount << "): ";
+	fmt << "Searching for factors (" << m_Info.power << '.' << m_Info.leftCount << '.' << m_Info.rightCount << "): ";
 	fmt << m_SolutionsFound << ((m_SolutionsFound == 1) ? " solution" : " solutions") << " found";
 
 	const size_t activeThreads = GetActiveThreads(true);
@@ -884,26 +842,6 @@ void FactorSearch::UpdateConsoleTitle(int leftCount, int rightCount)
 	}
 
 	util::SystemConsole::Instance().SetTitle(fmt.ToString());
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-bool FactorSearch::OpenLogFile(int leftCount, int rightCount)
-{
-	if (m_Log.Open(util::Format(L"log-%i.%i.%i.txt", m_Power, leftCount, rightCount),
-		util::FILE_OPEN_ALWAYS | util::FILE_OPEN_READWRITE))
-	{
-		if (auto fileSize = m_Log.GetSize(); fileSize > 0)
-		{
-			if (m_Log.SetPosition(fileSize) && m_Log.Write("---\n", 4))
-				return true;
-		}
-		else if (!fileSize)
-			return true;
-
-		m_Log.Close();
-	}
-
-	return false;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
