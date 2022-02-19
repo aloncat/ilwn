@@ -9,6 +9,66 @@
 #include <core/strformat.h>
 
 //--------------------------------------------------------------------------------------------------------------------------------
+bool IsInteger(std::string_view str)
+{
+	if (str.empty())
+		return false;
+
+	if (str[0] == '-')
+		str.remove_prefix(1);
+
+	return IsPositiveInteger(str);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool IsInteger(std::wstring_view str)
+{
+	if (str.empty())
+		return false;
+
+	if (str[0] == '-')
+		str.remove_prefix(1);
+
+	return IsPositiveInteger(str);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool IsPositiveInteger(std::string_view str)
+{
+	const char* p = str.data();
+	const size_t count = str.size();
+
+	if (!count)
+		return false;
+
+	for (size_t i = 0; i < count; ++i)
+	{
+		if (p[i] < '0' || p[i] > '9')
+			return false;
+	}
+
+	return true;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool IsPositiveInteger(std::wstring_view str)
+{
+	const wchar_t* p = str.data();
+	const size_t count = str.size();
+
+	if (!count)
+		return false;
+
+	for (size_t i = 0; i < count; ++i)
+	{
+		if (p[i] < '0' || p[i] > '9')
+			return false;
+	}
+
+	return true;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 static AML_NOINLINE std::string SeparateWithCommas(const char* str, size_t size, char separator)
 {
 	const size_t outSize = (size > 3) ? size + (size - 1) / 3 : size;

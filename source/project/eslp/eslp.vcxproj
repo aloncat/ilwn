@@ -186,8 +186,10 @@
   <ItemGroup>
     <ClInclude Include="..\..\eslp\factorsearch.h" />
     <ClInclude Include="..\..\eslp\hashtable.h" />
+    <ClInclude Include="..\..\eslp\options.h" />
     <ClInclude Include="..\..\eslp\pch.h" />
     <ClInclude Include="..\..\eslp\powers.h" />
+    <ClInclude Include="..\..\eslp\searchbase.h" />
     <ClInclude Include="..\..\eslp\solution.h" />
     <ClInclude Include="..\..\eslp\threadtimer.h" />
     <ClInclude Include="..\..\eslp\uint128.h" />
@@ -196,12 +198,14 @@
   <ItemGroup>
     <ClCompile Include="..\..\eslp\factorsearch.cpp" />
     <ClCompile Include="..\..\eslp\main.cpp" />
+    <ClCompile Include="..\..\eslp\options.cpp" />
     <ClCompile Include="..\..\eslp\prefix.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\..\eslp\searchbase.cpp" />
     <ClCompile Include="..\..\eslp\solution.cpp" />
     <ClCompile Include="..\..\eslp\threadtimer.cpp" />
     <ClCompile Include="..\..\eslp\uint128.cpp" />

@@ -9,6 +9,14 @@
 #include <string>
 #include <string_view>
 
+// Возвращает true, если str не пуст и содержит целое число
+bool IsInteger(std::string_view str);
+bool IsInteger(std::wstring_view str);
+
+// Возвращает true, если str не пуст и содержит только цифры
+bool IsPositiveInteger(std::string_view str);
+bool IsPositiveInteger(std::wstring_view str);
+
 // Форматирует число, разделяя цифры символом separator на группы по 3
 std::string SeparateWithCommas(uint64_t number, char separator = ',');
 

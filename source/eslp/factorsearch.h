@@ -5,6 +5,7 @@
 #pragma once
 
 #include "hashtable.h"
+#include "searchbase.h"
 #include "solution.h"
 #include "threadtimer.h"
 #include "uint128.h"
@@ -23,26 +24,17 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------------------------------------
-class FactorSearch
+class FactorSearch : public SearchBase
 {
-	AML_NONCOPYABLE(FactorSearch)
-
 public:
-	static constexpr int MAX_POWER = 20;
-	static constexpr int MAX_FACTOR_COUNT = 160;
-
 	FactorSearch();
-	~FactorSearch();
-
-	// Выполняет поиск. Если произойдёт ошибка, то функция вернёт false.
-	// В этом случае сообщение об ошибке будет выведено в окно консоли
-	bool Run(int power, int leftCount, int rightCount);
+	virtual ~FactorSearch() override;
 
 protected:
 	struct Worker;
 
-	// Выполняет поиск решений
-	void Search(unsigned hiFactor);
+	// Выполняет поиск решений (начиная с указанных значений коэффициентов)
+	virtual void Search(const std::vector<unsigned>& startFactors) override;
 
 	// Создаёт указанное количество рабочих потоков в приостановленном состоянии
 	void CreateWorkers(size_t threadCount);
@@ -91,27 +83,18 @@ protected:
 	void OnSolutionReady(const Solution& solution);
 	void ProcessPendingSolutions();
 
-	void ShowProgress(const unsigned* factors, int leftCount, int rightCount);
-	void UpdateConsoleTitle(int leftCount, int rightCount);
-	bool OpenLogFile(int leftCount, int rightCount);
+	void ShowProgress(const unsigned* factors);
+	virtual void UpdateConsoleTitle() override;
 	void UpdateActiveThreadCount();
 
 protected:
-	int m_Power = 0;							// Степень уравнения (от 1 до MAX_POWER)
-	int m_FactorCount = 0;						// Количество коэффициентов в правой части
-
 	thread::CriticalSection m_TaskCS;			// Критическая секция (задания)
 	thread::CriticalSection m_ProgressCS;		// Критическая секция (прогресс)
 	thread::CriticalSection m_ConsoleCS;		// Критическая секция (вывод в консоль)
 
+	ThreadTimer m_MainThreadTimer;				// Счётчик времени CPU для главного потока
 	std::vector<Worker*> m_Workers;				// Состояния рабочих потоков
 	size_t m_ActiveWorkers = 0;					// Желаемое количество активных потоков
-
-	ThreadTimer m_MainThreadTimer;				// Счётчик времени CPU для главного потока
-	uint32_t m_StartTick = 0;					// Тик начала работы программы (обновляется)
-	unsigned m_WorkTime = 0;					// Время работы программы в полных секундах
-
-	util::BinaryFile m_Log;						// Файл журнала (вывод результатов)
 
 	Solutions m_Solutions;						// Найденные примитивные решения
 	volatile size_t m_SolutionsFound = 0;		// Количество найденных примитивных решений

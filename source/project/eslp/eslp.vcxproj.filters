@@ -37,6 +37,12 @@
     <ClInclude Include="..\..\eslp\factorsearch.h">
       <Filter>search</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\eslp\searchbase.h">
+      <Filter>search</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\eslp\options.h">
+      <Filter>util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\eslp\prefix.cpp">
@@ -58,6 +64,12 @@
     </ClCompile>
     <ClCompile Include="..\..\eslp\factorsearch.cpp">
       <Filter>search</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\eslp\searchbase.cpp">
+      <Filter>search</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\eslp\options.cpp">
+      <Filter>util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
