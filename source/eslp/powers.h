@@ -48,15 +48,7 @@ public:
 		{
 			m_Powers[0] = 0;
 			for (unsigned i = 1; i <= upperValue; ++i)
-			{
-				uint64_t i2 = i;
-				T p = i2 *= i;
-
-				for (int j = 2; j + 2 <= power; j += 2)
-					p *= i2;
-
-				m_Powers[i] = (power & 1) ? p * i : p;
-			}
+				m_Powers[i] = CalcPower(i, power);
 		}
 
 		return upperValue;
@@ -80,6 +72,17 @@ public:
 	const T& operator [](size_t index) const
 	{
 		return m_Powers[index];
+	}
+
+	static T CalcPower(unsigned value, int power)
+	{
+		uint64_t v2 = value;
+		T p = v2 *= value;
+
+		for (int i = 2; i + 2 <= power; i += 2)
+			p *= v2;
+
+		return (power & 1) ? p * value : p;
 	}
 
 	static unsigned CalcUpperValue(int power, int factor = 1)

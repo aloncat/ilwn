@@ -72,6 +72,21 @@ void Solution::Swap(Solution& that)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+bool Solution::IsConfluent() const
+{
+	for (unsigned l : left)
+	{
+		for (unsigned r : right)
+		{
+			if (l == r)
+				return true;
+		}
+	}
+
+	return false;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 bool Solution::operator ==(const Solution& rhs) const
 {
 	if (size_t count = left.size(); Verify(count && count == rhs.left.size()))

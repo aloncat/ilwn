@@ -25,6 +25,10 @@ public:
 
 	void Swap(Solution& that);
 
+	// Возвращает true, если решение вырождено, то есть если некоторый коэффициент
+	// из левой части совпадает по значению с каким-либо коэффициентом из правой
+	bool IsConfluent() const;
+
 	bool operator ==(const Solution& rhs) const;
 	bool operator <(const Solution& rhs) const;
 };

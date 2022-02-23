@@ -10,11 +10,10 @@
 #include "threadtimer.h"
 #include "uint128.h"
 
-#include <core/file.h>
 #include <core/platform.h>
 #include <core/threadsync.h>
-#include <core/util.h>
 
+#include <thread>
 #include <vector>
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31,11 +30,45 @@ public:
 	virtual ~FactorSearch() override;
 
 protected:
+	struct Task;
 	struct Worker;
 
 	// Выполняет поиск решений (начиная с указанных значений коэффициентов)
 	virtual void Search(const std::vector<unsigned>& startFactors) override;
 
+	// Обновляет заголовок окна консоли
+	virtual void UpdateConsoleTitle() override;
+
+	// Инициализирует начальное задание (поля внутри m_NextTask) и
+	// устанавливает количество задаваемых коэффициентов в задании
+	virtual void InitFirstTask(const std::vector<unsigned>& startFactors);
+
+	// Выбирает следующее задание
+	virtual void SelectNextTask(Task& task);
+
+	// Проверяет, могут ли существовать решения для указанного задания task. Если
+	// гарантируется, что решений быть не может, то функция должна вернуть false
+	virtual bool MightHaveSolution(const Task& task) const { return true; }
+
+	// Выполняет задание в рабочем потоке
+	virtual void PerformTask(Worker* worker) = 0;
+
+	template<class NumberT>
+	const NumberT*& PowersArray();
+
+	// Функция вернёт true, если установлен флаг m_ForceQuit.
+	// Вызывается рабочим потоком для вывода прогресса поиска
+	bool OnProgress(Worker* worker, const unsigned* factors);
+
+	// Эта функция вызывается рабочим потоком при нахождении решения
+	void OnSolutionFound(Worker* worker, const unsigned* factors);
+
+protected:
+	const uint64_t* m_Pow64 = nullptr;		// Массив степеней (64 бита)
+	const UInt128* m_Powers = nullptr;		// Массив степеней (128 бит)
+	HashTable m_Hashes;						// Хеш-таблица значений степеней
+
+private:
 	// Создаёт указанное количество рабочих потоков в приостановленном состоянии
 	void CreateWorkers(size_t threadCount);
 	// Устанавливает всем рабочим потокам флаг shouldQuit и дожидается их завершения
@@ -51,43 +84,31 @@ protected:
 	// миллисекундах) с момента запуска или последнего вызова функции
 	uint64_t GetThreadTimes();
 
-	// Выполняет вычисления, начиная от hiFactor, возвращает следующее
-	// за последним проверенным значение старшего коэффициента
-	unsigned Compute(unsigned hiFactor);
-
-	template<class NumberT>
-	unsigned Compute(unsigned hiFactor, unsigned toCheck);
-
 	// Главная функция рабочего потока
 	void WorkerMainFn(Worker* worker);
-
-	template<class NumberT>
-	const NumberT*& PowersArray();
-
-	void GetProgress(unsigned* factors);
-
-	template<class NumberT>
-	void SearchFactors(Worker* worker, const NumberT* powers);
 
 	bool GetNextTask(Worker* worker);
 	void OnTaskDone(Worker* worker);
 
-	// Проверяет, могут ли существовать решения для задания, содержащегося в worker.
-	// Если гарантируется, что решений быть не может, то функция вернёт false
-	bool MightHaveSolution(const Worker* worker);
+	template<class NumberT>
+	unsigned CalcUpperValue() const;
 
-	// Функция врнёт true, если установлен флаг m_ForceQuit
-	bool OnProgress(Worker* worker, const unsigned* factors);
+	// Выполняет вычисления, начиная с указанных коэффициентов (задают первые коэффициенты стартового
+	// задания), возвращает следующее за последним проверенным значение старшего коэффициента левой части
+	unsigned Compute(const std::vector<unsigned>& startFactors);
 
-	void OnSolutionFound(const unsigned* factors);
+	template<class NumberT>
+	unsigned Compute(const std::vector<unsigned>& startFactors, unsigned toCheck);
+
+	void GetProgress(unsigned* factors);
+	void ShowProgress(const unsigned* factors);
+
 	void OnSolutionReady(const Solution& solution);
 	void ProcessPendingSolutions();
 
-	void ShowProgress(const unsigned* factors);
-	virtual void UpdateConsoleTitle() override;
 	void UpdateActiveThreadCount();
 
-protected:
+private:
 	thread::CriticalSection m_TaskCS;			// Критическая секция (задания)
 	thread::CriticalSection m_ProgressCS;		// Критическая секция (прогресс)
 	thread::CriticalSection m_ConsoleCS;		// Критическая секция (вывод в консоль)
@@ -100,24 +121,56 @@ protected:
 	volatile size_t m_SolutionsFound = 0;		// Количество найденных примитивных решений
 	std::vector<Solution> m_PendingSolutions;	// Найденные решения, ожидающие проверки
 
-	const uint64_t* m_Pow64 = nullptr;			// Массив степеней (64 бита)
-	const UInt128* m_Powers = nullptr;			// Массив степеней (128 бит)
-	HashTable m_Hashes;							// Хеш-таблица значений степеней
-
-	volatile unsigned m_NextHiFactor = 0;		// Следующий старший коэффициент (задание)
-	unsigned m_LastDoneFactor = 0;				// Последний проверенный коэффициент (задание)
+	Task* m_NextTask = nullptr;					// Следующее задание для выполнения
 	unsigned m_LastHiFactor = 0;				// Последний старший коэффициент в блоке заданий
+	unsigned m_LastDoneHiFactor = 0;			// Последний завершённый старший коэффициент
 
-	std::vector<unsigned> m_PendingTasks;		// Выполняемые и ожидающие проверки задания
-	volatile unsigned m_LoPendingTask = 0;		// Самое младшее (старое) ожидаемое задание
+	std::vector<int> m_PendingTasks;			// Выполняемые и ожидающие проверки задания (ID потоков)
+	volatile int m_LoPendingTask = 0;			// Самое младшее (старое) ожидаемое задание (ID потока)
 
 	unsigned m_Progress[8];						// Первые коэффициенты для вывода прогресса
 	size_t m_LastProgressLength = 0;			// Количество символов в последнем выводе прогресса
-	volatile bool m_IsProgressReady = false;	// true, если данные о прогрессе можно использовать
+
+	volatile bool m_IsProgressReady = false;	// true, если данные о прогрессе можно выводить
 	volatile bool m_ForceShowProgress = false;	// true, если прогресс нужно вывести немедленно
 	volatile bool m_NeedUpdateTitle = false;	// true, если нужно обновить заголовок окна
 
 	volatile bool m_NoTasks = false;			// true, если заданий для потоков больше нет
 	volatile bool m_IsCancelled = false;		// true, если работа была прервана пользователем
 	volatile bool m_ForceQuit = false;			// true, если нужно прервать работу немедленно
+};
+
+//--------------------------------------------------------------------------------------------------------------------------------
+struct FactorSearch::Task final
+{
+	// NB: рабочие потоки никогда не перебирают коэффициенты левой части уравнения (они всегда заданы
+	// заданием). Однако задание может задавать вместе со всеми коэффициентами левой части и первые
+	// коэффициенты правой. Но в любом случае суммарное количество заданных коэффициентов не может
+	// превышать максимально возможного количества коэффициентов в левой части
+	static constexpr int MAX_COUNT = MAX_FACTOR_COUNT / 2;
+
+	int factorCount = 0;				// Количество заданных коэффициентов
+	unsigned factors[MAX_COUNT];		// Заданные значения первых коэффициентов
+
+	Task& operator =(const Task& that) noexcept;
+
+	// Сравниваниет коэффициенты задания с коэффициентами решения.
+	// Возвращает true, если задание "старше" указанного решения
+	bool operator >(const Solution& rhs) const noexcept;
+};
+
+//--------------------------------------------------------------------------------------------------------------------------------
+struct FactorSearch::Worker final
+{
+	int workerId = 0;					// Уникальный ID (от 1)
+	std::thread threadObj;				// Объект потока
+	ThreadTimer* timer = nullptr;		// Таймер затраченного потоком времени CPU
+
+	Task task;							// Задание (первые коэффициенты)
+	unsigned progressCounter = 0;		// Вспомогательный счётчик прогресса
+
+	volatile bool isActive = false;		// true, если поток выполняет вычисления
+	volatile bool isFinished = false;	// true, если поток завершился (вышел из своей функции)
+	volatile bool shouldPause = false;	// true, если поток должен приостановиться (не брать задание)
+	volatile bool shouldQuit = false;	// true, если поток должен завершиться (после задания)
 };

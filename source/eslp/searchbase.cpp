@@ -54,8 +54,6 @@ bool SearchBase::Run(int power, int leftCount, int rightCount)
 	}
 
 	UpdateConsoleTitle();
-	// TODO: сейчас мы умеем начинать поиск только с 1 (старшего) заданного коэффициента. Позже, когда
-	// будет реализована возможность старта с нескольких коэффициентов, нужно будет поправить вывод
 	aux::Printf("Searching for factors of equation #6#%i.%i.%i#7, #2[Z]#7 starts from #10#%u\n",
 		m_Info.power, m_Info.leftCount, m_Info.rightCount, startFactors[0]);
 
