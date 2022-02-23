@@ -43,6 +43,9 @@
     <ClInclude Include="..\..\eslp\options.h">
       <Filter>util</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\eslp\multisearch.h">
+      <Filter>search</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\eslp\prefix.cpp">
@@ -70,6 +73,9 @@
     </ClCompile>
     <ClCompile Include="..\..\eslp\options.cpp">
       <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\eslp\multisearch.cpp">
+      <Filter>search</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -5,43 +5,16 @@
 #include "pch.h"
 #include "factorsearch.h"
 
+#include "options.h"
 #include "powers.h"
-#include "util.h"
 
 #include <auxlib/print.h>
 #include <core/console.h>
 #include <core/debug.h>
 #include <core/strformat.h>
-#include <core/strutil.h>
 #include <core/sysinfo.h>
+#include <core/util.h>
 #include <core/winapi.h>
-
-#include <thread>
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//   FactorSearch::Worker - состояние рабочего потока
-//
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//--------------------------------------------------------------------------------------------------------------------------------
-struct FactorSearch::Worker
-{
-	int workerId = 0;					// Уникальный ID рабочего потока
-	std::thread threadObj;				// Объект потока
-
-	volatile bool isActive = false;		// true, если поток выполняет вычисления
-	volatile bool isFinished = false;	// true, если поток завершился (вышел из своей функции)
-	volatile bool shouldPause = false;	// true, если поток должен приостановиться (не брать задание)
-	volatile bool shouldQuit = false;	// true, если поток должен завершиться (после задания)
-
-	ThreadTimer* timer = nullptr;		// Таймер затраченного потоком времени CPU
-
-	unsigned factors[8];				// Заданные коэффициенты для начала поиска
-	unsigned factorCount = 0;			// Количество заданных коэффициентов
-
-	unsigned progressCounter = 0;		// Вспомогательный счётчик прогресса
-};
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -59,21 +32,25 @@ FactorSearch::FactorSearch()
 //--------------------------------------------------------------------------------------------------------------------------------
 FactorSearch::~FactorSearch()
 {
+	AML_SAFE_DELETE(m_NextTask);
 	KillWorkers();
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 void FactorSearch::Search(const std::vector<unsigned>& startFactors)
 {
+	if (!Verify(!startFactors.empty()))
+		return;
+
 	m_MainThreadTimer.Reset();
 
 	m_Solutions.Clear();
 	m_SolutionsFound = 0;
-
 	m_PendingSolutions.clear();
 	m_PendingSolutions.reserve(100);
-	m_LastDoneFactor = 0;
+	m_LastDoneHiFactor = 0;
 
+	m_NoTasks = false;
 	m_IsCancelled = false;
 	m_ForceQuit = false;
 
@@ -91,21 +68,28 @@ void FactorSearch::Search(const std::vector<unsigned>& startFactors)
 	}
 
 	CreateWorkers(maxWorkerCount);
+	m_NextTask = new Task;
 
-	unsigned hiFactor = startFactors[0];
-	while (hiFactor && !m_IsCancelled)
-		hiFactor = Compute(hiFactor);
+	for (auto factors = startFactors; factors[0] && !m_IsCancelled;)
+	{
+		factors[0] = Compute(factors);
+		factors.resize(1);
+
+		m_Solutions.Clear();
+	}
 
 	UpdateConsoleTitle();
+
+	AML_SAFE_DELETE(m_NextTask);
 	KillWorkers();
 
 	util::SystemConsole::Instance().ShowCursor(true);
 	aux::Printf("\rTask %s#7, solutions found: #6#%u\n", m_IsCancelled ?
 		"#12cancelled" : "finished", m_SolutionsFound);
 
-	if (m_LastDoneFactor < UINT_MAX)
+	if (m_LastDoneHiFactor < UINT_MAX)
 	{
-		auto s = util::Format("nextHiFactor: %u\n", m_LastDoneFactor + 1);
+		auto s = util::Format("nextHiFactor: %u\n", m_LastDoneHiFactor + 1);
 		m_Log.Write(s.c_str(), s.size());
 	}
 
@@ -114,12 +98,139 @@ void FactorSearch::Search(const std::vector<unsigned>& startFactors)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+void FactorSearch::UpdateConsoleTitle()
+{
+	util::Formatter<char> fmt;
+	fmt << "Searching for factors (" << m_Info.power << '.' << m_Info.leftCount << '.' << m_Info.rightCount << "): ";
+	fmt << m_SolutionsFound << ((m_SolutionsFound == 1) ? " solution" : " solutions") << " found";
+
+	const size_t activeThreads = GetActiveThreads(true);
+	if (activeThreads || (m_ActiveWorkers && !m_IsCancelled))
+	{
+		fmt << " -- MT: ";
+		if (!m_IsCancelled && activeThreads != m_ActiveWorkers)
+			fmt << m_ActiveWorkers << " (" << activeThreads << ')';
+		else
+			fmt << activeThreads;
+
+		if (m_IsCancelled)
+		{
+			fmt << " -- stopping...";
+		}
+
+		// Если текущее количество активных потоков не совпадает с необходимым, то
+		// установим флаг обновления заголовка окна, чтобы снова обновить его позже
+		if (activeThreads != m_ActiveWorkers)
+			m_NeedUpdateTitle = true;
+	}
+
+	util::SystemConsole::Instance().SetTitle(fmt.ToString());
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void FactorSearch::InitFirstTask(const std::vector<unsigned>& startFactors)
+{
+	m_NextTask->factorCount = m_Info.leftCount;
+	const int count = std::min(m_Info.leftCount, static_cast<int>(startFactors.size()));
+
+	for (size_t i = 0; i < count; ++i)
+		m_NextTask->factors[i] = startFactors[i];
+
+	for (int i = count; i < m_Info.leftCount; ++i)
+		m_NextTask->factors[i] = 1;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void FactorSearch::SelectNextTask(Task& task)
+{
+	unsigned* k = task.factors;
+
+	// Выбираем следующее задание среди коэффициентов левой части
+	for (int i = m_Info.leftCount - 1;; --i)
+	{
+		if (i == 0)
+		{
+			++k[0];
+			break;
+		}
+		if (k[i - 1] > k[i])
+		{
+			++k[i];
+			break;
+		}
+		k[i] = 1;
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+template<class NumberT>
+const NumberT*& FactorSearch::PowersArray()
+{
+	if constexpr (std::is_same_v<NumberT, uint64_t>)
+		return m_Pow64;
+	else
+		return m_Powers;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+AML_NOINLINE bool FactorSearch::OnProgress(Worker* worker, const unsigned* factors)
+{
+	// NB: прогресс обновляется только для самого младшего задания
+	if (worker->workerId == m_LoPendingTask)
+	{
+		thread::Lock lock(m_ProgressCS);
+
+		for (size_t i = 0; i < util::CountOf(m_Progress); ++i)
+			m_Progress[i] = factors[i];
+
+		m_IsProgressReady = true;
+	}
+
+	return m_ForceQuit;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+AML_NOINLINE void FactorSearch::OnSolutionFound(Worker* worker, const unsigned* factors)
+{
+	Solution solution(factors, m_Info.leftCount, m_Info.rightCount);
+	solution.SortFactors();
+
+	// NB: нам следует пропускать решения, в которых количество коэффициентов слева и справа одинаково
+	// и при этом старший коэффициент правой части больше или равен старшего коэффициента в левой
+	if (m_Info.leftCount != m_Info.rightCount || solution.left[0] > solution.right[0])
+	{
+		for (;;)
+		{
+			m_TaskCS.Enter();
+
+			// Если это решение самого младшего (старого) задания, то мы всегда добавляем его в контейнер.
+			// В ином случае проверяем, сколько решений в контейнере, и если он "переполнен", то остальные
+			// потоки (решения других заданий) должны подождать, когда освободится место
+			if (worker->workerId <= m_LoPendingTask || m_PendingSolutions.size() < 5000)
+			{
+				// Отсеиваем вырожденные и непримитивные решения
+				if (!solution.IsConfluent() && m_Solutions.IsPrimitive(solution))
+					m_PendingSolutions.push_back(std::move(solution));
+
+				m_TaskCS.Leave();
+				return;
+			}
+
+			// Освобождаем критическую секцию, и ждём. Если поток, обрабатывающий младшее
+			// задание за это время его закончит, то место в контейнере освободится
+			m_TaskCS.Leave();
+			::Sleep(1);
+		}
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 void FactorSearch::CreateWorkers(size_t threadCount)
 {
 	Assert(threadCount && m_Workers.empty());
 
 	m_Workers.reserve(32);
-	for (size_t id = 0; id < threadCount; ++id)
+	for (size_t id = 1; id <= threadCount; ++id)
 	{
 		auto worker = new Worker;
 		m_Workers.push_back(worker);
@@ -196,14 +307,18 @@ void FactorSearch::SetActiveThreads(size_t activeCount)
 	activeCount = util::Clamp(activeCount, size_t(1), m_Workers.size());
 	if (auto current = GetActiveThreads(); current != activeCount)
 	{
+		// Если доступных заданий нет, то мы не пробуждаем потоки
+		if (current < activeCount && m_NoTasks)
+			return;
+
 		for (Worker* worker : m_Workers)
 		{
 			Assert(worker && !worker->isFinished);
 
 			if (current < activeCount)
 			{
-				// Пробуждаем поток (только если есть доступные задачи)
-				if (!m_NoTasks && !worker->shouldQuit && (!worker->isActive || worker->shouldPause))
+				// Пробуждаем поток
+				if (!worker->shouldQuit && (!worker->isActive || worker->shouldPause))
 				{
 					worker->shouldPause = false;
 					if (!worker->isActive && worker->threadObj.joinable())
@@ -243,50 +358,176 @@ uint64_t FactorSearch::GetThreadTimes()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-unsigned FactorSearch::Compute(unsigned hiFactor)
+void FactorSearch::WorkerMainFn(Worker* worker)
 {
-	aux::Print("\rRe-initializing...");
+	HANDLE threadHandle = ::GetCurrentThread();
+	::SetThreadPriority(threadHandle, THREAD_PRIORITY_IDLE);
 
-	// В зависимости от количества коэффициентов в уравнении, мы бы
-	// хотели проверять различное количество старших коэффициентов за раз
-	static const unsigned countImpact[10] = { 0, 0, 300000, 35000, 8000, 4000, 1000, 800, 600, 300 };
-	const unsigned toCheck = (m_Info.rightCount >= 2 && m_Info.rightCount <= 9) ? countImpact[m_Info.rightCount] : 200;
+	for (int i = 0; i < 8; ++i)
+		worker->task.factors[i] = 1;
 
-	// Если можем, то выполняем вычисления в 64-битах (так как это быстрее)
-	if (unsigned upper64 = Powers<uint64_t>::CalcUpperValue(m_Info.power, m_Info.rightCount); hiFactor < upper64)
-		return Compute<uint64_t>(hiFactor, toCheck);
+	while (!worker->shouldQuit)
+	{
+		if (worker->shouldPause)
+		{
+			worker->isActive = false;
+			::SuspendThread(threadHandle);
 
-	return Compute<UInt128>(hiFactor, toCheck);
+			worker->isActive = true;
+			continue;
+		}
+
+		if (!GetNextTask(worker))
+		{
+			worker->shouldPause = true;
+			continue;
+		}
+
+		PerformTask(worker);
+		OnTaskDone(worker);
+	}
+
+	worker->isFinished = true;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool FactorSearch::GetNextTask(Worker* worker)
+{
+	if (!m_NoTasks && !m_IsCancelled)
+	{
+		thread::Lock lock(m_TaskCS);
+
+		while (m_NextTask->factors[0] <= m_LastHiFactor)
+		{
+			if (MightHaveSolution(*m_NextTask))
+			{
+				worker->task = *m_NextTask;
+				m_PendingTasks.push_back(worker->workerId);
+				m_LoPendingTask = m_PendingTasks.front();
+				SelectNextTask(*m_NextTask);
+				return true;
+			}
+
+			SelectNextTask(*m_NextTask);
+		}
+	}
+
+	m_NoTasks = true;
+	return false;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void FactorSearch::OnTaskDone(Worker* worker)
+{
+	thread::Lock lock(m_TaskCS);
+
+	for (size_t i = 0, count = m_PendingTasks.size(); i < count; ++i)
+	{
+		if (m_PendingTasks[i] == worker->workerId)
+		{
+			m_PendingTasks.erase(m_PendingTasks.begin() + i);
+
+			if (!i)
+			{
+				if (m_Info.rightCount < 3 && !(++worker->progressCounter & 0x1ff))
+					OnProgress(worker, worker->task.factors);
+
+				m_LoPendingTask = (count > 1) ? m_PendingTasks.front() : 0;
+
+				if (!m_PendingSolutions.empty())
+					ProcessPendingSolutions();
+
+				if (!m_ForceQuit)
+				{
+					if (!m_PendingTasks.empty())
+					{
+						// Список ожидаемых заданий не пуст, значит последнее полностью завершённое
+						// задание было расположено непосредственно перед самым первым ожидаемым
+						Worker* nextWorker = m_Workers[m_PendingTasks.front() - 1];
+						m_LastDoneHiFactor = nextWorker->task.factors[0] - 1;
+					}
+					// Если же список пуст, то последнее полностью завершённое задание
+					// было расположено непосредственно перед следующим (неназначенным)
+					else if (unsigned nextHiFactor = m_NextTask->factors[0]; nextHiFactor > m_LastDoneHiFactor)
+						m_LastDoneHiFactor = nextHiFactor - 1;
+				}
+			}
+
+			break;
+		}
+	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 template<class NumberT>
-unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
+unsigned FactorSearch::CalcUpperValue() const
 {
-	Assert(toCheck && "Nothing to test");
+	const auto maxFactorCount = std::max(m_Info.leftCount, m_Info.rightCount);
+	const unsigned upperLimit = Powers<NumberT>::CalcUpperValue(m_Info.power, maxFactorCount);
+	unsigned leftHi = upperLimit;
+
+	if (m_Info.leftCount > 1)
+	{
+		// NB: макс. значение старшего коэффициента левой части должно быть таким, чтобы при макс. возможном значении
+		// старшего коэффициента правой части мин. сумма в правой части была больше макс. суммы в левой (при таких
+		// условиях мы не пропустим возможных наборов коэффициентов правой части, которые могли бы дать решение)
+		auto right = Powers<NumberT>::CalcPower(upperLimit, m_Info.power) + (m_Info.rightCount - 1);
+		while (Powers<NumberT>::CalcPower(leftHi, m_Info.power) * m_Info.leftCount <= right)
+			--leftHi;
+	}
+
+	return leftHi;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors)
+{
+	Assert(!startFactors.empty());
+	aux::Print("\rRe-initializing...");
+
+	const int factorCount = m_Info.leftCount + m_Info.rightCount;
+	// В зависимости от количества коэффициентов в уравнении, мы бы
+	// хотели проверять различное количество старших коэффициентов за раз
+	static const unsigned countImpact[10] = { 0, 0, 300000, 35000, 8000, 4000, 1000, 800, 600, 300 };
+	const unsigned toCheck = (factorCount >= 2 && factorCount <= 9) ? countImpact[factorCount] : 200;
+
+	// Если можем, то выполняем вычисления в 64-битах (так как это быстрее)
+	if (unsigned upper64 = CalcUpperValue<uint64_t>(); startFactors[0] < upper64)
+		return Compute<uint64_t>(startFactors, toCheck);
+
+	return Compute<UInt128>(startFactors, toCheck);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+template<class NumberT>
+unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsigned toCheck)
+{
+	Assert(!startFactors.empty() && toCheck && "Nothing to test");
 	Assert(!GetActiveThreads(true) && "All threads must be suspended");
 
-	const unsigned upperLimit = std::min(hiFactor + std::min(UINT_MAX - hiFactor,
-		toCheck - 1), Powers<NumberT>::CalcUpperValue(m_Info.power, m_Info.rightCount));
+	const unsigned hiFactor = startFactors[0];
+	const unsigned upperLimit = std::min(CalcUpperValue<NumberT>(),
+		hiFactor + std::min(UINT_MAX - hiFactor, toCheck - 1));
 
 	if (hiFactor > upperLimit)
 		return 0;
 
 	Powers<NumberT> powers;
-	powers.Init(m_Info.power, m_Info.rightCount, upperLimit);
+	powers.Init(m_Info.power, 1, upperLimit);
 	PowersArray<NumberT>() = powers.GetData();
 	m_Hashes.Init(upperLimit, powers);
 
-	m_NextHiFactor = hiFactor;
-	m_LastDoneFactor = hiFactor - 1;
+	InitFirstTask(startFactors);
+	m_LastDoneHiFactor = hiFactor - 1;
 	m_LastHiFactor = upperLimit;
 
 	Assert(m_PendingTasks.empty());
 	m_LoPendingTask = 0;
 	m_NoTasks = false;
 
-	memset(m_Progress, 0, sizeof(m_Progress));
-	m_Progress[0] = m_NextHiFactor;
+	m_Progress[0] = m_NextTask->factors[0];
+	for (size_t i = 1; i < util::CountOf(m_Progress); ++i)
+		m_Progress[i] = 1;
 
 	m_IsProgressReady = false;
 	m_ForceShowProgress = true;
@@ -335,7 +576,7 @@ unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 	m_Powers = nullptr;
 
 	Assert(!GetActiveThreads(true) && "Some threads are still active");
-	Assert(m_IsCancelled || m_NextHiFactor == upperLimit + 1);
+	Assert(m_IsCancelled || m_NextTask->factors[0] == upperLimit + 1);
 
 	if (m_LastProgressLength)
 	{
@@ -348,336 +589,49 @@ unsigned FactorSearch::Compute(unsigned hiFactor, unsigned toCheck)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void FactorSearch::WorkerMainFn(Worker* worker)
-{
-	HANDLE threadHandle = ::GetCurrentThread();
-	::SetThreadPriority(threadHandle, THREAD_PRIORITY_IDLE);
-
-	while (!worker->shouldQuit)
-	{
-		if (worker->shouldPause)
-		{
-			worker->isActive = false;
-			::SuspendThread(threadHandle);
-
-			worker->isActive = true;
-			continue;
-		}
-
-		if (!GetNextTask(worker))
-		{
-			worker->shouldPause = true;
-			continue;
-		}
-
-		if (m_Pow64)
-			SearchFactors(worker, m_Pow64);
-		else
-			SearchFactors(worker, m_Powers);
-
-		OnTaskDone(worker);
-	}
-
-	worker->isFinished = true;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-template<class NumberT>
-const NumberT*& FactorSearch::PowersArray()
-{
-	if constexpr (std::is_same_v<NumberT, uint64_t>)
-		return m_Pow64;
-	else
-		return m_Powers;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
 AML_NOINLINE void FactorSearch::GetProgress(unsigned* factors)
 {
 	thread::Lock lock(m_ProgressCS);
 
-	for (int i = 0; i < 8; ++i)
+	for (size_t i = 0; i < util::CountOf(m_Progress); ++i)
 		factors[i] = m_Progress[i];
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-template<class NumberT>
-void FactorSearch::SearchFactors(Worker* worker, const NumberT* powers)
+void FactorSearch::ShowProgress(const unsigned* factors)
 {
-	// Массив k хранит коэффициенты правой части уравнения, начиная с индекса 1.
-	// В элементе с индексом 0 будем хранить коэффициент левой части уравнения
-	unsigned k[1 + MAX_FACTOR_COUNT];
+	const int factorCount = m_Info.leftCount + m_Info.rightCount;
+	const int desiredCount = (factorCount < 5) ? 2 : std::min(8, 3 + (factorCount - 1) / 8);
 
-	k[0] = worker->factors[0];
-	for (int i = 1; i <= MAX_FACTOR_COUNT; ++i)
-		k[i] = 1;
+	util::Formatter<char> fmt;
+	fmt << (m_IsCancelled ? "#12" : "#07") << "\rTesting " << factors[0];
+	for (int i = 1, j = std::min(m_Info.leftCount, desiredCount); i < j; ++i)
+		fmt << '+' << factors[i];
 
-	// Значение левой части
-	const auto z = powers[k[0]];
-	// Пропускаем значения 1-го коэффициента в правой
-	// части, при которых набор не может дать решение
-	for (; z > powers[k[1]] * m_Info.rightCount; ++k[1]);
-	// Сумма всех членов правой части, кроме последнего
-	auto sum = powers[k[1]] + m_Info.rightCount - 2;
-
-	const int count = m_Info.rightCount;
-	// Перебираем коэффициенты правой части
-	for (size_t it = 0; k[0] > k[1];)
+	if (desiredCount >= m_Info.leftCount)
 	{
-		// Вычисляем значение степени последнего коэффициента правой части, при котором может существовать
-		// решение уравнения, и проверяем значение в хеш-таблице. Если значение не будет найдено, то значит
-		// не существует такого целого числа, степень которого равна lastFP и можно пропустить этот набор
-		if (const auto lastFP = z - sum; m_Hashes.Exists(lastFP))
-		{
-			// Хеш был обнаружен. Теперь нужно найти число, соответствующее значению степени lastFP. Так
-			// как массив степеней powers упорядочен по возрастанию, то используем бинарный поиск. Если
-			// коллизии хешей не было, то мы обнаружим значение в массиве, а его индекс будет искомым
-			// числом. Искомое значение не может превышать значения предпоследнего коэффициента
-			for (unsigned lo = 1, hi = k[count - 1]; lo <= hi;)
-			{
-				unsigned mid = (lo + hi) >> 1;
-				if (auto v = powers[mid]; v < lastFP)
-					lo = mid + 1;
-				else if (v > lastFP)
-					hi = mid - 1;
-				else
-				{
-					k[count] = mid;
-					OnSolutionFound(k);
-					break;
-				}
-			}
-		}
-
-		// Периодически выводим текущий прогресс. Если пользователь
-		// нажмёт Ctrl-C, то функция вернёт true, мы завершим работу
-		if (!(++it & 0xfff) && !(++worker->progressCounter & 0x7f))
-		{
-			if (OnProgress(worker, k))
-				break;
-		}
-
-		int idx = 0;
-		// Переходим к следующему набору коэффициентов правой части, перебирая все возможные
-		// комбинации так, чтобы коэффициенты всегда располагались в невозрастающем порядке
-		for (int i = count - 1;; --i)
-		{
-			sum -= powers[k[i]];
-			if (k[i - 1] > k[i])
-			{
-				const auto f = ++k[i];
-				if (auto n = sum + powers[f]; n < z || i == 1)
-				{
-					sum = n;
-					break;
-				}
-			}
-			sum += k[i] = 1;
-			idx = i;
-		}
-
-		if (idx)
-		{
-			// Каждый раз, когда мы сбрасываем в 1 коэффициент в правой части, увеличивая на 1 коэффициент слева от него,
-			// переменная idx будет содержать индекс самого левого единичного коэффициента. Единичное и многие следующие
-			// значения коэффициента не смогут дать решений, так как для них сумма в правой части будет меньше значения
-			// левой. Поэтому мы будем пропускать такие значения, сразу переходя к тем, которые могут дать решение
-			unsigned hi = k[idx - 1];
-			for (int rem = count - idx + 1; rem > 1; --rem)
-			{
-				const auto s = sum - (rem - 1);
-				for (unsigned step = hi >> 1; step; step >>= 1)
-				{
-					auto f = k[idx] + step;
-					if (hi >= f && z > s + powers[f - 1] * rem)
-						k[idx] = f;
-				}
-
-				hi = k[idx++];
-				sum += powers[hi] - 1;
-			}
-		}
-	}
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-bool FactorSearch::GetNextTask(Worker* worker)
-{
-	if (!m_NoTasks)
+		fmt << '=';
+		for (int i = m_Info.leftCount; i < desiredCount; ++i)
+			fmt << factors[i] << '+';
+	} else
 	{
-		thread::Lock lock(m_TaskCS);
-
-		if (!m_IsCancelled && m_NextHiFactor)
-		{
-			while (m_NextHiFactor <= m_LastHiFactor)
-			{
-				auto task = m_NextHiFactor++;
-				worker->factors[0] = task;
-				worker->factorCount = 1;
-
-				if (MightHaveSolution(worker))
-				{
-					m_PendingTasks.push_back(task);
-					m_LoPendingTask = m_PendingTasks.front();
-					return true;
-				}
-			}
-		}
-
-		m_NoTasks = true;
+		fmt << '+';
 	}
 
-	return false;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-void FactorSearch::OnTaskDone(Worker* worker)
-{
-	thread::Lock lock(m_TaskCS);
-
-	for (size_t i = 0, count = m_PendingTasks.size(); i < count; ++i)
+	fmt << "...";
+	auto newSize = fmt.GetSize() - 4;
+	if (newSize < m_LastProgressLength)
 	{
-		if (const auto f = worker->factors[0]; m_PendingTasks[i] == f)
-		{
-			m_PendingTasks.erase(m_PendingTasks.begin() + i);
-
-			if (!i)
-			{
-				m_LoPendingTask = (count > 1) ? m_PendingTasks.front() : 0;
-				m_IsProgressReady = false;
-
-				if (!m_PendingSolutions.empty())
-					ProcessPendingSolutions();
-
-				if (!m_ForceQuit)
-				{
-					// Если список ожидаемых заданий не пуст, то последнее полностью завершённое - это то,
-					// которое было непосредственно перед первым ожидаемым, иначе - только что завершённое
-					m_LastDoneFactor = m_PendingTasks.empty() ? std::max(f, m_LastDoneFactor) :
-						m_PendingTasks.front() - 1;
-				}
-			}
-
-			break;
-		}
+		auto k = m_LastProgressLength - newSize;
+		for (size_t i = 0; i < k; ++i)
+			fmt << ' ';
+		for (size_t i = 0; i < k; ++i)
+			fmt << '\b';
 	}
-}
+	m_LastProgressLength = newSize;
 
-//--------------------------------------------------------------------------------------------------------------------------------
-bool FactorSearch::MightHaveSolution(const Worker* worker)
-{
-	const unsigned* factors = worker->factors;
-	// NB: у нас нет оптимизаций для нечётных степеней
-	if (worker->factorCount != 1 || (m_Info.power & 1))
-		return true;
-
-	// Уравнения 2.1.n
-	if (m_Info.power == 2)
-	{
-		// Z не может быть чётным для n < 4
-		if (m_Info.rightCount < 4 && !(factors[0] & 1))
-			return false;
-	}
-	// Уравнение 4.1.n
-	else if (m_Info.power == 4)
-	{
-		// Для n < 16
-		if (m_Info.rightCount < 16)
-		{
-			// Z не может быть чётным
-			if (!(factors[0] & 1))
-				return false;
-			// Z не может быть кратным 5 для n < 5
-			if (m_Info.rightCount < 5 && !(factors[0] % 5))
-				return false;
-		}
-	}
-	// Уравнение 6.1.n
-	else if (m_Info.power == 6)
-	{
-		// Для n < 8
-		if (m_Info.rightCount < 8)
-		{
-			// Z не может быть чётным
-			if (!(factors[0] & 1))
-				return false;
-		}
-		// Для n < 9
-		if (m_Info.rightCount < 9)
-		{
-			// Z не может быть кратно 3
-			if (!(factors[0] % 3))
-				return false;
-			// Z не может быть кратным 7 для n < 7
-			if (m_Info.rightCount < 7 && !(factors[0] % 7))
-				return false;
-		}
-	}
-	// Уравнение 8.1.n
-	else if (m_Info.power == 8)
-	{
-		// Z не может быть чётным для n < 32
-		if (m_Info.rightCount < 32 && !(factors[0] & 1))
-			return false;
-	}
-	// Уравнение 10.1.n
-	else if (m_Info.power == 10)
-	{
-		// Z не может быть кратным 11 для n < 11
-		if (m_Info.rightCount < 11 && !(factors[0] % 11))
-			return false;
-	}
-
-	return true;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-AML_NOINLINE bool FactorSearch::OnProgress(Worker* worker, const unsigned* factors)
-{
-	// NB: прогресс обновляется только для самого младшего задания
-	if (worker->factors[0] == m_LoPendingTask)
-	{
-		thread::Lock lock(m_ProgressCS);
-
-		for (int i = 0; i < 8; ++i)
-			m_Progress[i] = factors[i];
-
-		m_IsProgressReady = true;
-	}
-
-	return m_ForceQuit;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-AML_NOINLINE void FactorSearch::OnSolutionFound(const unsigned* factors)
-{
-	Solution solution(factors, m_Info.leftCount, m_Info.rightCount);
-	solution.SortFactors();
-
-	for (;;)
-	{
-		m_TaskCS.Enter();
-
-		// Если это решение самого младшего (старого) задания, то мы всегда добавляем его в контейнер.
-		// В ином случае проверяем, сколько решений в контейнере, и если он "переполнен", то остальные
-		// потоки (решения других заданий) должны подождать, когда освободится место
-		if (factors[0] <= m_LoPendingTask || m_PendingSolutions.size() < 25000)
-		{
-			// Отсеиваем непримитивные решения
-			if (m_Solutions.IsPrimitive(solution))
-			{
-				m_PendingSolutions.push_back(std::move(solution));
-			}
-
-			m_TaskCS.Leave();
-			return;
-		}
-
-		// Освобождаем критическую секцию, и ждём. Если поток, обрабатывающий младшее
-		// задание за это время его закончит, то место в контейнере освободится
-		m_TaskCS.Leave();
-		::Sleep(1);
-	}
+	thread::Lock lock(m_ConsoleCS);
+	aux::Printc(fmt);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -728,16 +682,17 @@ void FactorSearch::ProcessPendingSolutions()
 	else if (size_t count = m_PendingSolutions.size())
 	{
 		size_t ready = count;
-		if (const unsigned lowest = m_LoPendingTask)
+		if (m_LoPendingTask)
 		{
 			ready = 0;
+			const Task& lowestTask = m_Workers[m_LoPendingTask - 1]->task;
 			// NB: если имеются ожидаемые задания (результаты которых ещё не полностью готовы), то мы можем
 			// обработать только часть решений, соответствующих полностью завершённым заданиям. Поэтому для
 			// эффективности (решений может быть довольно много) предварительно переместим все подходящие
 			// решения в начало контейнера, а затем отсортируем только эту его часть
 			for (size_t i = 0; i < count; ++i)
 			{
-				if (auto& s = m_PendingSolutions[i]; s.left[0] < lowest)
+				if (auto& s = m_PendingSolutions[i]; lowestTask > s)
 					s.Swap(m_PendingSolutions[ready++]);
 			}
 
@@ -753,20 +708,17 @@ void FactorSearch::ProcessPendingSolutions()
 		bool hadGoodSolutions = false;
 		for (auto it = m_PendingSolutions.begin(); it != itEnd; ++it)
 		{
-			// Пытаемся добавить решение в набор. Непримитивные решения мы
-			// уже отбросили. Сейчас проверяем только уникальность решения
+			// Пытаемся добавить решение в набор. Вырожденные и непримитивные
+			// мы уже отбросили. Сейчас проверяем только уникальность решения
 			if (m_Solutions.Insert(*it, false))
 			{
 				hadGoodSolutions = true;
 				++m_SolutionsFound;
 
-				// Выведем решение
+				// Выводим решение
 				OnSolutionReady(*it);
 			}
 		}
-
-		// Обновляем значение последнего завершённого задания
-		m_LastDoneFactor = m_PendingSolutions[ready - 1].left[0];
 
 		// Удаляем все обработанные решения из контейнера
 		m_PendingSolutions.erase(m_PendingSolutions.begin(), itEnd);
@@ -779,69 +731,6 @@ void FactorSearch::ProcessPendingSolutions()
 			m_NeedUpdateTitle = true;
 		}
 	}
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-void FactorSearch::ShowProgress(const unsigned* factors)
-{
-	const int factorCount = m_Info.leftCount + m_Info.rightCount;
-	const int desiredCount = (factorCount < 5) ? 2 : std::min(8, 3 + (factorCount - 1) / 8);
-
-	util::Formatter<char> fmt;
-	fmt << (m_IsCancelled ? "#12" : "#07") << "\rTesting " << factors[0];
-	for (int i = 1, j = std::min(m_Info.leftCount, desiredCount); i < j; ++i)
-		fmt << '+' << factors[i];
-
-	if (desiredCount >= m_Info.leftCount)
-		fmt << '=';
-
-	for (int i = m_Info.leftCount; i < desiredCount; ++i)
-		fmt << factors[i] << '+';
-
-	fmt << "...";
-	auto newSize = fmt.GetSize() - 4;
-	if (newSize < m_LastProgressLength)
-	{
-		auto k = m_LastProgressLength - newSize;
-		for (size_t i = 0; i < k; ++i)
-			fmt << ' ';
-		for (size_t i = 0; i < k; ++i)
-			fmt << '\b';
-	}
-	m_LastProgressLength = newSize;
-
-	thread::Lock lock(m_ConsoleCS);
-	aux::Printc(fmt);
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-void FactorSearch::UpdateConsoleTitle()
-{
-	util::Formatter<char> fmt;
-	fmt << "Searching for factors (" << m_Info.power << '.' << m_Info.leftCount << '.' << m_Info.rightCount << "): ";
-	fmt << m_SolutionsFound << ((m_SolutionsFound == 1) ? " solution" : " solutions") << " found";
-
-	const size_t activeThreads = GetActiveThreads(true);
-	if (activeThreads || (m_ActiveWorkers && !m_IsCancelled))
-	{
-		fmt << " -- MT: ";
-		if (!m_IsCancelled && activeThreads != m_ActiveWorkers)
-			fmt << m_ActiveWorkers << " (" << activeThreads << ')';
-		else
-			fmt << activeThreads;
-
-		if (m_IsCancelled)
-		{
-			fmt << " -- stopping...";
-		}
-
-		// Если текущее количество активных потоков не совпадает с необходимым, то
-		// установим флаг обновления заголовка окна, чтобы снова обновить его позже
-		if (activeThreads != m_ActiveWorkers)
-			m_NeedUpdateTitle = true;
-	}
-
-	util::SystemConsole::Instance().SetTitle(fmt.ToString());
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -872,4 +761,50 @@ void FactorSearch::UpdateActiveThreadCount()
 		SetActiveThreads(m_ActiveWorkers);
 		m_NeedUpdateTitle = true;
 	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   FactorSearch::Task
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//--------------------------------------------------------------------------------------------------------------------------------
+FactorSearch::Task& FactorSearch::Task::operator =(const Task& that) noexcept
+{
+	if (this != &that)
+	{
+		factorCount = that.factorCount;
+
+		if (factorCount < 8)
+		{
+			for (int i = 0; i < factorCount; ++i)
+				factors[i] = that.factors[i];
+		} else
+		{
+			memcpy(factors, that.factors, 4 * factorCount);
+		}
+	}
+
+	return *this;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool FactorSearch::Task::operator >(const Solution& rhs) const noexcept
+{
+	const int leftCount = static_cast<int>(rhs.left.size());
+
+	for (int i = 0; i < leftCount; ++i)
+	{
+		if (auto f = rhs.left[i]; factors[i] != f)
+			return factors[i] > f;
+	}
+
+	for (int i = leftCount; i < factorCount; ++i)
+	{
+		if (auto f = rhs.right[i - leftCount]; factors[i] != f)
+			return factors[i] > f;
+	}
+
+	return false;
 }

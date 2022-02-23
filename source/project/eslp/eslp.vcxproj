@@ -186,6 +186,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\eslp\factorsearch.h" />
     <ClInclude Include="..\..\eslp\hashtable.h" />
+    <ClInclude Include="..\..\eslp\multisearch.h" />
     <ClInclude Include="..\..\eslp\options.h" />
     <ClInclude Include="..\..\eslp\pch.h" />
     <ClInclude Include="..\..\eslp\powers.h" />
@@ -198,6 +199,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\eslp\factorsearch.cpp" />
     <ClCompile Include="..\..\eslp\main.cpp" />
+    <ClCompile Include="..\..\eslp\multisearch.cpp" />
     <ClCompile Include="..\..\eslp\options.cpp" />
     <ClCompile Include="..\..\eslp\prefix.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

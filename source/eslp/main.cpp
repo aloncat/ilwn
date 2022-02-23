@@ -4,7 +4,7 @@
 
 #include "pch.h"
 
-#include "factorsearch.h"
+#include "multisearch.h"
 #include "searchbase.h"
 
 #include <auxlib/print.h>
@@ -26,7 +26,7 @@ int wmain(int argCount, const wchar_t* args[], const wchar_t* envVars[])
 	if (argCount <= 1)
 	{
 		// Справка для пустой командной строки
-		aux::Printc("#15Usage: #10eslp.exe#7 <power> <left> <right> [<factor>]\n");
+		aux::Printc("#15Usage: #10eslp.exe#7 <power> <left> <right> [<factor>] [options]\n");
 		SearchBase::PrintOptionsHelp();
 		return 0;
 	}
@@ -42,7 +42,7 @@ int wmain(int argCount, const wchar_t* args[], const wchar_t* envVars[])
 			leftCount < maxCount && rightCount < maxCount && leftCount <= rightCount &&
 			leftCount + rightCount <= maxCount)
 		{
-			FactorSearch search;
+			MultiSearch search;
 			// Ищем решения. Передаём в функцию только значение степени и количество коэффициентов
 			// уравнения (начальное значение старшего коэффициента функция получит самостоятельно).
 			// При возникновении ошибки функция вернёт false и выведет сообщение в окно консоли
