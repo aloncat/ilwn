@@ -110,11 +110,6 @@ void MultiSearch::SearchFactors(Worker* worker, const NumberT* powers)
 
 	// Количество "перебираемых коэффициентов"
 	const int count = factorCount - worker->task.factorCount;
-	// Если левая часть уравнения содержит только 1 коэффициент или если в правой
-	// его части хотя бы 1 коэффициент задан заданием, то значение k[1] будет ограничено
-	// значением k[0]. Иначе ограничения нет и мы должны ориентироваться только на сумму
-	const int lowestLimited = (m_Info.leftCount == 1 || worker->task.factorCount > m_Info.leftCount) ? 0 : 1;
-
 	// Массив k, начиная с индекса 1, созержит перебираемые коэффициенты правой части уравнения. В
 	// элементе с индексом 0 хранится предшествующий им коэффициент левой или правой части уравнения
 	unsigned* k = factors + (worker->task.factorCount - 1);
@@ -170,7 +165,7 @@ void MultiSearch::SearchFactors(Worker* worker, const NumberT* powers)
 		for (int i = count - 1;; --i)
 		{
 			sum -= powers[k[i]];
-			if (k[i - 1] > k[i] || i == lowestLimited)
+			if (k[i - 1] > k[i] || i == 1)
 			{
 				const auto f = ++k[i];
 				if (auto n = sum + powers[f]; n < z)
@@ -187,10 +182,18 @@ void MultiSearch::SearchFactors(Worker* worker, const NumberT* powers)
 
 		if (idx)
 		{
-			// NB: для уравнений с одинаковым числом коэффициентов в левой и правой частях, мы не хотим перебирать
-			// старшие коэффициенты правой части, значения которых >= значению старшего коэффициента левой части
-			if (idx == 2 && k[1] >= factors[0] && m_Info.leftCount == m_Info.rightCount)
-				return;
+			if (idx == 2)
+			{
+				// NB: для уравнений с одинаковым числом коэффициентов в левой и правой частях, мы не хотим перебирать
+				// старшие коэффициенты правой части, значения которых >= значению старшего коэффициента левой части
+				if (k[1] >= factors[0] && m_Info.leftCount == m_Info.rightCount)
+					return;
+
+				// Если в правой части уравнения хотя бы 1 коэффициент задан
+				// заданием, то значение k[1] не должно превышать значения k[0]
+				if (k[1] > k[0] && worker->task.factorCount > m_Info.leftCount)
+					return;
+			}
 
 			// Каждый раз, когда мы сбрасываем в 1 коэффициент в правой части, увеличивая на 1 коэффициент слева от него,
 			// переменная idx будет содержать индекс самого левого единичного коэффициента. Единичное и многие следующие
