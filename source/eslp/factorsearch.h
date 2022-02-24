@@ -14,6 +14,7 @@
 #include <core/threadsync.h>
 
 #include <thread>
+#include <utility>
 #include <vector>
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -91,7 +92,7 @@ private:
 	void OnTaskDone(Worker* worker);
 
 	template<class NumberT>
-	unsigned CalcUpperValue() const;
+	std::pair<unsigned, unsigned> CalcUpperValue(unsigned leftHigh = UINT_MAX) const;
 
 	// Выполняет вычисления, начиная с указанных коэффициентов (задают первые коэффициенты стартового
 	// задания), возвращает следующее за последним проверенным значение старшего коэффициента левой части

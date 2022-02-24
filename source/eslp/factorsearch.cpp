@@ -429,13 +429,10 @@ void FactorSearch::OnTaskDone(Worker* worker)
 
 			if (!i)
 			{
-				if (m_Info.rightCount < 3 && !(++worker->progressCounter & 0x1ff))
+				if (!(++worker->progressCounter & 0x1ff))
 					OnProgress(worker, worker->task.factors);
 
 				m_LoPendingTask = (count > 1) ? m_PendingTasks.front() : 0;
-
-				if (!m_PendingSolutions.empty())
-					ProcessPendingSolutions();
 
 				if (!m_ForceQuit)
 				{
@@ -451,6 +448,9 @@ void FactorSearch::OnTaskDone(Worker* worker)
 					else if (unsigned nextHiFactor = m_NextTask->factors[0]; nextHiFactor > m_LastDoneHiFactor)
 						m_LastDoneHiFactor = nextHiFactor - 1;
 				}
+
+				if (!m_PendingSolutions.empty())
+					ProcessPendingSolutions();
 			}
 
 			break;
@@ -460,23 +460,45 @@ void FactorSearch::OnTaskDone(Worker* worker)
 
 //--------------------------------------------------------------------------------------------------------------------------------
 template<class NumberT>
-unsigned FactorSearch::CalcUpperValue() const
+std::pair<unsigned, unsigned> FactorSearch::CalcUpperValue(unsigned leftHigh) const
 {
+	// Находим предельное значение для коэффициента
 	const auto maxFactorCount = std::max(m_Info.leftCount, m_Info.rightCount);
 	const unsigned upperLimit = Powers<NumberT>::CalcUpperValue(m_Info.power, maxFactorCount);
-	unsigned leftHi = upperLimit;
+
+	// Рассчитываем желаемые максимальные значения старших коэффициентов левой и правой частей
+	leftHigh = std::min(upperLimit, leftHigh);
+	unsigned rightHigh = leftHigh;
 
 	if (m_Info.leftCount > 1)
 	{
-		// NB: макс. значение старшего коэффициента левой части должно быть таким, чтобы при макс. возможном значении
-		// старшего коэффициента правой части мин. сумма в правой части была больше макс. суммы в левой (при таких
-		// условиях мы не пропустим возможных наборов коэффициентов правой части, которые могли бы дать решение)
-		auto right = Powers<NumberT>::CalcPower(upperLimit, m_Info.power) + (m_Info.rightCount - 1);
-		while (Powers<NumberT>::CalcPower(leftHi, m_Info.power) * m_Info.leftCount <= right)
-			--leftHi;
+		// NB: для уравнений, в которых в левой части 2 и более коэффициента, макс. значение старшего
+		// коэффициента в правой части может быть выше значения старшего коэффициента в левой. Поэтому
+		// нам нужно найти такое значение для старшего коэффициента правой части, при котором мин. возможная
+		// сумма в правой части будет выше макс. возможной суммы в левой (при таких условиях мы не пропустим
+		// возможных наборов коэффициентов правой части, которые могут дать решение)
+
+		// Макс. возможные значения сумм степеней коэффициентов левой и правой частей
+		auto leftPowHi = Powers<NumberT>::CalcPower(leftHigh, m_Info.power) * m_Info.leftCount;
+		auto rightPowHi = Powers<NumberT>::CalcPower(rightHigh, m_Info.power) + (m_Info.rightCount - 1);
+
+		// Найдём подходящее значение старшего коэффициента правой части
+		while (leftPowHi >= rightPowHi && rightHigh < upperLimit)
+		{
+			++rightHigh;
+			rightPowHi = Powers<NumberT>::CalcPower(rightHigh, m_Info.power) + (m_Info.rightCount - 1);
+		}
+
+		// Если значение rightHigh стало равно upperLimit, то поступим наоборот: уменьшим значение
+		// старшего коэффициента левой части leftHigh, чтобы наше условие выполнялось для rightHigh
+		while (leftPowHi >= rightPowHi)
+		{
+			--leftHigh;
+			leftPowHi = Powers<NumberT>::CalcPower(leftHigh, m_Info.power) * m_Info.leftCount;
+		}
 	}
 
-	return leftHi;
+	return { leftHigh, rightHigh };
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -492,7 +514,7 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors)
 	const unsigned toCheck = (factorCount >= 2 && factorCount <= 9) ? countImpact[factorCount] : 200;
 
 	// Если можем, то выполняем вычисления в 64-битах (так как это быстрее)
-	if (unsigned upper64 = CalcUpperValue<uint64_t>(); startFactors[0] < upper64)
+	if (unsigned upper64 = CalcUpperValue<uint64_t>().first; startFactors[0] < upper64)
 		return Compute<uint64_t>(startFactors, toCheck);
 
 	return Compute<UInt128>(startFactors, toCheck);
@@ -506,20 +528,19 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 	Assert(!GetActiveThreads(true) && "All threads must be suspended");
 
 	const unsigned hiFactor = startFactors[0];
-	const unsigned upperLimit = std::min(CalcUpperValue<NumberT>(),
-		hiFactor + std::min(UINT_MAX - hiFactor, toCheck - 1));
+	const auto upperLimit = CalcUpperValue<NumberT>(hiFactor + std::min(UINT_MAX - hiFactor, toCheck - 1));
 
-	if (hiFactor > upperLimit)
+	if (hiFactor > upperLimit.first)
 		return 0;
 
 	Powers<NumberT> powers;
-	powers.Init(m_Info.power, 1, upperLimit);
+	powers.Init(m_Info.power, 1, upperLimit.second);
 	PowersArray<NumberT>() = powers.GetData();
-	m_Hashes.Init(upperLimit, powers);
+	m_Hashes.Init(upperLimit.second, powers);
 
 	InitFirstTask(startFactors);
 	m_LastDoneHiFactor = hiFactor - 1;
-	m_LastHiFactor = upperLimit;
+	m_LastHiFactor = upperLimit.first;
 
 	Assert(m_PendingTasks.empty());
 	m_LoPendingTask = 0;
@@ -576,7 +597,7 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 	m_Powers = nullptr;
 
 	Assert(!GetActiveThreads(true) && "Some threads are still active");
-	Assert(m_IsCancelled || m_NextTask->factors[0] == upperLimit + 1);
+	Assert(m_IsCancelled || m_NextTask->factors[0] == upperLimit.first + 1);
 
 	if (m_LastProgressLength)
 	{
@@ -585,7 +606,7 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 		m_LastProgressLength = 0;
 	}
 
-	return upperLimit + 1;
+	return upperLimit.first + 1;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
