@@ -6,15 +6,14 @@
 
 #include "multisearch.h"
 #include "searchbase.h"
+#include "util.h"
 
 #include <auxlib/print.h>
 #include <core/util.h>
 
 //--------------------------------------------------------------------------------------------------------------------------------
-int wmain(int argCount, const wchar_t* args[], const wchar_t* envVars[])
+static int Main(int argCount, const wchar_t* args[])
 {
-	util::CheckMinimalRequirements();
-
 	aux::Printc(L"Equal Sums of Like Powers (ESLP)/iLWN. Standalone app. Ver. 0.30a\n"
 		"#8For more information, please visit us at #3https://dmaslov.me/eslp/\n");
 
@@ -42,15 +41,25 @@ int wmain(int argCount, const wchar_t* args[], const wchar_t* envVars[])
 			leftCount < maxCount && rightCount < maxCount && leftCount <= rightCount &&
 			leftCount + rightCount <= maxCount)
 		{
-			MultiSearch search;
+			// Создаём подходящий объект (универсального класса MultiSearch
+			// или класса со спецализированным алгоритмом, если такой имеется)
+			auto instance = MultiSearch::CreateInstance(power, leftCount, rightCount);
+
 			// Ищем решения. Передаём в функцию только значение степени и количество коэффициентов
 			// уравнения (начальное значение старшего коэффициента функция получит самостоятельно).
 			// При возникновении ошибки функция вернёт false и выведет сообщение в окно консоли
-			return search.Run(power, leftCount, rightCount) ? 0 : 1;
+			return instance->Run(power, leftCount, rightCount) ? 0 : 1;
 		}
 	}
 
 	// Аргументы в командной строке некорректны
 	aux::Printc("#12Error: invalid command line\n");
 	return 1;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+int wmain(int argCount, const wchar_t* args[], const wchar_t* envVars[])
+{
+	util::CheckMinimalRequirements();
+	InvokeSafe(std::bind(Main, argCount, args));
 }

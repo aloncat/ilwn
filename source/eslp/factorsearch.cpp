@@ -429,9 +429,6 @@ void FactorSearch::OnTaskDone(Worker* worker)
 
 			if (!i)
 			{
-				if (!(++worker->progressCounter & 0x1ff))
-					OnProgress(worker, worker->task.factors);
-
 				m_LoPendingTask = (count > 1) ? m_PendingTasks.front() : 0;
 
 				if (!m_ForceQuit)
@@ -510,7 +507,7 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors)
 	const int factorCount = m_Info.leftCount + m_Info.rightCount;
 	// В зависимости от количества коэффициентов в уравнении, мы бы
 	// хотели проверять различное количество старших коэффициентов за раз
-	static const unsigned countImpact[10] = { 0, 0, 300000, 35000, 8000, 4000, 1000, 800, 600, 300 };
+	static const unsigned countImpact[10] = { 0, 0, 250000, 30000, 6500, 2000, 800, 650, 450, 300 };
 	const unsigned toCheck = (factorCount >= 2 && factorCount <= 9) ? countImpact[factorCount] : 200;
 
 	// Если можем, то выполняем вычисления в 64-битах (так как это быстрее)

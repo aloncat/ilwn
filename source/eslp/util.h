@@ -6,6 +6,7 @@
 
 #include <core/platform.h>
 
+#include <functional>
 #include <string>
 #include <string_view>
 
@@ -22,3 +23,8 @@ std::string SeparateWithCommas(uint64_t number, char separator = ',');
 
 // Возвращает строку, символы которой разделены на группы по три
 std::string SeparateWithCommas(std::string_view str, char separator = ',');
+
+// Вызывает функцию fn внутри блока try..except, отлавливая все типы исключений. Если произойдётисключение,
+// то в окно консоли будет выведено сообщение и функция вернёт указанное значение errorCode. Иначе функция
+// вернёт значение, возвращённое функцией fn. Если fn не задана, то функция вернёт 0
+int InvokeSafe(const std::function<int()>& fn, int errorCode = 3);

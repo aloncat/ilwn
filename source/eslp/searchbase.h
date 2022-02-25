@@ -49,6 +49,10 @@ protected:
 	// Возвращает время работы в секундах
 	float GetRunningTime() const;
 
+	// Возвращает строку с дополнительной информацией об алгоритме. Используется
+	// в классах наследниках, реализующих специализированные алгоритмы поиска
+	virtual std::wstring GetAdditionalInfo() const;
+
 	// Выполняет поиск решений. Вектор startFactors
 	// содержит стартовые значения первых коэффициентов
 	virtual void Search(const std::vector<unsigned>& startFactors) = 0;
