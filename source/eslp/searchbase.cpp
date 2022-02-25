@@ -82,6 +82,9 @@ bool SearchBase::Run(int power, int leftCount, int rightCount)
 		aux::Printc("#12WARNING: #3this equation has no solutions!\n");
 	}
 
+	if (auto info = GetAdditionalInfo(); !info.empty())
+		aux::Printf(L"#10Using#7 %s\n", info.c_str());
+
 	Search(startFactors);
 	m_Log.Close();
 
@@ -108,6 +111,12 @@ void SearchBase::UpdateRunningTime()
 float SearchBase::GetRunningTime() const
 {
 	return m_RunningTime + .001f * (::GetTickCount() - m_StartTick);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+std::wstring SearchBase::GetAdditionalInfo() const
+{
+	return std::wstring();
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------

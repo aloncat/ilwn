@@ -54,7 +54,7 @@ public:
 	}
 
 protected:
-	static constexpr unsigned HASH_BITS = 18;
+	static constexpr unsigned HASH_BITS = 19; // 64 KiB
 	static constexpr unsigned BYTE_MASK = (1 << HASH_BITS) - 1;
 	static constexpr unsigned ARRAY_SIZE = 1 << (HASH_BITS - 3);
 

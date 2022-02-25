@@ -5,8 +5,17 @@
 #include "pch.h"
 #include "util.h"
 
+#include <auxlib/print.h>
 #include <core/array.h>
+#include <core/exception.h>
 #include <core/strformat.h>
+#include <core/winapi.h>
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   Вспомогательные функции
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------------------------------------
 bool IsInteger(std::string_view str)
@@ -99,4 +108,50 @@ std::string SeparateWithCommas(uint64_t number, char separator)
 std::string SeparateWithCommas(std::string_view str, char separator)
 {
 	return SeparateWithCommas(str.data(), str.size(), separator);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   Функция InvokeSafe
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//--------------------------------------------------------------------------------------------------------------------------------
+static int CppExceptionGuard(const std::function<int()>& fn, int errorCode)
+{
+	try
+	{
+		return fn ? fn() : 0;
+	}
+	catch (const util::EGeneric& e)
+	{
+		aux::Printf("\r#12Fatal error: unhandled exception [%s] -> %s \n",
+			e.ClassName(), e.what());
+	}
+	catch (const std::exception& e)
+	{
+		aux::Printf("\r#12Fatal error: unhandled c++ exception -> %s \n", e.what());
+	}
+	catch (...)
+	{
+		aux::Printc("\r#12Fatal error: unhandled c++ exception \n");
+	}
+
+	return errorCode;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+int InvokeSafe(const std::function<int()>& fn, int errorCode)
+{
+	__try
+	{
+		return CppExceptionGuard(fn, errorCode);
+	}
+	__except(EXCEPTION_EXECUTE_HANDLER)
+	{
+		aux::Printf("\r#12Fatal error: unhandled exception %08X \n",
+			::GetExceptionCode());
+	}
+
+	return errorCode;
 }
