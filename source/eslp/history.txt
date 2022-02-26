@@ -1,3 +1,14 @@
+=== Version 0.30 ===
+Released: 2022-02-xx
+
+== Changes ==
+ * '--thread <N>' command line option.
+
+== Features ==
+ * Arbitrary number of coefficients on either side.
+ * Specialized algorithm for 5.2.3 equation.
+
+
 === Version 0.20 ===
 Released: 2022-02-16
 

@@ -6,23 +6,17 @@
 
 #include "factorsearch.h"
 
-#include <memory>
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//   MultiSearch - универсальный алгоритм поиска
+//   Search523 - специализированный алгоритм для уравнения 5.2.3
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------------------------------------
-class MultiSearch : public FactorSearch
+class Search523 : public FactorSearch
 {
-public:
-	using Instance = std::unique_ptr<FactorSearch>;
-	static Instance CreateInstance(int power, int leftCount, int rightCount);
-
 protected:
-	virtual bool MightHaveSolution(const Task& task) const override;
+	virtual std::wstring GetAdditionalInfo() const override;
 
 	virtual void PerformTask(Worker* worker) override;
 

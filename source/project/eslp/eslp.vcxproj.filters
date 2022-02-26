@@ -10,6 +10,9 @@
     <Filter Include="search">
       <UniqueIdentifier>{20936959-e66d-4012-bd80-295307a8f5c1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="search\special">
+      <UniqueIdentifier>{096ca3a1-cd6d-4215-bd6a-2cbff5c30e17}</UniqueIdentifier>
+    </Filter>
     <Filter Include="util">
       <UniqueIdentifier>{44753c3c-029a-4e03-bc85-922cf36e65d9}</UniqueIdentifier>
     </Filter>
@@ -46,6 +49,9 @@
     <ClInclude Include="..\..\eslp\multisearch.h">
       <Filter>search</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\eslp\search-523.h">
+      <Filter>search\special</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\eslp\prefix.cpp">
@@ -76,6 +82,9 @@
     </ClCompile>
     <ClCompile Include="..\..\eslp\multisearch.cpp">
       <Filter>search</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\eslp\search-523.cpp">
+      <Filter>search\special</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
