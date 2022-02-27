@@ -187,11 +187,11 @@ AML_NOINLINE void SearchX13::SearchFactors(Worker* worker, const NumberT* powers
 		// Перебор 2-го коэф-та
 		for (; k[2] <= k[1]; ++k[2])
 		{
-			auto f = powers[k[2]];
-			if (f >= zd)
+			const auto pk2 = powers[k[2]];
+			if (pk2 >= zd)
 				break;
 
-			if (const auto lastFP = zd - f; m_Hashes.Exists(lastFP))
+			if (const auto lastFP = zd - pk2; m_Hashes.Exists(lastFP))
 			{
 				for (unsigned lo = 1, hi = k[2]; lo <= hi;)
 				{

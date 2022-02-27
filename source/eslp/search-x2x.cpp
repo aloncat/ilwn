@@ -33,6 +33,8 @@ void SearchX22::PerformTask(Worker* worker)
 template<class NumberT>
 AML_NOINLINE void SearchX22::SearchFactors(Worker* worker, const NumberT* powers)
 {
+	// NB: размер массива коэффициентов не может быть
+	// менее 8 элементов (см. функцию OnProgress)
 	unsigned k[8];
 
 	// Коэффициенты левой части
@@ -106,6 +108,8 @@ void SearchX23::PerformTask(Worker* worker)
 template<class NumberT>
 AML_NOINLINE void SearchX23::SearchFactors(Worker* worker, const NumberT* powers)
 {
+	// NB: размер массива коэффициентов не может быть
+	// менее 8 элементов (см. функцию OnProgress)
 	unsigned k[8];
 
 	// Коэффициенты левой части
@@ -125,19 +129,29 @@ AML_NOINLINE void SearchX23::SearchFactors(Worker* worker, const NumberT* powers
 	}
 
 	size_t it = 0;
-	for (auto sum = powers[k[2]];;)
+	// Перебор старшего коэф-та правой части
+	for (auto pk2 = powers[k[2]];;)
 	{
+		// Левая часть без старшего коэф-та
+		const auto zd = z - pk2;
+
 		k[3] = 1;
+		// Пропускаем низкие значения 2-го коэф-та
 		for (unsigned step = k[2] >> 1; step; step >>= 1)
 		{
 			auto f = k[3] + step;
-			if (f <= k[2] && z > sum + powers[f - 1] * 2)
+			if (zd > powers[f - 1] * 2)
 				k[3] = f;
 		}
 
-		for (sum += powers[k[3]];;)
+		// Перебор 2-го коэф-та
+		for (; k[3] <= k[2]; ++k[3])
 		{
-			if (const auto lastFP = z - sum; m_Hashes.Exists(lastFP))
+			const auto pk3 = powers[k[3]];
+			if (pk3 >= zd)
+				break;
+
+			if (const auto lastFP = zd - pk3; m_Hashes.Exists(lastFP))
 			{
 				for (unsigned lo = 1, hi = k[3]; lo <= hi;)
 				{
@@ -154,18 +168,10 @@ AML_NOINLINE void SearchX23::SearchFactors(Worker* worker, const NumberT* powers
 					}
 				}
 			}
-
-			auto f = ++k[3];
-			if (f > k[2])
-				break;
-
-			sum += powers[f] - powers[f - 1];
-			if (sum >= z)
-				break;
 		}
 
-		sum = powers[++k[2]];
-		if (sum + 2 > z)
+		pk2 = powers[++k[2]];
+		if (pk2 + 2 > z)
 			break;
 
 		// Вывод прогресса
