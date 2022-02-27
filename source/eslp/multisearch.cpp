@@ -28,8 +28,12 @@ MultiSearch::Instance MultiSearch::CreateInstance(int power, int leftCount, int 
 	{
 		if (rightCount == 2)
 			return std::make_unique<SearchX22>();
+
 		if (rightCount == 3)
-			return std::make_unique<SearchX23>();
+		{
+			return (power & 1) ? std::make_unique<SearchX23>() :
+				std::make_unique<SearchE23>();
+		}
 	}
 
 	return std::make_unique<MultiSearch>();
