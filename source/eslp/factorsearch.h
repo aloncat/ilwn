@@ -139,6 +139,9 @@ private:
 	volatile bool m_NoTasks = false;			// true, если заданий для потоков больше нет
 	volatile bool m_IsCancelled = false;		// true, если работа была прервана пользователем
 	volatile bool m_ForceQuit = false;			// true, если нужно прервать работу немедленно
+
+	volatile bool m_PrintSolutions = false;		// true, если вывод решений на экран разрешён
+	bool m_PrintAllSolutions = false;			// true, если указана опция "--printall"
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------

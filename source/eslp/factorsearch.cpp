@@ -67,6 +67,9 @@ void FactorSearch::Search(const std::vector<unsigned>& startFactors)
 			1, static_cast<int>(m_ActiveWorkers));
 	}
 
+	m_PrintSolutions = true;
+	m_PrintAllSolutions = m_Options.HasOption(L"printall");
+
 	CreateWorkers(maxWorkerCount);
 	m_NextTask = new Task;
 
@@ -507,8 +510,10 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors)
 	const int factorCount = m_Info.leftCount + m_Info.rightCount;
 	// В зависимости от количества коэффициентов в уравнении, мы бы
 	// хотели проверять различное количество старших коэффициентов за раз
-	static const unsigned countImpact[10] = { 0, 0, 250000, 30000, 6500, 2000, 800, 650, 450, 300 };
-	const unsigned toCheck = (factorCount >= 2 && factorCount <= 9) ? countImpact[factorCount] : 200;
+	static const unsigned countImpact[10] = { 0, 0, 0, 80000, 8000, 2200, 800, 640, 420, 300 };
+	unsigned toCheck = (factorCount >= 2 && factorCount <= 9) ? countImpact[factorCount] : 200;
+	// Для чётных степеней, не превышающих 8, увеличиваем значение в 1.5 раза
+	toCheck += ((m_Info.power & 1) || m_Info.power > 8) ? 0 : toCheck / 2;
 
 	// Если можем, то выполняем вычисления в 64-битах (так как это быстрее)
 	if (unsigned upper64 = CalcUpperValue<uint64_t>().first; startFactors[0] < upper64)
@@ -682,10 +687,23 @@ void FactorSearch::OnSolutionReady(const Solution& solution)
 	fn(solution.right);
 	fmt << '\n';
 
+	// Выводим решение в файл
 	m_Log.Write(fmt.GetData(), fmt.GetSize());
 
-	thread::Lock lock(m_ConsoleCS);
-	aux::Print("\rSolution found: " + fmt.ToString());
+	if (m_PrintSolutions)
+	{
+		thread::Lock lock(m_ConsoleCS);
+
+		// Выводим решение на экран (первые 1000 решений - в любом
+		// случае, следующие - только при наличии опции "--printall")
+		if (m_SolutionsFound <= 1000 || m_PrintAllSolutions)
+			aux::Print("\rSolution found: " + fmt.ToString());
+		else
+		{
+			aux::Printc("#12\rToo many solutions found: #7no more will be shown\n");
+			m_PrintSolutions = false;
+		}
+	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -724,6 +742,7 @@ void FactorSearch::ProcessPendingSolutions()
 
 		// Обрабатываем
 		bool hadGoodSolutions = false;
+		const bool consoleOutputAllowed = m_PrintSolutions;
 		for (auto it = m_PendingSolutions.begin(); it != itEnd; ++it)
 		{
 			// Пытаемся добавить решение в набор. Вырожденные и непримитивные
@@ -745,7 +764,7 @@ void FactorSearch::ProcessPendingSolutions()
 		// Нам нужно немедленно вывести прогресс и обновить заголовок окна
 		if (hadGoodSolutions)
 		{
-			m_ForceShowProgress = true;
+			m_ForceShowProgress |= consoleOutputAllowed;
 			m_NeedUpdateTitle = true;
 		}
 	}

@@ -95,6 +95,7 @@ bool SearchBase::Run(int power, int leftCount, int rightCount)
 void SearchBase::PrintOptionsHelp()
 {
 	aux::Printc("#15Options:\n"
+		"#3  --printall     #7Print all found solutions (first 1K otherwise)\n"
 		"#3  --thread <N>   #7Set initial count of active threads to N\n"
 	);
 }
@@ -209,6 +210,13 @@ bool SearchBase::InitOptions()
 	
 			if (!key.empty())
 			{
+				// Опция "--printall", разрешает вывод большого количества решений на экран
+				if (!util::StrInsCmp(key, L"printall"))
+				{
+					m_Options.AddOption(key);
+					continue;
+				}
+
 				// Опция "--thread <N>", задаёт количество активных потоков
 				if (!util::StrInsCmp(key, L"thread"))
 				{

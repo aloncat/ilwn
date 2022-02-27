@@ -5,9 +5,8 @@
 #include "pch.h"
 #include "multisearch.h"
 
-#include "search-523.h"
-
-#include <core/debug.h>
+#include "search-x1x.h"
+#include "search-x2x.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -18,8 +17,20 @@
 //--------------------------------------------------------------------------------------------------------------------------------
 MultiSearch::Instance MultiSearch::CreateInstance(int power, int leftCount, int rightCount)
 {
-	if (power == 5 && leftCount == 2 && rightCount == 3)
-		return std::make_unique<Search523>();
+	if (leftCount == 1)
+	{
+		if (rightCount == 2)
+			return std::make_unique<SearchX12>();
+		if (rightCount == 3)
+			return std::make_unique<SearchX13>();
+	}
+	else if (leftCount == 2)
+	{
+		if (rightCount == 2)
+			return std::make_unique<SearchX22>();
+		if (rightCount == 3)
+			return std::make_unique<SearchX23>();
+	}
 
 	return std::make_unique<MultiSearch>();
 }

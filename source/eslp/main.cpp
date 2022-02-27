@@ -61,5 +61,5 @@ static int Main(int argCount, const wchar_t* args[])
 int wmain(int argCount, const wchar_t* args[], const wchar_t* envVars[])
 {
 	util::CheckMinimalRequirements();
-	InvokeSafe(std::bind(Main, argCount, args));
+	return InvokeSafe(std::bind(Main, argCount, args));
 }
