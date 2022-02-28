@@ -6,6 +6,7 @@
 #include "searchbase.h"
 
 #include "powers.h"
+#include "uint128.h"
 #include "util.h"
 
 #include <auxlib/print.h>

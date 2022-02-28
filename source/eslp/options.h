@@ -13,11 +13,11 @@
 
 //--------------------------------------------------------------------------------------------------------------------------------
 struct OptionKey {
-	const std::wstring key;		// Имя опции (в нижнем регистре)
+	const std::string key;		// Имя опции (в нижнем регистре)
 	const std::wstring value;	// Строковое значение (если есть)
 
 public:
-	explicit OptionKey(std::wstring_view _key, std::wstring_view _value = L"");
+	explicit OptionKey(std::string_view _key, std::wstring_view _value = L"");
 
 	// Возвращает true, если значение value - не пустая строка
 	bool HasValue() const;
@@ -29,9 +29,9 @@ public:
 	// value не является корректным числом, то функция вернёт 0
 	int GetNumericValue() const;
 
-	bool operator <(std::wstring_view rhs) const { return key < rhs; }
+	bool operator <(std::string_view rhs) const { return key < rhs; }
 	bool operator <(const OptionKey& rhs) const { return key < rhs.key; }
-	friend bool operator <(std::wstring_view lhs, const OptionKey& rhs) { return lhs < rhs.key; }
+	friend bool operator <(std::string_view lhs, const OptionKey& rhs) { return lhs < rhs.key; }
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -44,16 +44,17 @@ public:
 
 	// Добавляет опцию в набор. Если такая опция уже есть,
 	// то её существующее значение будет заменено на value
+	void AddOption(std::string_view key, std::wstring_view value = L"");
 	void AddOption(std::wstring_view key, std::wstring_view value = L"");
 
 	// Возвращает true, если указанная опция существует
-	bool HasOption(std::wstring_view key) const;
+	bool HasOption(std::string_view key) const;
 
 	// Возвращает опцию, соответствующую ключу key
-	const OptionKey& operator[](std::wstring_view key) const;
+	const OptionKey& operator[](std::string_view key) const;
 
 private:
-	static std::wstring SanitizeKey(std::wstring_view key);
+	static std::string SanitizeKey(std::string_view key);
 
 	std::set<OptionKey, std::less<>> m_Options;
 };

@@ -17,7 +17,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------------------------------------
-OptionKey::OptionKey(std::wstring_view _key, std::wstring_view _value)
+OptionKey::OptionKey(std::string_view _key, std::wstring_view _value)
 	: key(_key)
 	, value(_value)
 {
@@ -54,11 +54,11 @@ int OptionKey::GetNumericValue() const
 //--------------------------------------------------------------------------------------------------------------------------------
 Options::Options()
 {
-	m_Options.emplace(L"");
+	m_Options.emplace("");
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void Options::AddOption(std::wstring_view key, std::wstring_view value)
+void Options::AddOption(std::string_view key, std::wstring_view value)
 {
 	if (auto s = SanitizeKey(key); Verify(!s.empty()))
 	{
@@ -71,7 +71,13 @@ void Options::AddOption(std::wstring_view key, std::wstring_view value)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-bool Options::HasOption(std::wstring_view key) const
+void Options::AddOption(std::wstring_view key, std::wstring_view value)
+{
+	AddOption(util::ToUtf8(key), value);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool Options::HasOption(std::string_view key) const
 {
 	if (auto s = SanitizeKey(key); !s.empty())
 		return m_Options.find(s) != m_Options.end();
@@ -80,7 +86,7 @@ bool Options::HasOption(std::wstring_view key) const
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-const OptionKey& Options::operator[](std::wstring_view key) const
+const OptionKey& Options::operator[](std::string_view key) const
 {
 	if (auto s = SanitizeKey(key); Verify(!s.empty()))
 	{
@@ -94,9 +100,9 @@ const OptionKey& Options::operator[](std::wstring_view key) const
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-std::wstring Options::SanitizeKey(std::wstring_view key)
+std::string Options::SanitizeKey(std::string_view key)
 {
-	std::wstring s = util::Trim(key);
+	std::string s = util::Trim(key);
 	util::LoCaseInplace(s, true);
 	return s;
 }

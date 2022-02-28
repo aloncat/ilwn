@@ -6,12 +6,7 @@
 
 #include "factorsearch.h"
 
-//--------------------------------------------------------------------------------------------------------------------------------
-class SearchX2XCommon : public FactorSearch
-{
-protected:
-	virtual bool MightHaveSolution(const Task& task) const override;
-};
+#include <string>
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -20,10 +15,13 @@ protected:
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------------------------------------
-class SearchX22 : public SearchX2XCommon
+class SearchX22 : public FactorSearch
 {
 protected:
 	virtual std::wstring GetAdditionalInfo() const override;
+
+	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors) override;
+	virtual void SelectNextTask(Task& task) override;
 
 	virtual void PerformTask(Worker* worker) override;
 
@@ -38,11 +36,12 @@ protected:
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------------------------------------
-class SearchX23 : public SearchX2XCommon
+class SearchX23 : public FactorSearch
 {
 protected:
 	virtual std::wstring GetAdditionalInfo() const override;
 
+	virtual bool MightHaveSolution(const Task& task) const override;
 	virtual void PerformTask(Worker* worker) override;
 
 	template<class NumberT>

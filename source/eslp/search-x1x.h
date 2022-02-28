@@ -6,6 +6,8 @@
 
 #include "factorsearch.h"
 
+#include <string>
+
 //--------------------------------------------------------------------------------------------------------------------------------
 class SearchX1XCommon : public FactorSearch
 {

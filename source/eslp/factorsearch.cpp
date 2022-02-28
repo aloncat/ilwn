@@ -61,14 +61,14 @@ void FactorSearch::Search(const std::vector<unsigned>& startFactors)
 	size_t maxWorkerCount = util::SystemInfo::Instance().GetCoreCount().logical;
 	m_ActiveWorkers = maxWorkerCount - ((maxWorkerCount <= 4) ? 0 : 1);
 
-	if (m_Options.HasOption(L"thread"))
+	if (m_Options.HasOption("thread"))
 	{
-		m_ActiveWorkers = util::Clamp(m_Options[L"thread"].GetNumericValue(),
-			1, static_cast<int>(m_ActiveWorkers));
+		int count = m_Options["thread"].GetNumericValue();
+		m_ActiveWorkers = util::Clamp(count, 1, static_cast<int>(m_ActiveWorkers));
 	}
 
 	m_PrintSolutions = true;
-	m_PrintAllSolutions = m_Options.HasOption(L"printall");
+	m_PrintAllSolutions = m_Options.HasOption("printall");
 
 	CreateWorkers(maxWorkerCount);
 	m_NextTask = new Task;
@@ -131,16 +131,16 @@ void FactorSearch::UpdateConsoleTitle()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void FactorSearch::InitFirstTask(const std::vector<unsigned>& startFactors)
+void FactorSearch::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
 {
-	m_NextTask->factorCount = m_Info.leftCount;
+	task.factorCount = m_Info.leftCount;
 	const int count = std::min(m_Info.leftCount, static_cast<int>(startFactors.size()));
 
 	for (size_t i = 0; i < count; ++i)
-		m_NextTask->factors[i] = startFactors[i];
+		task.factors[i] = startFactors[i];
 
 	for (int i = count; i < m_Info.leftCount; ++i)
-		m_NextTask->factors[i] = 1;
+		task.factors[i] = 1;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -540,7 +540,7 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 	PowersArray<NumberT>() = powers.GetData();
 	m_Hashes.Init(upperLimit.second, powers);
 
-	InitFirstTask(startFactors);
+	InitFirstTask(*m_NextTask, startFactors);
 	m_LastDoneHiFactor = hiFactor - 1;
 	m_LastHiFactor = upperLimit.first;
 

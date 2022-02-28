@@ -31,11 +31,14 @@ MultiSearch::Instance MultiSearch::CreateInstance(int power, int leftCount, int 
 
 		if (rightCount == 3)
 		{
+			// X23 и E23 - оптимизированные алгоритмы для уравнения вида x.2.3. X23 подходит для любых степеней;
+			// но E23 имеет дополнительные оптимизации и подходит только для чётных степеней до 20-й включительно
 			return (power & 1) ? std::make_unique<SearchX23>() :
 				std::make_unique<SearchE23>();
 		}
 	}
 
+	// Дефолтный универсальный алгоритм
 	return std::make_unique<MultiSearch>();
 }
 
@@ -49,19 +52,17 @@ MultiSearch::Instance MultiSearch::CreateInstance(int power, int leftCount, int 
 bool MultiSearch::MightHaveSolution(const Task& task) const
 {
 	const unsigned* factors = task.factors;
-	// NB: у нас нет оптимизаций для нечётных степеней
+
+	// NB: оптимизация (фильтр заданий) для универсального алгоритма ограничена
+	// только чётными степенями уравнения и 1 коэффициентом в его левой части
 	if (m_Info.leftCount != 1 || (m_Info.power & 1))
 		return true;
 
-	// Уравнения 2.1.n
-	if (m_Info.power == 2)
-	{
-		// Z не может быть чётным для n < 4
-		if (m_Info.rightCount < 4 && !(factors[0] & 1))
-			return false;
-	}
+	// NB: для уравнений 2.1.3 и 2.1.4 оптимизации не нужны, так как у
+	// нас есть отдельные оптимизированные алгоритмы для x.1.2 и x.1.3
+
 	// Уравнение 4.1.n
-	else if (m_Info.power == 4)
+	if (m_Info.power == 4)
 	{
 		// Для n < 16
 		if (m_Info.rightCount < 16)

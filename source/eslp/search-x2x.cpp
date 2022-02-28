@@ -9,29 +9,6 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//   Общая функция проверки старшего коэффициента левой части уравнения
-//
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//--------------------------------------------------------------------------------------------------------------------------------
-bool SearchX2XCommon::MightHaveSolution(const Task& task) const
-{
-	// Все чётные степени от 2 до 20 включительно
-	if (!(m_Info.power & 1) && m_Info.power <= 20)
-	{
-		// Коэффициенты не могут быть чётными одновременно
-		if (!(task.factors[0] & 1) && !(task.factors[1] & 1))
-			return false;
-
-		// NB: оптимизация одновременной кратности 3 и 5 для 4-й степени не имеет смысла, так как даёт очень
-		// небольшой эффект и только для случая rightCount == 3. Оптимизации для 6-й степени не имеют смысла
-	}
-
-	return true;
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
 //   SearchX22 - улучшенный алгоритм для уравнений x.2.2
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39,8 +16,25 @@ bool SearchX2XCommon::MightHaveSolution(const Task& task) const
 //--------------------------------------------------------------------------------------------------------------------------------
 std::wstring SearchX22::GetAdditionalInfo() const
 {
-	Assert(m_Info.leftCount == 2 && m_Info.rightCount == 2);
+	Assert(m_Info.power <= 20 && m_Info.leftCount == 2 && m_Info.rightCount == 2);
 	return L"#15optimized #7algorithm for #6#X.2.2";
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void SearchX22::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
+{
+	// NB: для x.2.2 задание задаёт только старший коэффициент левой части. 2-й коэффициент
+	// в левой части, так же, как и коэффициенты в правой, перебираются в SearchFactors
+	Assert(!startFactors.empty());
+
+	task.factorCount = 1;
+	task.factors[0] = startFactors[0];
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void SearchX22::SelectNextTask(Task& task)
+{
+	++task.factors[0];
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -60,48 +54,55 @@ AML_NOINLINE void SearchX22::SearchFactors(Worker* worker, const NumberT* powers
 	// менее 8 элементов (см. функцию OnProgress)
 	unsigned k[8];
 
-	// Коэффициенты левой части
+	// Старший коэф-т левой части
 	k[0] = worker->task.factors[0];
-	k[1] = worker->task.factors[1];
 
-	// Сумма в левой части уравнения
-	const auto z = powers[k[0]] + powers[k[1]];
+	// NB: если значение k[0] чётно, то k[1] не может быть чётным (для любых чётных степеней), иначе
+	// решение не будет примитивным. В этих случаях мы должны проверять только нечётные значения k[1]
+	const unsigned delta = ((m_Info.power & 1) || (k[0] & 1)) ? 1 : 2;
 
-	k[2] = 1;
-	// Пропускаем низкие значения старшего коэф-та
-	for (unsigned step = k[0] >> 1; step; step >>= 1)
+	// Перебор 2-го коэф-та левой части
+	for (k[1] = 1; k[1] <= k[0]; k[1] += delta)
 	{
-		auto f = k[2] + step;
-		if (z > powers[f - 1] * 2)
-			k[2] = f;
-	}
+		// Сумма в левой части уравнения
+		const auto z = powers[k[0]] + powers[k[1]];
 
-	for (; k[2] < k[0]; ++k[2])
-	{
-		if (const auto lastFP = z - powers[k[2]]; m_Hashes.Exists(lastFP))
+		k[2] = 1;
+		// Пропускаем низкие значения старшего коэф-та
+		for (unsigned step = k[0] >> 1; step; step >>= 1)
 		{
-			for (unsigned lo = 1, hi = k[2]; lo <= hi;)
+			auto f = k[2] + step;
+			if (z > powers[f - 1] * 2)
+				k[2] = f;
+		}
+
+		for (; k[2] < k[0]; ++k[2])
+		{
+			if (const auto lastFP = z - powers[k[2]]; m_Hashes.Exists(lastFP))
 			{
-				unsigned mid = (lo + hi) >> 1;
-				if (auto v = powers[mid]; v < lastFP)
-					lo = mid + 1;
-				else if (v > lastFP)
-					hi = mid - 1;
-				else
+				for (unsigned lo = 1, hi = k[2]; lo <= hi;)
 				{
-					k[3] = mid;
-					OnSolutionFound(worker, k);
-					break;
+					unsigned mid = (lo + hi) >> 1;
+					if (auto v = powers[mid]; v < lastFP)
+						lo = mid + 1;
+					else if (v > lastFP)
+						hi = mid - 1;
+					else
+					{
+						k[3] = mid;
+						OnSolutionFound(worker, k);
+						break;
+					}
 				}
 			}
 		}
-	}
 
-	// Вывод прогресса
-	if (!(++worker->progressCounter & 0x3ff))
-	{
-		if (OnProgress(worker, k))
-			return;
+		// Вывод прогресса
+		if (!(++worker->progressCounter & 0x3ff))
+		{
+			if (OnProgress(worker, k))
+				return;
+		}
 	}
 }
 
@@ -116,6 +117,23 @@ std::wstring SearchX23::GetAdditionalInfo() const
 {
 	Assert(m_Info.leftCount == 2 && m_Info.rightCount == 3);
 	return L"#15optimized #7algorithm for #6#X.2.3";
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool SearchX23::MightHaveSolution(const Task& task) const
+{
+	// Все чётные степени от 2 до 20 включительно
+	if (!(m_Info.power & 1) && m_Info.power <= 20)
+	{
+		// Коэффициенты не могут быть чётными одновременно
+		if (!(task.factors[0] & 1) && !(task.factors[1] & 1))
+			return false;
+
+		// NB: оптимизация одновременной кратности 3 и 5 для 4-й степени не имеет смысла, так как даёт очень
+		// небольшой эффект и только для случая rightCount == 3. Оптимизации для 6-й степени не имеют смысла
+	}
+
+	return true;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------

@@ -19,11 +19,12 @@ class MultiSearch : public FactorSearch
 {
 public:
 	using Instance = std::unique_ptr<FactorSearch>;
+
+	// Создаёт экземпляр наиболее подходящего (оптимального) класса поиска
 	static Instance CreateInstance(int power, int leftCount, int rightCount);
 
 protected:
 	virtual bool MightHaveSolution(const Task& task) const override;
-
 	virtual void PerformTask(Worker* worker) override;
 
 	template<class NumberT>

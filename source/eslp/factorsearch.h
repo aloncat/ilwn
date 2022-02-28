@@ -40,9 +40,9 @@ protected:
 	// Обновляет заголовок окна консоли
 	virtual void UpdateConsoleTitle() override;
 
-	// Инициализирует начальное задание (поля внутри m_NextTask) и
-	// устанавливает количество задаваемых коэффициентов в задании
-	virtual void InitFirstTask(const std::vector<unsigned>& startFactors);
+	// Инициализирует начальное задание task из набора коэфициентов startFactors
+	// и устанавливает количество коэффициентов, которые будут задаваться заданием
+	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors);
 
 	// Выбирает следующее задание
 	virtual void SelectNextTask(Task& task);
