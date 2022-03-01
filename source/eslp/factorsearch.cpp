@@ -134,12 +134,12 @@ void FactorSearch::UpdateConsoleTitle()
 void FactorSearch::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
 {
 	task.factorCount = m_Info.leftCount;
-	const int count = std::min(m_Info.leftCount, static_cast<int>(startFactors.size()));
+	const int count = std::min(task.factorCount, static_cast<int>(startFactors.size()));
 
 	for (size_t i = 0; i < count; ++i)
 		task.factors[i] = startFactors[i];
 
-	for (int i = count; i < m_Info.leftCount; ++i)
+	for (int i = count; i < task.factorCount; ++i)
 		task.factors[i] = 1;
 }
 
@@ -147,22 +147,18 @@ void FactorSearch::InitFirstTask(Task& task, const std::vector<unsigned>& startF
 void FactorSearch::SelectNextTask(Task& task)
 {
 	unsigned* k = task.factors;
-
-	// Выбираем следующее задание среди коэффициентов левой части
-	for (int i = m_Info.leftCount - 1;; --i)
+	for (int i = task.factorCount - 1; i; --i)
 	{
-		if (i == 0)
-		{
-			++k[0];
-			break;
-		}
 		if (k[i - 1] > k[i])
 		{
 			++k[i];
-			break;
+			return;
 		}
+
 		k[i] = 1;
 	}
+
+	++k[0];
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -176,7 +172,7 @@ const NumberT*& FactorSearch::PowersArray()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-AML_NOINLINE bool FactorSearch::OnProgress(Worker* worker, const unsigned* factors)
+AML_NOINLINE bool FactorSearch::OnProgress(const Worker* worker, const unsigned* factors)
 {
 	// NB: прогресс обновляется только для самого младшего задания
 	if (worker->workerId == m_LoPendingTask)
@@ -193,37 +189,44 @@ AML_NOINLINE bool FactorSearch::OnProgress(Worker* worker, const unsigned* facto
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-AML_NOINLINE void FactorSearch::OnSolutionFound(Worker* worker, const unsigned* factors)
+AML_NOINLINE void FactorSearch::OnSolutionFound(const Worker* worker, const unsigned* factors)
 {
 	Solution solution(factors, m_Info.leftCount, m_Info.rightCount);
 	solution.SortFactors();
 
-	// NB: нам следует пропускать решения, в которых количество коэффициентов слева и справа одинаково
-	// и при этом старший коэффициент правой части больше или равен старшего коэффициента в левой
-	if (m_Info.leftCount != m_Info.rightCount || solution.left[0] > solution.right[0])
+	// Будем пропускать решения, в которых количество коэффициентов слева и справа одинаково и
+	// при этом старший коэффициент правой части больше или равен старшего коэффициента в левой
+	if (m_Info.leftCount == m_Info.rightCount && solution.left[0] <= solution.right[0])
+		return;
+
+	// Если решение вырождено, то также пропустим его
+	if (solution.IsConfluent())
+		return;
+
+	for (;;)
 	{
-		for (;;)
+		m_TaskCS.Enter();
+
+		// Если это решение самого младшего (старого) задания, то мы всегда добавляем его в контейнер.
+		// В ином случае проверяем, сколько решений в контейнере, и если он "переполнен", то остальные
+		// потоки (решения других заданий) должны подождать, когда освободится место
+		if (worker->workerId <= m_LoPendingTask || m_PendingSolutions.size() < 5000)
 		{
-			m_TaskCS.Enter();
-
-			// Если это решение самого младшего (старого) задания, то мы всегда добавляем его в контейнер.
-			// В ином случае проверяем, сколько решений в контейнере, и если он "переполнен", то остальные
-			// потоки (решения других заданий) должны подождать, когда освободится место
-			if (worker->workerId <= m_LoPendingTask || m_PendingSolutions.size() < 5000)
+			// Отсеиваем непримитивные решения. NB: так как проверка делается функцией класса Solutions,
+			// который не потокобезопасен, то проверяем примитивность решения внутри критической секции
+			if (m_Solutions.IsPrimitive(solution))
 			{
-				// Отсеиваем вырожденные и непримитивные решения
-				if (!solution.IsConfluent() && m_Solutions.IsPrimitive(solution))
-					m_PendingSolutions.push_back(std::move(solution));
-
-				m_TaskCS.Leave();
-				return;
+				m_PendingSolutions.push_back(std::move(solution));
 			}
 
-			// Освобождаем критическую секцию, и ждём. Если поток, обрабатывающий младшее
-			// задание за это время его закончит, то место в контейнере освободится
 			m_TaskCS.Leave();
-			::Sleep(1);
+			return;
 		}
+
+		// Освобождаем критическую секцию, и ждём. Если поток, обрабатывающий младшее
+		// задание за это время его закончит, то место в контейнере освободится
+		m_TaskCS.Leave();
+		::Sleep(1);
 	}
 }
 
@@ -829,18 +832,26 @@ FactorSearch::Task& FactorSearch::Task::operator =(const Task& that) noexcept
 //--------------------------------------------------------------------------------------------------------------------------------
 bool FactorSearch::Task::operator >(const Solution& rhs) const noexcept
 {
-	const int leftCount = static_cast<int>(rhs.left.size());
-
-	for (int i = 0; i < leftCount; ++i)
+	if (const int leftCount = static_cast<int>(rhs.left.size()); factorCount <= leftCount)
 	{
-		if (auto f = rhs.left[i]; factors[i] != f)
-			return factors[i] > f;
-	}
-
-	for (int i = leftCount; i < factorCount; ++i)
+		for (int i = 0; i < factorCount; ++i)
+		{
+			if (auto f = rhs.left[i]; factors[i] != f)
+				return factors[i] > f;
+		}
+	} else
 	{
-		if (auto f = rhs.right[i - leftCount]; factors[i] != f)
-			return factors[i] > f;
+		for (int i = 0; i < leftCount; ++i)
+		{
+			if (auto f = rhs.left[i]; factors[i] != f)
+				return factors[i] > f;
+		}
+
+		for (int i = leftCount; i < factorCount; ++i)
+		{
+			if (auto f = rhs.right[i - leftCount]; factors[i] != f)
+				return factors[i] > f;
+		}
 	}
 
 	return false;
