@@ -41,7 +41,6 @@ class SearchX23 : public FactorSearch
 protected:
 	virtual std::wstring GetAdditionalInfo() const override;
 
-	virtual bool MightHaveSolution(const Task& task) const override;
 	virtual void PerformTask(Worker* worker) override;
 
 	template<class NumberT>
@@ -54,6 +53,7 @@ class SearchE23 : public SearchX23
 protected:
 	virtual std::wstring GetAdditionalInfo() const override;
 
+	virtual bool MightHaveSolution(const Task& task) const override;
 	virtual void PerformTask(Worker* worker) override;
 
 	template<class NumberT>

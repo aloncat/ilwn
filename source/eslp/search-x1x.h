@@ -51,3 +51,25 @@ protected:
 	template<class NumberT>
 	void SearchFactors(Worker* worker, const NumberT* powers);
 };
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   SearchE1X - улучшенный алгоритм для уравнений p.1.n (для чётных p при некоторых n)
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//--------------------------------------------------------------------------------------------------------------------------------
+class SearchE1X : public SearchX1XCommon
+{
+public:
+	static bool IsSuitable(int power, int leftCount, int rightCount);
+
+protected:
+	virtual std::wstring GetAdditionalInfo() const override;
+
+	virtual bool MightHaveSolution(const Task& task) const override;
+	virtual void PerformTask(Worker* worker) override;
+
+	template<class NumberT>
+	void SearchFactors(Worker* worker, const NumberT* powers);
+};

@@ -120,23 +120,6 @@ std::wstring SearchX23::GetAdditionalInfo() const
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-bool SearchX23::MightHaveSolution(const Task& task) const
-{
-	// Все чётные степени от 2 до 20 включительно
-	if (!(m_Info.power & 1) && m_Info.power <= 20)
-	{
-		// Коэффициенты не могут быть чётными одновременно
-		if (!(task.factors[0] & 1) && !(task.factors[1] & 1))
-			return false;
-
-		// NB: оптимизация одновременной кратности 3 и 5 для 4-й степени не имеет смысла, так как даёт очень
-		// небольшой эффект и только для случая rightCount == 3. Оптимизации для 6-й степени не имеют смысла
-	}
-
-	return true;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
 void SearchX23::PerformTask(Worker* worker)
 {
 	if (m_Pow64)
@@ -234,7 +217,22 @@ AML_NOINLINE void SearchX23::SearchFactors(Worker* worker, const NumberT* powers
 std::wstring SearchE23::GetAdditionalInfo() const
 {
 	Assert(!(m_Info.power & 1) && m_Info.power <= 20);
-	return SearchX23::GetAdditionalInfo();
+	Assert(m_Info.leftCount == 2 && m_Info.rightCount == 3);
+
+	return L"#15optimized #7algorithm for #6#E.2.3";
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool SearchE23::MightHaveSolution(const Task& task) const
+{
+	// Коэффициенты не могут быть чётными одновременно
+	if (!(task.factors[0] & 1) && !(task.factors[1] & 1))
+		return false;
+
+	// NB: оптимизация одновременной кратности 3 и 5 для 4-й степени не имеет смысла, так как даёт очень
+	// небольшой эффект и только для случая rightCount == 3. Оптимизации для 6-й степени не имеют смысла
+
+	return true;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------

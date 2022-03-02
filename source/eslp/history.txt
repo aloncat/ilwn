@@ -1,5 +1,5 @@
 === Version 0.30 ===
-Released: 2022-02-xx
+Released: 2022-03-xx
 
 == Changes ==
  * '--printall' command line option.
@@ -8,7 +8,7 @@ Released: 2022-02-xx
 
 == Features ==
  * Arbitrary number of coefficients on either side.
- * Optimized algorithms for x.1.2 & x.1.3 equation.
+ * Optimized algorithms for some of x.1.x equations.
  * Optimized algorithms for x.2.2 & x.2.3 equation.
 
 

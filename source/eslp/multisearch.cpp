@@ -25,6 +25,8 @@ MultiSearch::Instance MultiSearch::CreateInstance(int power, int leftCount, int 
 				return std::make_unique<SearchX12>();
 			if (rightCount == 3)
 				return std::make_unique<SearchX13>();
+			if (SearchE1X::IsSuitable(power, leftCount, rightCount))
+				return std::make_unique<SearchE1X>();
 		}
 		else if (leftCount == 2)
 		{
@@ -54,15 +56,13 @@ MultiSearch::Instance MultiSearch::CreateInstance(int power, int leftCount, int 
 //--------------------------------------------------------------------------------------------------------------------------------
 bool MultiSearch::MightHaveSolution(const Task& task) const
 {
-	const unsigned* factors = task.factors;
-
 	// NB: оптимизация (фильтр заданий) для универсального алгоритма ограничена
 	// только чётными степенями уравнения и 1 коэффициентом в его левой части
 	if (m_Info.leftCount != 1 || (m_Info.power & 1))
 		return true;
 
-	// NB: для уравнений 2.1.3 и 2.1.4 оптимизации не нужны, так как у
-	// нас есть отдельные оптимизированные алгоритмы для x.1.2 и x.1.3
+	// NB: для уравнений 2.1.2 и 2.1.3 оптимизации не нужны, так как есть отдельные
+	// алгоритмы для x.1.2 и x.1.3. Оптимизаций для 2.1.n, где n >= 4, - вообще нет
 
 	// Уравнение 4.1.n
 	if (m_Info.power == 4)
@@ -71,54 +71,73 @@ bool MultiSearch::MightHaveSolution(const Task& task) const
 		if (m_Info.rightCount < 16)
 		{
 			// Z не может быть чётным
-			if (!(factors[0] & 1))
+			if (!(task.factors[0] & 1))
 				return false;
 			// Z не может быть кратным 5 для n < 5
-			if (m_Info.rightCount < 5 && !(factors[0] % 5))
+			if (m_Info.rightCount < 5 && !(task.factors[0] % 5))
 				return false;
 		}
 	}
 	// Уравнение 6.1.n
 	else if (m_Info.power == 6)
 	{
-		// Для n < 8
-		if (m_Info.rightCount < 8)
-		{
-			// Z не может быть чётным
-			if (!(factors[0] & 1))
-				return false;
-		}
+		// Z не может быть чётным для n < 8
+		if (m_Info.rightCount < 8 && !(task.factors[0] & 1))
+			return false;
+
 		// Для n < 9
 		if (m_Info.rightCount < 9)
 		{
 			// Z не может быть кратно 3
-			if (!(factors[0] % 3))
+			if (!(task.factors[0] % 3))
 				return false;
 			// Z не может быть кратным 7 для n < 7
-			if (m_Info.rightCount < 7 && !(factors[0] % 7))
+			if (m_Info.rightCount < 7 && !(task.factors[0] % 7))
 				return false;
 		}
 	}
 	// Уравнение 8.1.n
 	else if (m_Info.power == 8)
 	{
-		// Z не может быть чётным для n < 32
-		if (m_Info.rightCount < 32 && !(factors[0] & 1))
-			return false;
+		// Для n < 32
+		if (m_Info.rightCount < 32)
+		{
+			// Z не может быть чётным
+			if (!(task.factors[0] & 1))
+				return false;
+			// Z не может быть кратным 5 для n < 5
+			if (m_Info.rightCount < 5 && !(task.factors[0] % 5))
+				return false;
+		}
 	}
-	// Уравнение 10.1.n
-	else if (m_Info.power == 10)
+	// Степени 10, 12, ..., 20
+	else if (m_Info.power <= 20)
 	{
-		// Z не может быть кратным 11 для n < 11
-		if (m_Info.rightCount < 11 && !(factors[0] % 11))
-			return false;
+		// Z не может быть чётным...
+		if (!(task.factors[0] & 1))
+		{
+			// ...если n < 8
+			if (m_Info.rightCount < 8)
+				return false;
+			// ...если n < 16 (для степеней, кратных 4)
+			if (!(m_Info.power & 3) && m_Info.rightCount < 16)
+				return false;
+			// ...если n < 64 (для 16-й степени)
+			if (m_Info.power == 16 && m_Info.rightCount < 64)
+				return false;
+		}
+
+		// Уравнение 10.1.n
+		if (m_Info.power == 10)
+		{
+			// Z не может быть кратным 11 для n < 11
+			if (m_Info.rightCount < 11 && !(task.factors[0] % 11))
+				return false;
+		}
 	}
 
 	// TODO: добавить оптимизацию левой части для x.2.x (и x.2.4 в частности) для случая чётных степеней:
 	// оба коэффициента в левой части не могут быть чётными одновременно для многих значений rightCount
-
-	// TODO: для 10-й, 12-й, 14-й и других чётных степеней также есть оптимизации чётности,
-	// но ограничения по количеству коэффициентов правой части там разные, - добавить их
 
 	return true;
 }
@@ -134,7 +153,7 @@ void MultiSearch::PerformTask(Worker* worker)
 
 //--------------------------------------------------------------------------------------------------------------------------------
 template<class NumberT>
-void MultiSearch::SearchFactors(Worker* worker, const NumberT* powers)
+AML_NOINLINE void MultiSearch::SearchFactors(Worker* worker, const NumberT* powers)
 {
 	// Коэффициенты уравнения
 	unsigned factors[MAX_FACTOR_COUNT];
