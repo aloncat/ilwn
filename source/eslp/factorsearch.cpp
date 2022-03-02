@@ -48,6 +48,7 @@ void FactorSearch::Search(const std::vector<unsigned>& startFactors)
 	m_SolutionsFound = 0;
 	m_PendingSolutions.clear();
 	m_PendingSolutions.reserve(100);
+	m_PendingTasks.reserve(64);
 	m_LastDoneHiFactor = 0;
 
 	m_NoTasks = false;
@@ -369,7 +370,8 @@ void FactorSearch::WorkerMainFn(Worker* worker)
 	HANDLE threadHandle = ::GetCurrentThread();
 	::SetThreadPriority(threadHandle, THREAD_PRIORITY_IDLE);
 
-	for (int i = 0; i < 8; ++i)
+	Assert(util::CountOf(m_Progress) <= Task::MAX_COUNT);
+	for (int i = 0; i < util::CountOf(m_Progress); ++i)
 		worker->task.factors[i] = 1;
 
 	while (!worker->shouldQuit)
@@ -514,7 +516,7 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors)
 	// В зависимости от количества коэффициентов в уравнении, мы бы
 	// хотели проверять различное количество старших коэффициентов за раз
 	static const unsigned countImpact[10] = { 0, 0, 0, 80000, 8000, 2200, 800, 640, 420, 300 };
-	unsigned toCheck = (factorCount >= 2 && factorCount <= 9) ? countImpact[factorCount] : 200;
+	unsigned toCheck = (factorCount >= 3 && factorCount <= 9) ? countImpact[factorCount] : 200;
 	// Для чётных степеней, не превышающих 8, увеличиваем значение в 1.5 раза
 	toCheck += ((m_Info.power & 1) || m_Info.power > 8) ? 0 : toCheck / 2;
 
@@ -535,7 +537,7 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 	const unsigned hiFactor = startFactors[0];
 	const auto upperLimit = CalcUpperValue<NumberT>(hiFactor + std::min(UINT_MAX - hiFactor, toCheck - 1));
 
-	if (hiFactor > upperLimit.first)
+	if (!hiFactor || hiFactor > upperLimit.first)
 		return 0;
 
 	Powers<NumberT> powers;
@@ -607,7 +609,7 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 	if (m_LastProgressLength)
 	{
 		// Очистим строку на экране, в которой выводился прогресс
-		aux::Print("\r" + std::string(m_LastProgressLength, ' '));
+		aux::Print("\r" + std::string(m_LastProgressLength, ' ') + "\r");
 		m_LastProgressLength = 0;
 	}
 
