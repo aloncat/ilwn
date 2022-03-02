@@ -15,26 +15,29 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------------------------------------
-MultiSearch::Instance MultiSearch::CreateInstance(int power, int leftCount, int rightCount)
+MultiSearch::Instance MultiSearch::CreateInstance(int power, int leftCount, int rightCount, const Options& options)
 {
-	if (leftCount == 1)
+	if (!options.HasOption("nocustom"))
 	{
-		if (rightCount == 2)
-			return std::make_unique<SearchX12>();
-		if (rightCount == 3)
-			return std::make_unique<SearchX13>();
-	}
-	else if (leftCount == 2)
-	{
-		if (rightCount == 2)
-			return std::make_unique<SearchX22>();
-
-		if (rightCount == 3)
+		if (leftCount == 1)
 		{
-			// X23 и E23 - оптимизированные алгоритмы для уравнения вида x.2.3. X23 подходит для любых степеней;
-			// но E23 имеет дополнительные оптимизации и подходит только для чётных степеней до 20-й включительно
-			return (power & 1) ? std::make_unique<SearchX23>() :
-				std::make_unique<SearchE23>();
+			if (rightCount == 2)
+				return std::make_unique<SearchX12>();
+			if (rightCount == 3)
+				return std::make_unique<SearchX13>();
+		}
+		else if (leftCount == 2)
+		{
+			if (rightCount == 2)
+				return std::make_unique<SearchX22>();
+
+			if (rightCount == 3)
+			{
+				// X23 и E23 - оптимизированные алгоритмы для уравнения вида x.2.3. X23 подходит для любых степеней;
+				// но E23 имеет дополнительные оптимизации и подходит только для чётных степеней до 20-й включительно
+				return (power & 1) ? std::make_unique<SearchX23>() :
+					std::make_unique<SearchE23>();
+			}
 		}
 	}
 
@@ -111,6 +114,12 @@ bool MultiSearch::MightHaveSolution(const Task& task) const
 			return false;
 	}
 
+	// TODO: добавить оптимизацию левой части для x.2.x (и x.2.4 в частности) для случая чётных степеней:
+	// оба коэффициента в левой части не могут быть чётными одновременно для многих значений rightCount
+
+	// TODO: для 10-й, 12-й, 14-й и других чётных степеней также есть оптимизации чётности,
+	// но ограничения по количеству коэффициентов правой части там разные, - добавить их
+
 	return true;
 }
 
@@ -149,9 +158,9 @@ void MultiSearch::SearchFactors(Worker* worker, const NumberT* powers)
 	for (int i = m_Info.leftCount; i < factorCount - 1; ++i)
 		sum += powers[factors[i]];
 
-	// Количество "перебираемых коэффициентов"
+	// Количество "перебираемых" коэффициентов
 	const int count = factorCount - worker->task.factorCount;
-	// Массив k, начиная с индекса 1, созержит перебираемые коэффициенты правой части уравнения. В
+	// Массив k, начиная с индекса 1, содержит перебираемые коэффициенты правой части уравнения. В
 	// элементе с индексом 0 хранится предшествующий им коэффициент левой или правой части уравнения
 	unsigned* k = factors + (worker->task.factorCount - 1);
 
@@ -194,15 +203,23 @@ void MultiSearch::SearchFactors(Worker* worker, const NumberT* powers)
 
 		// Периодически выводим текущий прогресс. Если пользователь
 		// нажмёт Ctrl-C, то функция вернёт true, мы завершим работу
-		if (!(it++ & 0xfff) && !(++worker->progressCounter & 0x7f))
+		if (!(it++ & 0x7ff) && !(++worker->progressCounter & 0x7f))
 		{
 			if (OnProgress(worker, factors))
 				return;
 		}
 
+		// Увеличиваем предпоследний коэффициент в правой части
+		if (auto f = k[count - 1]; f < k[count - 2])
+		{
+			k[count - 1] = ++f;
+			if (sum += powers[f] - powers[f - 1]; sum < z)
+				continue;
+		}
+
 		int idx = 0;
-		// Переходим к следующему набору коэффициентов правой части, перебирая все возможные
-		// комбинации так, чтобы коэффициенты всегда располагались в невозрастающем порядке
+		// Значение предпоследнего коэффициента или сумма оказались слишком большими. Переходим
+		// к следующему набору коэффициентов правой части, меняя сразу несколько коэффициентов
 		for (int i = count - 1;; --i)
 		{
 			sum -= powers[k[i]];
@@ -225,7 +242,7 @@ void MultiSearch::SearchFactors(Worker* worker, const NumberT* powers)
 		{
 			if (idx == 2)
 			{
-				// NB: для уравнений с одинаковым числом коэффициентов в левой и правой частях, мы не хотим перебирать
+				// Для уравнений с одинаковым числом коэффициентов в левой и правой частях мы не хотим перебирать
 				// старшие коэффициенты правой части, значения которых >= значению старшего коэффициента левой части
 				if (k[1] >= factors[0] && m_Info.leftCount == m_Info.rightCount)
 					return;
@@ -247,7 +264,7 @@ void MultiSearch::SearchFactors(Worker* worker, const NumberT* powers)
 				for (unsigned step = hi >> 1; step; step >>= 1)
 				{
 					auto f = k[idx] + step;
-					if (hi >= f && z > s + powers[f - 1] * rem)
+					if (z > s + powers[f - 1] * rem)
 						k[idx] = f;
 				}
 

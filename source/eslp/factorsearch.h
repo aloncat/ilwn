@@ -35,7 +35,7 @@ protected:
 	struct Worker;
 
 	// Выполняет поиск решений (начиная с указанных значений коэффициентов)
-	virtual void Search(const std::vector<unsigned>& startFactors) override;
+	virtual void Search(const Options& options, const std::vector<unsigned>& startFactors) override;
 
 	// Обновляет заголовок окна консоли
 	virtual void UpdateConsoleTitle() override;

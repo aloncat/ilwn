@@ -22,7 +22,7 @@ SearchBase::~SearchBase()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-bool SearchBase::Run(int power, int leftCount, int rightCount)
+bool SearchBase::Run(int power, int leftCount, int rightCount, const Options& options)
 {
 	if (power < 1 || power > MAX_POWER || leftCount < 1 || rightCount < 2 ||
 		leftCount >= MAX_FACTOR_COUNT || rightCount >= MAX_FACTOR_COUNT ||
@@ -38,9 +38,6 @@ bool SearchBase::Run(int power, int leftCount, int rightCount)
 
 	m_StartTick = ::GetTickCount();
 	m_RunningTime = 0;
-
-	if (!InitOptions())
-		return false;
 
 	// Извлекаем из командной строки стартовые значения первых коэффициентов.
 	// Если ничего не было задано, то функция венёт вектор с одним элементом
@@ -86,7 +83,7 @@ bool SearchBase::Run(int power, int leftCount, int rightCount)
 	if (auto info = GetAdditionalInfo(); !info.empty())
 		aux::Printf(L"#10Using#7 %s\n", info.c_str());
 
-	Search(startFactors);
+	Search(options, startFactors);
 	m_Log.Close();
 
 	return true;
@@ -96,9 +93,73 @@ bool SearchBase::Run(int power, int leftCount, int rightCount)
 void SearchBase::PrintOptionsHelp()
 {
 	aux::Printc("#15Options:\n"
+		"#3  --nocustom     #8Disable all custom (optimized) algorithms\n"
 		"#3  --printall     #7Print all found solutions (first 1K otherwise)\n"
 		"#3  --thread <N>   #7Set initial count of active threads to N\n"
 	);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool SearchBase::InitOptions(Options& options)
+{
+	auto& params = util::SystemInfo::Instance().GetCommandLineParameters();
+
+	bool hasOptions = false;
+	for (size_t i = 3; i < params.size(); ++i)
+	{
+		if (auto s = util::Trim(params[i]); !s.empty())
+		{
+			// Опции должны начинаться с "--"
+			if (util::StrNCmp(s, L"--", 2))
+			{
+				if (!hasOptions)
+					continue;
+
+				// Некорректный параметр в командной строке
+				aux::Printc(util::Formatter<wchar_t>() << L"#12Error: "
+					"invalid token \"" << s << L"\"\n");
+				return false;
+			}
+
+			hasOptions = true;
+			std::wstring_view key = s;
+			key.remove_prefix(2);
+
+			if (!key.empty())
+			{
+				// Опция "--nocustom", отключает все кастомные алгоритмы
+				if (!util::StrInsCmp(key, L"nocustom"))
+				{
+					options.AddOption(key);
+					continue;
+				}
+
+				// Опция "--printall", разрешает вывод большого количества решений на экран
+				if (!util::StrInsCmp(key, L"printall"))
+				{
+					options.AddOption(key);
+					continue;
+				}
+
+				// Опция "--thread <N>", задаёт количество активных потоков
+				if (!util::StrInsCmp(key, L"thread"))
+				{
+					if (i + 1 < params.size() && IsPositiveInteger(params[i + 1]))
+					{
+						options.AddOption(key, params[++i]);
+						continue;
+					}
+				}
+
+				// Опция не распознана или некорректна
+				aux::Printc(util::Formatter<wchar_t>() << L"#12Error: "
+					"invalid option \"" << s << L"\"\n");
+				return false;
+			}
+		}
+	}
+
+	return true;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -181,60 +242,4 @@ std::vector<unsigned> SearchBase::GetStartFactors()
 	}
 
 	return factors;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-bool SearchBase::InitOptions()
-{
-	auto& params = util::SystemInfo::Instance().GetCommandLineParameters();
-
-	bool hasOptions = false;
-	for (size_t i = 3; i < params.size(); ++i)
-	{
-		if (auto s = util::Trim(params[i]); !s.empty())
-		{
-			// Опции должны начинаться с "--"
-			if (util::StrNCmp(s, L"--", 2))
-			{
-				if (!hasOptions)
-					continue;
-
-				// Некорректный параметр в командной строке
-				aux::Printc(util::Formatter<wchar_t>() << L"#12Error: "
-					"invalid token \"" << s << L"\"\n");
-				return false;
-			}
-				
-			hasOptions = true;
-			std::wstring_view key = s;
-			key.remove_prefix(2);
-	
-			if (!key.empty())
-			{
-				// Опция "--printall", разрешает вывод большого количества решений на экран
-				if (!util::StrInsCmp(key, L"printall"))
-				{
-					m_Options.AddOption(key);
-					continue;
-				}
-
-				// Опция "--thread <N>", задаёт количество активных потоков
-				if (!util::StrInsCmp(key, L"thread"))
-				{
-					if (i + 1 < params.size() && IsPositiveInteger(params[i + 1]))
-					{
-						m_Options.AddOption(key, params[++i]);
-						continue;
-					}
-				}
-
-				// Опция не распознана или некорректна
-				aux::Printc(util::Formatter<wchar_t>() << L"#12Error: "
-					"invalid option \"" << s << L"\"\n");
-				return false;
-			}
-		}
-	}
-
-	return true;
 }

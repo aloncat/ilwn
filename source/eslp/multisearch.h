@@ -5,6 +5,7 @@
 #pragma once
 
 #include "factorsearch.h"
+#include "options.h"
 
 #include <memory>
 
@@ -21,7 +22,7 @@ public:
 	using Instance = std::unique_ptr<FactorSearch>;
 
 	// Создаёт экземпляр наиболее подходящего (оптимального) класса поиска
-	static Instance CreateInstance(int power, int leftCount, int rightCount);
+	static Instance CreateInstance(int power, int leftCount, int rightCount, const Options& options);
 
 protected:
 	virtual bool MightHaveSolution(const Task& task) const override;

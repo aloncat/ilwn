@@ -12,6 +12,7 @@
 class SearchX1XCommon : public FactorSearch
 {
 protected:
+	virtual void SelectNextTask(Task& task) override;
 	virtual bool MightHaveSolution(const Task& task) const override;
 };
 

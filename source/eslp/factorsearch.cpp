@@ -37,7 +37,7 @@ FactorSearch::~FactorSearch()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void FactorSearch::Search(const std::vector<unsigned>& startFactors)
+void FactorSearch::Search(const Options& options, const std::vector<unsigned>& startFactors)
 {
 	if (!Verify(!startFactors.empty()))
 		return;
@@ -62,14 +62,14 @@ void FactorSearch::Search(const std::vector<unsigned>& startFactors)
 	size_t maxWorkerCount = util::SystemInfo::Instance().GetCoreCount().logical;
 	m_ActiveWorkers = maxWorkerCount - ((maxWorkerCount <= 4) ? 0 : 1);
 
-	if (m_Options.HasOption("thread"))
+	if (options.HasOption("thread"))
 	{
-		int count = m_Options["thread"].GetNumericValue();
+		int count = options["thread"].GetNumericValue();
 		m_ActiveWorkers = util::Clamp(count, 1, static_cast<int>(m_ActiveWorkers));
 	}
 
 	m_PrintSolutions = true;
-	m_PrintAllSolutions = m_Options.HasOption("printall");
+	m_PrintAllSolutions = options.HasOption("printall");
 
 	CreateWorkers(maxWorkerCount);
 	m_NextTask = new Task;

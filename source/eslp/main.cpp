@@ -5,6 +5,7 @@
 #include "pch.h"
 
 #include "multisearch.h"
+#include "options.h"
 #include "searchbase.h"
 #include "util.h"
 
@@ -41,14 +42,18 @@ static int Main(int argCount, const wchar_t* args[])
 			leftCount < maxCount && rightCount < maxCount && leftCount <= rightCount &&
 			leftCount + rightCount <= maxCount)
 		{
+			Options options;
+			if (!SearchBase::InitOptions(options))
+				return 1;
+
 			// Создаём подходящий объект (универсального класса MultiSearch
 			// или класса со спецализированным алгоритмом, если такой имеется)
-			auto instance = MultiSearch::CreateInstance(power, leftCount, rightCount);
+			auto instance = MultiSearch::CreateInstance(power, leftCount, rightCount, options);
 
 			// Ищем решения. Передаём в функцию только значение степени и количество коэффициентов
 			// уравнения (начальные значения старших коэффициентов функция получит самостоятельно).
 			// При возникновении ошибки функция вернёт false и выведет сообщение в окно консоли
-			return instance->Run(power, leftCount, rightCount) ? 0 : 1;
+			return instance->Run(power, leftCount, rightCount, options) ? 0 : 1;
 		}
 	}
 

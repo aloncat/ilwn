@@ -33,10 +33,13 @@ public:
 
 	// Выполняет поиск. Если произойдёт ошибка, то функция вернёт false.
 	// В этом случае сообщение об ошибке будет выведено в окно консоли
-	bool Run(int power, int leftCount, int rightCount);
+	bool Run(int power, int leftCount, int rightCount, const Options& options);
 
 	// Выводит справку по опциям
 	static void PrintOptionsHelp();
+
+	// Инициализирует опции
+	static bool InitOptions(Options& options);
 
 protected:
 	struct EquationInfo {
@@ -56,7 +59,7 @@ protected:
 
 	// Выполняет поиск решений. Вектор startFactors
 	// содержит стартовые значения первых коэффициентов
-	virtual void Search(const std::vector<unsigned>& startFactors) = 0;
+	virtual void Search(const Options& options, const std::vector<unsigned>& startFactors) = 0;
 
 	// Обновляет заголовок окна консоли
 	virtual void UpdateConsoleTitle() = 0;
@@ -69,13 +72,8 @@ private:
 	// коэффициентов, полученный из командной строки
 	static std::vector<unsigned> GetStartFactors();
 
-	// Инициализирует опции
-	bool InitOptions();
-
 protected:
 	EquationInfo m_Info;		// Параметры уравнения
-	Options m_Options;			// Список опций (из командной строки)
-
 	util::BinaryFile m_Log;		// Файл журнала (для вывода результатов)
 
 private:
