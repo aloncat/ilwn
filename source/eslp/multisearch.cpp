@@ -61,11 +61,15 @@ bool MultiSearch::MightHaveSolution(const Task& task) const
 	if (m_Info.leftCount != 1 || (m_Info.power & 1))
 		return true;
 
-	// NB: для уравнений 2.1.2 и 2.1.3 оптимизации не нужны, так как есть отдельные
-	// алгоритмы для x.1.2 и x.1.3. Оптимизаций для 2.1.n, где n >= 4, - вообще нет
-
+	// Уравнение 2.1.n
+	if (m_Info.power == 2)
+	{
+		// Z не может быть чётным для n < 4
+		if (m_Info.rightCount < 4 && !(task.factors[0] & 1))
+			return false;
+	}
 	// Уравнение 4.1.n
-	if (m_Info.power == 4)
+	else if (m_Info.power == 4)
 	{
 		// Для n < 16
 		if (m_Info.rightCount < 16)
