@@ -231,9 +231,12 @@ AML_NOINLINE void MultiSearch::SearchFactors(Worker* worker, const NumberT* powe
 		// Увеличиваем предпоследний коэффициент в правой части
 		if (auto f = k[count - 1]; f < k[count - 2])
 		{
-			k[count - 1] = ++f;
-			if (sum += powers[f] - powers[f - 1]; sum < z)
+			if (auto n = sum - powers[f] + powers[f + 1]; n < z)
+			{
+				k[count - 1] = f + 1;
+				sum = n;
 				continue;
+			}
 		}
 
 		int idx = 0;
