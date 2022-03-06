@@ -5,6 +5,7 @@
 #include "pch.h"
 #include "multisearch.h"
 
+#include "search-414.h"
 #include "search-x1x.h"
 #include "search-x2x.h"
 
@@ -21,6 +22,9 @@ MultiSearch::Instance MultiSearch::CreateInstance(int power, int leftCount, int 
 	{
 		if (leftCount == 1)
 		{
+			if (power == 4 && rightCount == 4)
+				return std::make_unique<Search414>();
+
 			if (rightCount == 2)
 				return std::make_unique<SearchX12>();
 			if (rightCount == 3)
@@ -52,6 +56,101 @@ MultiSearch::Instance MultiSearch::CreateInstance(int power, int leftCount, int 
 //   MultiSearch - универсальный алгоритм поиска
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void MultiSearch::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
+{
+	// Для универсального алгоритма все коэффициенты
+	// левой части уравнения всегда заданы заданием
+	task.factorCount = m_Info.leftCount;
+
+	if (m_Info.power > 5 && m_Info.leftCount == 1)
+	{
+		const int p = m_Info.power;
+		const int c = m_Info.rightCount - m_Info.leftCount;
+		// Дополнительно задаваемые коэффициенты правой части
+		const float predefined = .08f * (p + 2) + .2f * (c + 1) - .4f;
+
+		static const int maxCount[11] = { 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1 };
+		const int maxPredefined = (m_Info.power <= 10) ? maxCount[m_Info.power] : 1;
+		task.factorCount += util::Clamp(static_cast<int>(predefined), 0, maxPredefined);
+	}
+
+	const int count = std::min(task.factorCount, static_cast<int>(startFactors.size()));
+
+	for (size_t i = 0; i < count; ++i)
+		task.factors[i] = startFactors[i];
+
+	for (int i = count; i < task.factorCount; ++i)
+		task.factors[i] = 1;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void MultiSearch::SelectNextTask(Task& task)
+{
+	unsigned* k = task.factors;
+
+	if (task.factorCount <= m_Info.leftCount)
+	{
+		for (int i = task.factorCount - 1; i; --i)
+		{
+			if (k[i - 1] > k[i])
+			{
+				++k[i];
+				return;
+			}
+
+			k[i] = 1;
+		}
+
+		++k[0];
+		return;
+	}
+
+	for (;;)
+	{
+		int idx = 0;
+		for (int i = task.factorCount - 1;; --i)
+		{
+			if (!i)
+			{
+				++k[0];
+				break;
+			}
+
+			if (k[i - 1] > k[i])
+			{
+				++k[i];
+				break;
+			}
+
+			k[i] = 1;
+			idx = i;
+		}
+
+		if (!idx || (m_Pow64 ? SkipLowSet(task, m_Pow64) : SkipLowSet(task, m_Powers)))
+			break;
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+template<class NumberT>
+bool MultiSearch::SkipLowSet(Task& task, const NumberT* powers) const
+{
+	unsigned* k = task.factors;
+	const auto z = powers[k[0]];
+	const int rem = m_Info.rightCount;
+
+	// Пропускаем низкие значения старшего коэф-та
+	for (unsigned step = k[0] >> 1; step; step >>= 1)
+	{
+		auto f = k[1] + step;
+		if (z > powers[f - 1] * rem)
+			k[1] = f;
+	}
+
+	return k[0] > k[1];
+}
 
 //--------------------------------------------------------------------------------------------------------------------------------
 bool MultiSearch::MightHaveSolution(const Task& task) const

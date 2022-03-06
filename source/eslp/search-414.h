@@ -5,32 +5,22 @@
 #pragma once
 
 #include "factorsearch.h"
-#include "options.h"
 
-#include <memory>
+#include <string>
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//   MultiSearch - универсальный алгоритм поиска
+//   Search414 - специализированный алгоритм для уравнения 4.1.4
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------------------------------------
-class MultiSearch : public FactorSearch
+class Search414 : public FactorSearch
 {
-public:
-	using Instance = std::unique_ptr<FactorSearch>;
-
-	// Создаёт экземпляр наиболее подходящего (оптимального) класса поиска
-	static Instance CreateInstance(int power, int leftCount, int rightCount, const Options& options);
-
 protected:
-	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors) override;
+	virtual std::wstring GetAdditionalInfo() const override;
+
 	virtual void SelectNextTask(Task& task) override;
-
-	template<class NumberT>
-	bool SkipLowSet(Task& task, const NumberT* powers) const;
-
 	virtual bool MightHaveSolution(const Task& task) const override;
 	virtual void PerformTask(Worker* worker) override;
 

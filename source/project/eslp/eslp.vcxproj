@@ -190,6 +190,7 @@
     <ClInclude Include="..\..\eslp\options.h" />
     <ClInclude Include="..\..\eslp\pch.h" />
     <ClInclude Include="..\..\eslp\powers.h" />
+    <ClInclude Include="..\..\eslp\search-414.h" />
     <ClInclude Include="..\..\eslp\search-x1x.h" />
     <ClInclude Include="..\..\eslp\search-x2x.h" />
     <ClInclude Include="..\..\eslp\searchbase.h" />
@@ -209,6 +210,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\..\eslp\search-414.cpp" />
     <ClCompile Include="..\..\eslp\search-x1x.cpp" />
     <ClCompile Include="..\..\eslp\search-x2x.cpp" />
     <ClCompile Include="..\..\eslp\searchbase.cpp" />
