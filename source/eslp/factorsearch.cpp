@@ -604,7 +604,7 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 	m_Powers = nullptr;
 
 	Assert(!GetActiveThreads(true) && "Some threads are still active");
-	Assert(m_IsCancelled || m_NextTask->factors[0] == upperLimit.first + 1);
+	Assert(m_IsCancelled || m_NextTask->factors[0] >= upperLimit.first + 1);
 
 	if (m_LastProgressLength)
 	{

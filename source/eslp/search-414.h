@@ -20,8 +20,9 @@ class Search414 : public FactorSearch
 protected:
 	virtual std::wstring GetAdditionalInfo() const override;
 
+	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors) override;
 	virtual void SelectNextTask(Task& task) override;
-	virtual bool MightHaveSolution(const Task& task) const override;
+
 	virtual void PerformTask(Worker* worker) override;
 
 	template<class NumberT>

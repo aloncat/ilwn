@@ -1,6 +1,12 @@
 === Version 0.31 ===
 Released: 2022-03-xx
 
+== Changes ==
+ * Ability to specify several starting coefficients.
+
+== Bug fixes ==
+  * Smaller worker tasks for smoother progress.
+
 == Features ==
  * Specialized algorithm for 4.1.4 equation.
 
