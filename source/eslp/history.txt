@@ -5,6 +5,7 @@ Released: 2022-03-xx
  * Ability to specify several starting coefficients.
 
 == Bug fixes ==
+  * Minor optimizations for even powers.
   * Smaller worker tasks for smoother progress.
 
 == Features ==
