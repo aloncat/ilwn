@@ -102,7 +102,8 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 					else
 					{
 						k[4] = mid;
-						OnSolutionFound(worker, k);
+						if (OnSolutionFound(worker, k))
+							return;
 						break;
 					}
 				}

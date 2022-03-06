@@ -351,7 +351,8 @@ AML_NOINLINE void MultiSearch::SearchFactors(Worker* worker, const NumberT* powe
 				else
 				{
 					k[count] = mid;
-					OnSolutionFound(worker, factors);
+					if (OnSolutionFound(worker, factors))
+						return;
 					break;
 				}
 			}

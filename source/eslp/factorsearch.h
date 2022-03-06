@@ -34,6 +34,9 @@ protected:
 	struct Task;
 	struct Worker;
 
+	// Максимальное количество выводимых решений
+	static constexpr size_t MAX_SOLUTIONS = 100000;
+
 	// Выполняет поиск решений (начиная с указанных значений коэффициентов)
 	virtual void Search(const Options& options, const std::vector<unsigned>& startFactors) override;
 
@@ -62,7 +65,7 @@ protected:
 	bool OnProgress(const Worker* worker, const unsigned* factors);
 
 	// Эта функция вызывается рабочим потоком при нахождении решения
-	void OnSolutionFound(const Worker* worker, const unsigned* factors);
+	bool OnSolutionFound(const Worker* worker, const unsigned* factors);
 
 protected:
 	const uint64_t* m_Pow64 = nullptr;		// Массив степеней (64 бита)
@@ -138,6 +141,7 @@ private:
 
 	volatile bool m_NoTasks = false;			// true, если заданий для потоков больше нет
 	volatile bool m_IsCancelled = false;		// true, если работа была прервана пользователем
+	volatile bool m_IsAborted = false;			// true, если работа была прервана по иной причине
 	volatile bool m_ForceQuit = false;			// true, если нужно прервать работу немедленно
 
 	volatile bool m_PrintSolutions = false;		// true, если вывод решений на экран разрешён

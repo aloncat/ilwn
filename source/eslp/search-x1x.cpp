@@ -115,7 +115,8 @@ AML_NOINLINE void SearchX12::SearchFactors(Worker* worker, const NumberT* powers
 				else
 				{
 					k[2] = mid;
-					OnSolutionFound(worker, k);
+					if (OnSolutionFound(worker, k))
+						return;
 					break;
 				}
 			}
@@ -209,7 +210,8 @@ AML_NOINLINE void SearchX13::SearchFactors(Worker* worker, const NumberT* powers
 					else
 					{
 						k[3] = mid;
-						OnSolutionFound(worker, k);
+						if (OnSolutionFound(worker, k))
+							return;
 						break;
 					}
 				}
@@ -389,7 +391,8 @@ AML_NOINLINE void SearchE1X::SearchFactors(Worker* worker, const NumberT* powers
 				else
 				{
 					k[count] = mid;
-					OnSolutionFound(worker, factors);
+					if (OnSolutionFound(worker, factors))
+						return;
 					break;
 				}
 			}

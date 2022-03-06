@@ -53,6 +53,7 @@ void FactorSearch::Search(const Options& options, const std::vector<unsigned>& s
 
 	m_NoTasks = false;
 	m_IsCancelled = false;
+	m_IsAborted = false;
 	m_ForceQuit = false;
 
 	m_LastProgressLength = 15;
@@ -66,6 +67,13 @@ void FactorSearch::Search(const Options& options, const std::vector<unsigned>& s
 	{
 		int count = options["thread"].GetNumericValue();
 		m_ActiveWorkers = util::Clamp(count, 1, static_cast<int>(m_ActiveWorkers));
+	}
+
+	if (m_Info.power == 1)
+	{
+		// NB: для степени 1 принудительно ограничиваем количество рабочих
+		// потоков, так как для этой степени решения ищутся очень быстро
+		m_ActiveWorkers = 1;
 	}
 
 	m_PrintSolutions = true;
@@ -88,10 +96,14 @@ void FactorSearch::Search(const Options& options, const std::vector<unsigned>& s
 	KillWorkers();
 
 	util::SystemConsole::Instance().ShowCursor(true);
-	aux::Printf("\rTask %s#7, solutions found: #6#%u\n", m_IsCancelled ?
+	aux::Printf(m_IsAborted ? "\rTask #12ABORTED#7: too many solutions\n" :
+		"\rTask %s#7, solutions found: #6#%u\n", m_IsCancelled ?
 		"#12cancelled" : "finished", m_SolutionsFound);
 
-	if (m_LastDoneHiFactor < UINT_MAX)
+	// NB: если было найдено максимально допустимое количество решений, то не все
+	// решения попали в вывод, и m_LastDoneHiFactor не соответствует последнему
+	// выведенному решению. Поэтому в этом случае значение выводить не стоит
+	if (m_SolutionsFound < MAX_SOLUTIONS && m_LastDoneHiFactor < UINT_MAX)
 	{
 		auto s = util::Format("nextHiFactor: %u\n", m_LastDoneHiFactor + 1);
 		m_Log.Write(s.c_str(), s.size());
@@ -190,7 +202,7 @@ AML_NOINLINE bool FactorSearch::OnProgress(const Worker* worker, const unsigned*
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-AML_NOINLINE void FactorSearch::OnSolutionFound(const Worker* worker, const unsigned* factors)
+AML_NOINLINE bool FactorSearch::OnSolutionFound(const Worker* worker, const unsigned* factors)
 {
 	Solution solution(factors, m_Info.leftCount, m_Info.rightCount);
 	solution.SortFactors();
@@ -198,11 +210,11 @@ AML_NOINLINE void FactorSearch::OnSolutionFound(const Worker* worker, const unsi
 	// Будем пропускать решения, в которых количество коэффициентов слева и справа одинаково и
 	// при этом старший коэффициент правой части больше или равен старшего коэффициента в левой
 	if (m_Info.leftCount == m_Info.rightCount && solution.left[0] <= solution.right[0])
-		return;
+		return m_IsAborted;
 
 	// Если решение вырождено, то также пропустим его
 	if (solution.IsConfluent())
-		return;
+		return m_IsAborted;
 
 	for (;;)
 	{
@@ -211,17 +223,23 @@ AML_NOINLINE void FactorSearch::OnSolutionFound(const Worker* worker, const unsi
 		// Если это решение самого младшего (старого) задания, то мы всегда добавляем его в контейнер.
 		// В ином случае проверяем, сколько решений в контейнере, и если он "переполнен", то остальные
 		// потоки (решения других заданий) должны подождать, когда освободится место
-		if (worker->workerId <= m_LoPendingTask || m_PendingSolutions.size() < 5000)
+		if (auto count = m_PendingSolutions.size(); count < 5000 || worker->workerId <= m_LoPendingTask)
 		{
+			if (count >= 1000000)
+			{
+				m_IsCancelled = true;
+				m_IsAborted = true;
+				m_ForceQuit = true;
+			}
 			// Отсеиваем непримитивные решения. NB: так как проверка делается функцией класса Solutions,
 			// который не потокобезопасен, то проверяем примитивность решения внутри критической секции
-			if (m_Solutions.IsPrimitive(solution))
+			else if (m_Solutions.IsPrimitive(solution))
 			{
 				m_PendingSolutions.push_back(std::move(solution));
 			}
 
 			m_TaskCS.Leave();
-			return;
+			return m_IsAborted;
 		}
 
 		// Освобождаем критическую секцию, и ждём. Если поток, обрабатывающий младшее
@@ -471,8 +489,10 @@ std::pair<unsigned, unsigned> FactorSearch::CalcUpperValue(unsigned leftHigh) co
 	const auto maxFactorCount = std::max(m_Info.leftCount, m_Info.rightCount);
 	const unsigned upperLimit = Powers<NumberT>::CalcUpperValue(m_Info.power, maxFactorCount);
 
-	// Рассчитываем желаемые максимальные значения старших коэффициентов левой и правой частей
-	leftHigh = std::min(upperLimit, leftHigh);
+	// Рассчитываем желаемые максимальные значения старших коэффициентов левой и правой частей.
+	// NB: так как в алгоритме перебора мы иногда используем большие приращения, нам необходимо,
+	// чтобы значения коэффициентов не вышли за пределы 32-бит. Для этого немного ограничим лимит
+	leftHigh = std::min(leftHigh, std::min(upperLimit, UINT_MAX - 999));
 	unsigned rightHigh = leftHigh;
 
 	if (m_Info.leftCount > 1)
@@ -584,16 +604,15 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 			UpdateConsoleTitle();
 		}
 
-		const bool userBreak = util::SystemConsole::Instance().IsCtrlCPressed(true);
-		if (bool tooManySolutions = m_SolutionsFound >= 100000; userBreak || tooManySolutions)
+		if (util::SystemConsole::Instance().IsCtrlCPressed(true))
 		{
-			if (!m_IsCancelled)
+			if (m_IsCancelled)
+				m_ForceQuit = true;
+			else
 			{
 				m_IsCancelled = true;
 				m_ForceShowProgress = true;
 			}
-			else if (userBreak || tooManySolutions)
-				m_ForceQuit = true;
 		}
 
 		UpdateActiveThreadCount();
@@ -755,10 +774,17 @@ void FactorSearch::ProcessPendingSolutions()
 			if (m_Solutions.Insert(*it, false))
 			{
 				hadGoodSolutions = true;
-				++m_SolutionsFound;
+				auto found = ++m_SolutionsFound;
 
 				// Выводим решение
 				OnSolutionReady(*it);
+
+				if (found >= MAX_SOLUTIONS)
+				{
+					m_IsCancelled = true;
+					m_ForceQuit = true;
+					break;
+				}
 			}
 		}
 
