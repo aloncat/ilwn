@@ -31,8 +31,6 @@ public:
 	unsigned Init(int power, int factor = 1, unsigned upperValue = ~0u)
 	{
 		upperValue = std::min(upperValue, CalcUpperValue(power, factor));
-		// NB: максимальное значение также ограничено размером массива в 1 гигабайт
-		upperValue = std::min(upperValue, static_cast<unsigned>((1024 * 1024 * 1024) / sizeof(T)));
 
 		m_Power = power;
 		m_UpperValue = upperValue;
@@ -93,9 +91,12 @@ public:
 		if (!Verify(power >= 1 && power <= 32 && factor >= 1))
 			return 0;
 
+		// NB: максимальное значение ограничено размером массива в 1 гигабайт
+		const unsigned upperBound = static_cast<unsigned>((1024 * 1024 * 1024) / sizeof(T)) - 1;
+
 		if (power == 1)
 		{
-			return UINT_MAX / factor;
+			return std::min(upperBound, UINT_MAX / factor);
 		}
 
 		// Макс. значения для T
@@ -105,7 +106,8 @@ public:
 		};
 
 		constexpr double high = highest[sizeof(T) / 8];
-		const auto uv = static_cast<unsigned>(std::min(4294967295.0, pow(high / factor, 1.0 / power)));
+		const auto uv = static_cast<unsigned>(std::min(pow(high / factor, 1.0 / power),
+			static_cast<double>(upperBound)));
 
 		if (uv)
 		{

@@ -7,9 +7,13 @@ Released: 2022-03-xx
 == Bug fixes ==
   * Minor optimizations for even powers.
   * Smaller worker tasks for smoother progress.
+  * Fixed crash when too high starting coefficient specified.
 
 == Features ==
  * Specialized algorithm for 4.1.4 equation.
+
+== Known issues ==
+ * Low performance for equations of even powers.
 
 
 === Version 0.30 ===
