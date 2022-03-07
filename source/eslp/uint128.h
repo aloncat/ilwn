@@ -153,8 +153,25 @@ public:
 	//UInt128 operator <<(size_t bits) const noexcept
 	//UInt128& operator <<=(size_t bits) noexcept
 
-	//UInt128 operator >>(size_t bits) const noexcept
-	//UInt128& operator >>=(size_t bits) noexcept
+	UInt128 operator >>(size_t bits) const noexcept
+	{
+		UInt128 result;
+
+		const auto shift = static_cast<uint8_t>(bits);
+		result.loPart = __shiftright128(loPart, hiPart, shift);
+		result.hiPart = hiPart >> shift;
+
+		return result;
+	}
+
+	UInt128& operator >>=(size_t bits) noexcept
+	{
+		const auto shift = static_cast<uint8_t>(bits);
+		loPart = __shiftright128(loPart, hiPart, shift);
+		hiPart >>= shift;
+
+		return *this;
+	}
 
 	bool operator ==(uint64_t rhs) const noexcept
 	{

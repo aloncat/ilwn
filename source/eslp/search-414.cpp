@@ -21,16 +21,15 @@ void Search414::InitFirstTask(Task& task, const std::vector<unsigned>& startFact
 
 	task.factorCount = 2;
 	task.factors[0] = startFactors[0];
+	// NB: первый коэффициент в правой части должен быть нечётным
+	task.factors[1] = (startFactors.size() > 1) ? startFactors[1] | 1 : 1;
 
-	// NB: первый коэффициент в правой части должен быть кратен 10
-	unsigned f = (startFactors.size() > 1) ? startFactors[1] : 10;
-	task.factors[1] = std::max(10u, f - (f % 10));
-
-	// Пропускаем чётные и кратные 5 значения коэф-та в левой части
-	while (!(task.factors[0] & 1) || !(task.factors[0] % 5))
+	// Пропускаем чётные и кратные 5 значения коэффициента в левой части, а также те наборы,
+	// в которых первый (заданный) коэффициент правой части больше коэффициента в левой части
+	while (!(task.factors[0] & 1) || !(task.factors[0] % 5) || task.factors[0] <= task.factors[1])
 	{
 		++task.factors[0];
-		task.factors[1] = 10;
+		task.factors[1] = 1;
 	}
 }
 
@@ -39,10 +38,10 @@ void Search414::SelectNextTask(Task& task)
 {
 	unsigned* k = task.factors;
 
-	if (k[1] += 10; k[0] <= k[1])
+	if (k[1] += 2; k[0] <= k[1])
 	{
 		++k[0];
-		k[1] = 10;
+		k[1] = 1;
 
 		// Z не может быть чётным или кратным 5
 		while (!(k[0] & 1) || !(k[0] % 5))
@@ -72,27 +71,36 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 	// Первый коэф-т правой части
 	k[1] = worker->task.factors[1];
 
-	// Левая часть уравнения
-	const auto z = powers[k[0]];
+	// Разность значений левой части уравнения и степени первого коэффициента правой.
+	// Должна быть кратна 16, так как остальные 3 коэффициента правой части - чётные.
+	// По той же причине значение по модулю 256 должно быть равно 0, 16, 32 или 48
+	auto left = powers[k[0]] - powers[k[1]];
+	if ((left & 15) || (left & 255) > 48)
+		return;
 
-	auto sum = powers[k[1]];
-	for (unsigned k2 = 10; k2 <= k[1]; k2 += 10)
+	// Макс. значение оставшихся коэффициентов не должно превышать значения коэффициента в левой
+	// части. Но так как все они чётны, то мы будем перебирать значения, вдвое меньшие реальных
+	const unsigned limit = k[0] >> 1;
+	left >>= 4;
+
+	for (unsigned k2 = 5; k2 <= limit; k2 += 5)
 	{
-		k[2] = k2;
-		if (sum += powers[k2]; sum >= z)
+		k[2] = k2 << 1;
+		const auto pk2 = powers[k2];
+		if (pk2 >= left)
 			break;
 
-		const auto zd = z - sum;
-		for (unsigned k3 = 5; k3 < k[0]; k3 += 5)
+		const auto zd = left - pk2;
+		for (unsigned k3 = 5; k3 <= k2; k3 += 5)
 		{
-			k[3] = k3;
+			k[3] = k3 << 1;
 			const auto pk3 = powers[k3];
 			if (pk3 >= zd)
 				break;
 
 			if (const NumberT lastFP = zd - pk3; m_Hashes.Exists(lastFP))
 			{
-				for (unsigned lo = 1, hi = k[0] - 1; lo <= hi;)
+				for (unsigned lo = 1, hi = limit; lo <= hi;)
 				{
 					unsigned mid = (lo + hi) >> 1;
 					if (auto v = powers[mid]; v < lastFP)
@@ -101,7 +109,7 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 						hi = mid - 1;
 					else
 					{
-						k[4] = mid;
+						k[4] = mid << 1;
 						if (OnSolutionFound(worker, k))
 							return;
 						break;
@@ -109,13 +117,12 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 				}
 			}
 		}
-
-		sum -= powers[k2];
 	}
 
 	// Вывод прогресса
-	if (!(++worker->progressCounter & 15))
+	if (!(++worker->progressCounter & 31))
 	{
+		k[2] = k[1] - k[1] % 10;
 		if (OnProgress(worker, k))
 			return;
 	}
