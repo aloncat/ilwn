@@ -5,6 +5,8 @@
 #include "pch.h"
 #include "search-x1x.h"
 
+#include "progressman.h"
+
 #include <core/debug.h>
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,9 +84,8 @@ void SearchX12::PerformTask(Worker* worker)
 template<class NumberT>
 AML_NOINLINE void SearchX12::SearchFactors(Worker* worker, const NumberT* powers)
 {
-	// NB: размер массива коэффициентов не может быть
-	// менее 8 элементов (см. функцию OnProgress)
-	unsigned k[8];
+	// Массив коэффициентов
+	unsigned k[ProgressManager::MAX_COEFS];
 
 	// Коэффициент левой части
 	k[0] = worker->task.factors[0];
@@ -124,7 +125,7 @@ AML_NOINLINE void SearchX12::SearchFactors(Worker* worker, const NumberT* powers
 	}
 
 	// Вывод прогресса
-	if (!(++worker->progressCounter & 0x1ff))
+	if (!(++worker->progressCounter & 0xff))
 	{
 		if (OnProgress(worker, k))
 			return;
@@ -157,9 +158,8 @@ void SearchX13::PerformTask(Worker* worker)
 template<class NumberT>
 AML_NOINLINE void SearchX13::SearchFactors(Worker* worker, const NumberT* powers)
 {
-	// NB: размер массива коэффициентов не может быть
-	// менее 8 элементов (см. функцию OnProgress)
-	unsigned k[8];
+	// Массив коэффициентов
+	unsigned k[ProgressManager::MAX_COEFS];
 
 	// Коэффициент левой части
 	k[0] = worker->task.factors[0];
@@ -219,7 +219,7 @@ AML_NOINLINE void SearchX13::SearchFactors(Worker* worker, const NumberT* powers
 		}
 
 		// Вывод прогресса
-		if (!(it++ & 0x7f) && !(++worker->progressCounter & 0x7f))
+		if (!(it++ & 0xff) && !(++worker->progressCounter & 0x7f))
 		{
 			if (OnProgress(worker, k))
 				return;
@@ -400,7 +400,7 @@ AML_NOINLINE void SearchE1X::SearchFactors(Worker* worker, const NumberT* powers
 
 		// Периодически выводим текущий прогресс. Если пользователь
 		// нажмёт Ctrl-C, то функция вернёт true, мы завершим работу
-		if (!(it++ & 0x7ff) && !(++worker->progressCounter & 0x7f))
+		if (!(it++ & 0x3fff) && !(++worker->progressCounter & 0x1ff))
 		{
 			if (OnProgress(worker, factors))
 				return;

@@ -5,6 +5,8 @@
 #include "pch.h"
 #include "search-414.h"
 
+#include "progressman.h"
+
 #include <core/debug.h>
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -62,9 +64,8 @@ void Search414::PerformTask(Worker* worker)
 template<class NumberT>
 AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers)
 {
-	// NB: размер массива коэффициентов не может быть
-	// менее 8 элементов (см. функцию OnProgress)
-	unsigned k[8];
+	// Массив коэффициентов
+	unsigned k[ProgressManager::MAX_COEFS];
 
 	// Коэффициент левой части
 	k[0] = worker->task.factors[0];

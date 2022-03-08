@@ -5,6 +5,8 @@
 #include "pch.h"
 #include "search-x2x.h"
 
+#include "progressman.h"
+
 #include <core/debug.h>
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,9 +52,8 @@ void SearchX22::PerformTask(Worker* worker)
 template<class NumberT>
 AML_NOINLINE void SearchX22::SearchFactors(Worker* worker, const NumberT* powers)
 {
-	// NB: размер массива коэффициентов не может быть
-	// менее 8 элементов (см. функцию OnProgress)
-	unsigned k[8];
+	// Массив коэффициентов
+	unsigned k[ProgressManager::MAX_COEFS];
 
 	// Старший коэф-т левой части
 	k[0] = worker->task.factors[0];
@@ -99,7 +100,7 @@ AML_NOINLINE void SearchX22::SearchFactors(Worker* worker, const NumberT* powers
 		}
 
 		// Вывод прогресса
-		if (!(++worker->progressCounter & 0x3ff))
+		if (!(++worker->progressCounter & 0x7ff))
 		{
 			if (OnProgress(worker, k))
 				return;
@@ -133,9 +134,8 @@ void SearchX23::PerformTask(Worker* worker)
 template<class NumberT>
 AML_NOINLINE void SearchX23::SearchFactors(Worker* worker, const NumberT* powers)
 {
-	// NB: размер массива коэффициентов не может быть
-	// менее 8 элементов (см. функцию OnProgress)
-	unsigned k[8];
+	// Массив коэффициентов
+	unsigned k[ProgressManager::MAX_COEFS];
 
 	// Коэффициенты левой части
 	k[0] = worker->task.factors[0];
@@ -250,9 +250,8 @@ void SearchE23::PerformTask(Worker* worker)
 template<class NumberT>
 AML_NOINLINE void SearchE23::SearchFactors(Worker* worker, const NumberT* powers)
 {
-	// NB: размер массива коэффициентов не может быть
-	// менее 8 элементов (см. функцию OnProgress)
-	unsigned k[8];
+	// Массив коэффициентов
+	unsigned k[ProgressManager::MAX_COEFS];
 
 	// Коэффициенты левой части
 	k[0] = worker->task.factors[0];
@@ -331,7 +330,7 @@ AML_NOINLINE void SearchE23::SearchFactors(Worker* worker, const NumberT* powers
 			break;
 
 		// Вывод прогресса
-		if (!(it++ & 0x7f) && !(++worker->progressCounter & 0x7f))
+		if (!(it++ & 0x1ff) && !(++worker->progressCounter & 0x7f))
 		{
 			if (OnProgress(worker, k))
 				return;

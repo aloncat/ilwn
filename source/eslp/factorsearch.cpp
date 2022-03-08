@@ -25,15 +25,14 @@
 //--------------------------------------------------------------------------------------------------------------------------------
 FactorSearch::FactorSearch()
 	: m_TaskCS(3000)
-	, m_ProgressCS(1000)
 {
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 FactorSearch::~FactorSearch()
 {
-	AML_SAFE_DELETE(m_NextTask);
 	KillWorkers();
+	AML_SAFE_DELETE(m_NextTask);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -79,8 +78,8 @@ void FactorSearch::Search(const Options& options, const std::vector<unsigned>& s
 	m_PrintSolutions = true;
 	m_PrintAllSolutions = options.HasOption("printall");
 
-	CreateWorkers(maxWorkerCount);
 	m_NextTask = new Task;
+	CreateWorkers(maxWorkerCount);
 
 	for (auto factors = startFactors; factors[0] && !m_IsCancelled;)
 	{
@@ -92,8 +91,8 @@ void FactorSearch::Search(const Options& options, const std::vector<unsigned>& s
 
 	UpdateConsoleTitle();
 
-	AML_SAFE_DELETE(m_NextTask);
 	KillWorkers();
+	AML_SAFE_DELETE(m_NextTask);
 
 	util::SystemConsole::Instance().ShowCursor(true);
 	aux::Printf(m_IsAborted ? "\rTask #12ABORTED#7: too many solutions\n" :
@@ -187,17 +186,7 @@ const NumberT*& FactorSearch::PowersArray()
 //--------------------------------------------------------------------------------------------------------------------------------
 AML_NOINLINE bool FactorSearch::OnProgress(const Worker* worker, const unsigned* factors)
 {
-	// NB: прогресс обновляется только для самого младшего задания
-	if (worker->workerId == m_LoPendingTask)
-	{
-		thread::Lock lock(m_ProgressCS);
-
-		for (size_t i = 0; i < util::CountOf(m_Progress); ++i)
-			m_Progress[i] = factors[i];
-
-		m_IsProgressReady = true;
-	}
-
+	m_ProgressMan.SetProgress(factors, worker->task.taskId);
 	return m_ForceQuit;
 }
 
@@ -388,8 +377,8 @@ void FactorSearch::WorkerMainFn(Worker* worker)
 	HANDLE threadHandle = ::GetCurrentThread();
 	::SetThreadPriority(threadHandle, THREAD_PRIORITY_IDLE);
 
-	Assert(util::CountOf(m_Progress) <= Task::MAX_COUNT);
-	for (int i = 0; i < util::CountOf(m_Progress); ++i)
+	Assert(ProgressManager::MAX_COEFS <= Task::MAX_COUNT);
+	for (int i = 0; i < ProgressManager::MAX_COEFS; ++i)
 		worker->task.factors[i] = 1;
 
 	while (!worker->shouldQuit)
@@ -428,12 +417,18 @@ bool FactorSearch::GetNextTask(Worker* worker)
 			if (MightHaveSolution(*m_NextTask))
 			{
 				worker->task = *m_NextTask;
+
 				m_PendingTasks.push_back(worker->workerId);
 				m_LoPendingTask = m_PendingTasks.front();
+
 				SelectNextTask(*m_NextTask);
+				++m_NextTask->taskId;
+
 				return true;
 			}
 
+			// NB: выбираем следующее задание, но не меняем его
+			// номер, так как задание не отправлено в обработку
 			SelectNextTask(*m_NextTask);
 		}
 	}
@@ -455,6 +450,7 @@ void FactorSearch::OnTaskDone(Worker* worker)
 
 			if (!i)
 			{
+				m_ProgressMan.SetDone(worker->task.taskId);
 				m_LoPendingTask = (count > 1) ? m_PendingTasks.front() : 0;
 
 				if (!m_ForceQuit)
@@ -573,11 +569,7 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 	m_LoPendingTask = 0;
 	m_NoTasks = false;
 
-	m_Progress[0] = m_NextTask->factors[0];
-	for (size_t i = 1; i < util::CountOf(m_Progress); ++i)
-		m_Progress[i] = 1;
-
-	m_IsProgressReady = false;
+	m_ProgressMan.Reset();
 	m_ForceShowProgress = true;
 	m_NeedUpdateTitle = true;
 
@@ -587,14 +579,16 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 	uint32_t lastProgressTick = 0;
 	while (!m_NoTasks || GetActiveThreads(true))
 	{
-		if ((m_ForceShowProgress || ::GetTickCount() - lastProgressTick >= 500) && m_IsProgressReady)
+		if (m_ForceShowProgress || ::GetTickCount() - lastProgressTick >= 500)
 		{
 			unsigned factors[8];
-			GetProgress(factors);
-			ShowProgress(factors);
+			if (m_ProgressMan.GetProgress(factors))
+			{
+				ShowProgress(factors);
+				m_ForceShowProgress = false;
+				lastProgressTick = ::GetTickCount();
+			}
 
-			m_ForceShowProgress = false;
-			lastProgressTick = ::GetTickCount();
 			UpdateRunningTime();
 		}
 
@@ -633,15 +627,6 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 	}
 
 	return upperLimit.first + 1;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-AML_NOINLINE void FactorSearch::GetProgress(unsigned* factors)
-{
-	thread::Lock lock(m_ProgressCS);
-
-	for (size_t i = 0; i < util::CountOf(m_Progress); ++i)
-		factors[i] = m_Progress[i];
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -843,6 +828,7 @@ FactorSearch::Task& FactorSearch::Task::operator =(const Task& that) noexcept
 	if (this != &that)
 	{
 		factorCount = that.factorCount;
+		taskId = that.taskId;
 
 		if (factorCount < 8)
 		{

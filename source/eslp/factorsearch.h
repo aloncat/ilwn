@@ -5,6 +5,7 @@
 #pragma once
 
 #include "hashtable.h"
+#include "progressman.h"
 #include "searchbase.h"
 #include "solution.h"
 #include "threadtimer.h"
@@ -104,7 +105,6 @@ private:
 	template<class NumberT>
 	unsigned Compute(const std::vector<unsigned>& startFactors, unsigned toCheck);
 
-	void GetProgress(unsigned* factors);
 	void ShowProgress(const unsigned* factors);
 
 	void OnSolutionReady(const Solution& solution);
@@ -114,7 +114,6 @@ private:
 
 private:
 	thread::CriticalSection m_TaskCS;			// Критическая секция (задания)
-	thread::CriticalSection m_ProgressCS;		// Критическая секция (прогресс)
 	thread::CriticalSection m_ConsoleCS;		// Критическая секция (вывод в консоль)
 
 	ThreadTimer m_MainThreadTimer;				// Счётчик времени CPU для главного потока
@@ -132,10 +131,8 @@ private:
 	std::vector<int> m_PendingTasks;			// Выполняемые и ожидающие проверки задания (ID потоков)
 	volatile int m_LoPendingTask = 0;			// Самое младшее (старое) ожидаемое задание (ID потока)
 
-	unsigned m_Progress[8];						// Первые коэффициенты для вывода прогресса
+	ProgressManager m_ProgressMan;				// Менеджер прогресса
 	size_t m_LastProgressLength = 0;			// Количество символов в последнем выводе прогресса
-
-	volatile bool m_IsProgressReady = false;	// true, если данные о прогрессе можно выводить
 	volatile bool m_ForceShowProgress = false;	// true, если прогресс нужно вывести немедленно
 	volatile bool m_NeedUpdateTitle = false;	// true, если нужно обновить заголовок окна
 
@@ -157,8 +154,9 @@ struct FactorSearch::Task final
 	// не может превышать максимально возможного количества коэффициентов в левой части
 	static constexpr int MAX_COUNT = MAX_FACTOR_COUNT / 2;
 
-	int factorCount = 0;				// Количество заданных коэффициентов
-	unsigned factors[MAX_COUNT];		// Заданные значения первых коэффициентов
+	int factorCount = 0;			// Количество заданных коэффициентов
+	unsigned factors[MAX_COUNT];	// Заданные значения первых коэффициентов
+	unsigned taskId = 0;			// Уникальный номер задания
 
 	Task& operator =(const Task& that) noexcept;
 
@@ -175,7 +173,7 @@ struct FactorSearch::Worker final
 	ThreadTimer* timer = nullptr;		// Таймер затраченного потоком времени CPU
 
 	Task task;							// Задание (первые коэффициенты)
-	unsigned progressCounter = 0;		// Вспомогательный счётчик прогресса
+	unsigned progressCounter = 0;		// Вспомогательный счётчик вывода прогресса
 
 	volatile bool isActive = false;		// true, если поток выполняет вычисления
 	volatile bool isFinished = false;	// true, если поток завершился (вышел из своей функции)
