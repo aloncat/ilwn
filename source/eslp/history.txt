@@ -2,12 +2,13 @@
 Released: 2022-03-xx
 
 == Changes ==
- * Ability to specify several starting coefficients.
+ * Now several starting coefficients can be specified.
 
 == Bug fixes ==
   * Minor optimizations for even powers.
   * Smaller worker tasks for smoother progress.
   * Fixed crash when too high starting coefficient specified.
+  * Fixed progress freezes under certain circumstances.
 
 == Features ==
  * Specialized algorithm for 4.1.4 equation.

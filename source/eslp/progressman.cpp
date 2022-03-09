@@ -23,29 +23,20 @@ bool ProgressManager::GetProgress(unsigned* factors) const
 {
 	thread::Lock lock(m_CS);
 
-	const unsigned* progress = nullptr;
-
-	if (m_Count)
-	{
-		// Если у самого старого незавершённого задания (голова
-		// списка) есть данные прогресса, то вернём именно их
-		if (const Item& it = m_Items[m_Head]; it.isReady)
-			progress = it.progress;
-	}
-
-	// В ином случае, вернём данные последнего завершённого задания
-	if (!progress && m_IsReady)
+	const unsigned* progress;
+	// Если у самого старого незавершённого задания (голова списка) есть данные,
+	// то вернём именно их. Иначе вернём данные последнего завершённого задания
+	if (m_Count && m_Items[m_Head].isReady)
+		progress = m_Items[m_Head].progress;
+	else if (m_IsReady)
 		progress = m_Progress;
+	else
+		return false;
 
-	if (progress)
-	{
-		for (size_t i = 0; i < MAX_COEFS; ++i)
-			factors[i] = progress[i];
+	for (size_t i = 0; i < MAX_COEFS; ++i)
+		factors[i] = progress[i];
 
-		return true;
-	}
-
-	return false;
+	return true;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -95,10 +86,10 @@ ProgressManager::Item* ProgressManager::GetItem(unsigned taskId)
 	if (!m_Count || taskId < firstId)
 	{
 		// NB: иногда возникает ситуация, когда при пустом буфере один из рабочих потоков вызывает функцию
-		// SetProgress, а затем это делает другой поток для задания с более низким taskId. Это приводит к тому,
-		// что на какой-то момент прогресс отображается некорректно. Поэтому, если эта ситуация произошла не в
+		// SetProgress, а затем это делает другой поток для задания с более низким taskId. Это может привести
+		// к кратковременному нарушению порядка вывода прогресса. Поэтому, если эта ситуация произошла не в
 		// результате переполнения счётчика, мы будем игнорировать задания с более низким taskId
-		if (m_Count && firstId < 0xffff0000)
+		if (m_Count && (firstId < 0xffff0000 || taskId > 0x10000))
 			return nullptr;
 
 		m_Count = 1;
@@ -107,12 +98,13 @@ ProgressManager::Item* ProgressManager::GetItem(unsigned taskId)
 		m_Items[0].taskId = taskId;
 		m_Items[0].isReady = false;
 
-		return &m_Items[0];
+		return m_Items;
 	}
 
 	if (taskId >= static_cast<uint64_t>(firstId) + m_Count)
 	{
-		// Если расстояние между id больше размера буфера, то игнорируем задание
+		// Если расстояние между id больше размера буфера, то проигнорируем прогресс
+		// этого задания: сейчас это задание достаточно далеко от текущего прогресса
 		const unsigned newCount = taskId - firstId + 1;
 		if (newCount > MAX_TASKS)
 			return nullptr;

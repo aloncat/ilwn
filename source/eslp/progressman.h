@@ -24,6 +24,7 @@ public:
 	void Reset();
 
 	bool GetProgress(unsigned* factors) const;
+
 	void SetProgress(const unsigned* factors, unsigned taskId);
 	void SetDone(unsigned taskId);
 
@@ -43,10 +44,10 @@ private:
 private:
 	mutable thread::CriticalSection m_CS;
 
-	Item m_Items[MAX_TASKS];				// Кольцевой буфер заданий
-	unsigned m_Count = 0;					// Количество заданий в m_Items
-	unsigned m_Head = 0;					// Индекс старейшего задания (голова списка)
+	Item m_Items[MAX_TASKS];			// Кольцевой буфер заданий
+	unsigned m_Count = 0;				// Количество заданий в m_Items
+	unsigned m_Head = 0;				// Индекс старейшего задания (голова списка)
 
-	unsigned m_Progress[MAX_COEFS];			// Текущий прогресс (первые коэффициенты)
-	bool m_IsReady = false;					// true, если m_Progress содержит данные
+	unsigned m_Progress[MAX_COEFS];		// Текущий прогресс (первые коэффициенты)
+	bool m_IsReady = false;				// true, если m_Progress содержит данные
 };
