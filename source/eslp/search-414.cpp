@@ -124,7 +124,6 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 	if (!(++worker->progressCounter & 31))
 	{
 		k[2] = k[1] - k[1] % 10;
-		if (OnProgress(worker, k))
-			return;
+		OnProgress(worker, k);
 	}
 }

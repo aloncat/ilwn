@@ -126,10 +126,7 @@ AML_NOINLINE void SearchX12::SearchFactors(Worker* worker, const NumberT* powers
 
 	// Вывод прогресса
 	if (!(++worker->progressCounter & 0xff))
-	{
-		if (OnProgress(worker, k))
-			return;
-	}
+		OnProgress(worker, k);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
