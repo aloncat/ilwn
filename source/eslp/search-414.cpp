@@ -17,6 +17,19 @@ std::wstring Search414::GetAdditionalInfo() const
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+void Search414::InitHashTable(PowersBase& powers, unsigned upperLimit)
+{
+	// NB: так как последний коэффициент правой части всегда чётный и мы ищем уменьшенное вдвое
+	// значение этого коэффициента, то имеет смысл проинициализировать лишь половину значений
+	// хеш-таблицы. Это уменьшит количество коллизий и увеличит скорость работы
+
+	if (m_Pow64)
+		m_Hashes.Init(upperLimit >> 1, static_cast<Powers<uint64_t>&>(powers));
+	else
+		m_Hashes.Init(upperLimit >> 1, static_cast<Powers<UInt128>&>(powers));
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 void Search414::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
 {
 	Assert(!startFactors.empty());

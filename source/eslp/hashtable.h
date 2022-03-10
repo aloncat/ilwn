@@ -13,9 +13,13 @@
 #include <string.h>
 
 //--------------------------------------------------------------------------------------------------------------------------------
+template<size_t HASH_BITS>
 class HashTable
 {
 	AML_NONCOPYABLE(HashTable)
+
+	// Длина хеша: от 17 бит (размер массива 16 KiB) до 28 бит (32 MiB)
+	static_assert(HASH_BITS >= 17 && HASH_BITS <= 28, "Invalid hash length");
 
 public:
 	HashTable() = default;
@@ -54,7 +58,6 @@ public:
 	}
 
 protected:
-	static constexpr unsigned HASH_BITS = 19; // 64 KiB
 	static constexpr unsigned BYTE_MASK = (1 << HASH_BITS) - 1;
 	static constexpr unsigned ARRAY_SIZE = 1 << (HASH_BITS - 3);
 

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "hashtable.h"
+#include "powers.h"
 #include "progressman.h"
 #include "searchbase.h"
 #include "solution.h"
@@ -44,6 +45,9 @@ protected:
 	// Обновляет заголовок окна консоли
 	virtual void UpdateConsoleTitle() override;
 
+	// Инициализирует хеш-таблицу
+	virtual void InitHashTable(PowersBase& powers, unsigned upperLimit);
+
 	// Инициализирует начальное задание task из набора коэфициентов startFactors
 	// и устанавливает количество коэффициентов, которые будут задаваться заданием
 	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors);
@@ -76,7 +80,7 @@ protected:
 protected:
 	const uint64_t* m_Pow64 = nullptr;		// Массив степеней (64 бита)
 	const UInt128* m_Powers = nullptr;		// Массив степеней (128 бит)
-	HashTable m_Hashes;						// Хеш-таблица значений степеней
+	HashTable<19> m_Hashes;					// Хеш-таблица значений степеней
 
 private:
 	// Создаёт указанное количество рабочих потоков в приостановленном состоянии

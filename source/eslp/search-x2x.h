@@ -21,6 +21,7 @@ class SearchX22 : public FactorSearch
 protected:
 	virtual std::wstring GetAdditionalInfo() const override;
 
+	virtual void InitHashTable(PowersBase& powers, unsigned upperLimit) override;
 	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors) override;
 	virtual void SelectNextTask(Task& task) override;
 
@@ -28,6 +29,9 @@ protected:
 
 	template<class NumberT>
 	void SearchFactors(Worker* worker, const NumberT* powers);
+
+protected:
+	HashTable<23> m_Hashes;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

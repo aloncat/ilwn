@@ -15,14 +15,34 @@
 #include <type_traits>
 
 //--------------------------------------------------------------------------------------------------------------------------------
-template<class T>
-class Powers
+class PowersBase
 {
-	AML_NONCOPYABLE(Powers)
+	AML_NONCOPYABLE(PowersBase)
 
 public:
-	Powers() = default;
+	int GetPower() const
+	{
+		return m_Power;
+	}
 
+	unsigned GetUpperValue() const
+	{
+		return m_UpperValue;
+	}
+
+protected:
+	PowersBase() = default;
+
+protected:
+	int m_Power = 0;			// Значение степени, от 1 до 32
+	unsigned m_UpperValue = 0;	// Наибольшее корректное значение
+};
+
+//--------------------------------------------------------------------------------------------------------------------------------
+template<class T>
+class Powers : public PowersBase
+{
+public:
 	~Powers()
 	{
 		AML_SAFE_DELETEA(m_Powers);
@@ -50,16 +70,6 @@ public:
 		}
 
 		return upperValue;
-	}
-
-	int GetPower() const
-	{
-		return m_Power;
-	}
-
-	unsigned GetUpperValue() const
-	{
-		return m_UpperValue;
 	}
 
 	const T* GetData() const
@@ -128,8 +138,5 @@ public:
 	}
 
 protected:
-	int m_Power = 0;			// Значение степени, от 1 до 32
-	unsigned m_UpperValue = 0;	// Наибольшее корректное значение
-
 	T* m_Powers = nullptr;
 };

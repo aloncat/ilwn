@@ -6,7 +6,6 @@
 #include "factorsearch.h"
 
 #include "options.h"
-#include "powers.h"
 
 #include <auxlib/print.h>
 #include <core/console.h>
@@ -140,6 +139,15 @@ void FactorSearch::UpdateConsoleTitle()
 	}
 
 	util::SystemConsole::Instance().SetTitle(fmt.ToString());
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void FactorSearch::InitHashTable(PowersBase& powers, unsigned upperLimit)
+{
+	if (m_Pow64)
+		m_Hashes.Init(upperLimit, static_cast<Powers<uint64_t>&>(powers));
+	else
+		m_Hashes.Init(upperLimit, static_cast<Powers<UInt128>&>(powers));
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -568,7 +576,8 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 	Powers<NumberT> powers;
 	powers.Init(m_Info.power, 1, upperLimit.second);
 	PowersArray<NumberT>() = powers.GetData();
-	m_Hashes.Init(upperLimit.second, powers);
+
+	InitHashTable(powers, upperLimit.second);
 
 	InitFirstTask(*m_NextTask, startFactors);
 	m_LastDoneHiFactor = hiFactor - 1;

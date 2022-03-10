@@ -23,6 +23,15 @@ std::wstring SearchX22::GetAdditionalInfo() const
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+void SearchX22::InitHashTable(PowersBase& powers, unsigned upperLimit)
+{
+	if (m_Pow64)
+		m_Hashes.Init(upperLimit, static_cast<Powers<uint64_t>&>(powers));
+	else
+		m_Hashes.Init(upperLimit, static_cast<Powers<UInt128>&>(powers));
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 void SearchX22::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
 {
 	// NB: для x.2.2 задание задаёт только старший коэффициент левой части. 2-й коэффициент

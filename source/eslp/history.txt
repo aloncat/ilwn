@@ -1,8 +1,12 @@
 === Version 0.32 ===
 Released: 2022-03-xx
 
+== Bug fixes ==
+ * Removed unused items from hash table for 4.1.4.
+
 == Features ==
  * Specialized algorithm for 4.1.3 equation.
+ * Larger hash table for sensitive algorithms.
 
 
 === Version 0.31 ===
@@ -12,13 +16,13 @@ Released: 2022-03-09
  * Now several starting coefficients can be specified.
 
 == Bug fixes ==
-  * Minor optimizations for even powers.
-  * Smaller worker tasks for smoother progress.
-  * Fixed crash when too high starting coefficient specified.
-  * Fixed progress freezes under certain circumstances.
+ * Smaller worker tasks for smoother progress.
+ * Fixed crash when too high starting coefficient specified.
+ * Fixed progress freezes under certain circumstances.
 
 == Features ==
  * Specialized algorithm for 4.1.4 equation.
+ * Minor optimizations for even powers.
 
 == Known issues ==
  * Low performance for equations of even powers.

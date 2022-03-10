@@ -5,6 +5,7 @@
 #pragma once
 
 #include "factorsearch.h"
+#include "powers.h"
 
 #include <string>
 #include <vector>
@@ -21,6 +22,7 @@ class Search413 : public FactorSearch
 protected:
 	virtual std::wstring GetAdditionalInfo() const override;
 
+	virtual void InitHashTable(PowersBase& powers, unsigned upperLimit) override;
 	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors) override;
 	virtual void SelectNextTask(Task& task) override;
 	virtual unsigned GetChunkSize(unsigned hiFactor) override;
@@ -30,6 +32,7 @@ protected:
 	template<class NumberT>
 	void SearchFactors(Worker* worker, const NumberT* powers);
 
-private:
+protected:
+	HashTable<23> m_Hashes;
 	unsigned m_ProgressMask = 0;
 };
