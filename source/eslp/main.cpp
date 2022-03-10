@@ -15,7 +15,7 @@
 //--------------------------------------------------------------------------------------------------------------------------------
 static int Main(int argCount, const wchar_t* args[])
 {
-	aux::Printc(L"Equal Sums of Like Powers (ESLP)/iLWN. Standalone app. Ver. 0.31\n"
+	aux::Printc(L"Equal Sums of Like Powers (ESLP)/iLWN. Standalone app. Ver. 0.32a\n"
 		"#8For more information, please visit us at #3https://dmaslov.me/eslp/\n");
 
 	// Программа принимает 3 обязательных и несколько опциональных аргументов командной строки: 1) степень

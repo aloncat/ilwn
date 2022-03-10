@@ -174,6 +174,20 @@ void FactorSearch::SelectNextTask(Task& task)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+unsigned FactorSearch::GetChunkSize(unsigned hiFactor)
+{
+	const int factorCount = m_Info.leftCount + m_Info.rightCount;
+	// В зависимости от количества коэффициентов в уравнении, мы бы
+	// хотели проверять различное количество старших коэффициентов за 1 раз
+	static const unsigned countImpact[10] = { 0, 0, 0, 80000, 8000, 2200, 800, 640, 420, 240 };
+	unsigned toCheck = (factorCount >= 3 && factorCount <= 9) ? countImpact[factorCount] : 120;
+	// Для чётных степеней, не превышающих 8, увеличиваем значение в 1.5 раза
+	toCheck += ((m_Info.power & 1) || m_Info.power > 8) ? 0 : toCheck / 2;
+
+	return toCheck;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 template<class NumberT>
 const NumberT*& FactorSearch::PowersArray()
 {
@@ -528,13 +542,8 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors)
 	Assert(!startFactors.empty());
 	aux::Print("\rRe-initializing...");
 
-	const int factorCount = m_Info.leftCount + m_Info.rightCount;
-	// В зависимости от количества коэффициентов в уравнении, мы бы
-	// хотели проверять различное количество старших коэффициентов за раз
-	static const unsigned countImpact[10] = { 0, 0, 0, 80000, 8000, 2200, 800, 640, 420, 300 };
-	unsigned toCheck = (factorCount >= 3 && factorCount <= 9) ? countImpact[factorCount] : 200;
-	// Для чётных степеней, не превышающих 8, увеличиваем значение в 1.5 раза
-	toCheck += ((m_Info.power & 1) || m_Info.power > 8) ? 0 : toCheck / 2;
+	// Определяем размер блока вычислений
+	const unsigned toCheck = GetChunkSize(startFactors[0]);
 
 	// Если можем, то выполняем вычисления в 64-битах (так как это быстрее)
 	if (unsigned upper64 = CalcUpperValue<uint64_t>().first; startFactors[0] < upper64)

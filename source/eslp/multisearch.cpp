@@ -5,6 +5,7 @@
 #include "pch.h"
 #include "multisearch.h"
 
+#include "search-413.h"
 #include "search-414.h"
 #include "search-x1x.h"
 #include "search-x2x.h"
@@ -22,8 +23,13 @@ MultiSearch::Instance MultiSearch::CreateInstance(int power, int leftCount, int 
 	{
 		if (leftCount == 1)
 		{
-			if (power == 4 && rightCount == 4)
-				return std::make_unique<Search414>();
+			if (power == 4)
+			{
+				if (rightCount == 3)
+					return std::make_unique<Search413>();
+				if (rightCount == 4)
+					return std::make_unique<Search414>();
+			}
 
 			if (rightCount == 2)
 				return std::make_unique<SearchX12>();

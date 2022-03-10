@@ -7,23 +7,22 @@
 #include "factorsearch.h"
 
 #include <string>
-#include <vector>
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//   Search414 - специализированный алгоритм для уравнения 4.1.4
+//   Search413 - специализированный алгоритм для уравнения 4.1.3
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------------------------------------
-class Search414 : public FactorSearch
+class Search413 : public FactorSearch
 {
 protected:
 	virtual std::wstring GetAdditionalInfo() const override;
 
-	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors) override;
 	virtual void SelectNextTask(Task& task) override;
 	virtual unsigned GetChunkSize(unsigned hiFactor) override;
+	virtual bool MightHaveSolution(const Task& task) const override;
 
 	virtual void PerformTask(Worker* worker) override;
 

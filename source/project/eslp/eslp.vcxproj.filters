@@ -61,6 +61,9 @@
     <ClInclude Include="..\..\eslp\progressman.h">
       <Filter>search</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\eslp\search-413.h">
+      <Filter>search\special</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\eslp\prefix.cpp">
@@ -103,6 +106,9 @@
     </ClCompile>
     <ClCompile Include="..\..\eslp\progressman.cpp">
       <Filter>search</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\eslp\search-413.cpp">
+      <Filter>search\special</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

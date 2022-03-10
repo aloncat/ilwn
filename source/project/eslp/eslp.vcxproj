@@ -191,6 +191,7 @@
     <ClInclude Include="..\..\eslp\pch.h" />
     <ClInclude Include="..\..\eslp\powers.h" />
     <ClInclude Include="..\..\eslp\progressman.h" />
+    <ClInclude Include="..\..\eslp\search-413.h" />
     <ClInclude Include="..\..\eslp\search-414.h" />
     <ClInclude Include="..\..\eslp\search-x1x.h" />
     <ClInclude Include="..\..\eslp\search-x2x.h" />
@@ -212,6 +213,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\eslp\progressman.cpp" />
+    <ClCompile Include="..\..\eslp\search-413.cpp" />
     <ClCompile Include="..\..\eslp\search-414.cpp" />
     <ClCompile Include="..\..\eslp\search-x1x.cpp" />
     <ClCompile Include="..\..\eslp\search-x2x.cpp" />
