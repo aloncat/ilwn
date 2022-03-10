@@ -17,26 +17,34 @@ std::wstring Search413::GetAdditionalInfo() const
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+void Search413::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
+{
+	Assert(!startFactors.empty());
+
+	task.factorCount = 1;
+	task.factors[0] = startFactors[0];
+
+	// Z должен быть сравним с 1 по модулю 8 и не кратен 5
+	while ((task.factors[0] & 7) != 1 || !(task.factors[0] % 5))
+		++task.factors[0];
+
+	const auto f = task.factors[0];
+	m_ProgressMask = (f < 200000) ? 31 : (f < 600000) ? 15 : 0;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 void Search413::SelectNextTask(Task& task)
 {
-	++task.factors[0];
+	task.factors[0] += 8;
+	if (!(task.factors[0] % 5))
+		task.factors[0] += 8;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 unsigned Search413::GetChunkSize(unsigned hiFactor)
 {
-	return (hiFactor > 1000000) ? 20000 :
-		20000 + (1000000 - hiFactor) / 50;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-bool Search413::MightHaveSolution(const Task& task) const
-{
-	// Z не может быть чётным или кратным 5
-	if (!(task.factors[0] & 1) || !(task.factors[0] % 5))
-		return false;
-
-	return true;
+	return (hiFactor > 5000000) ? 120000 :
+		120000 + (5000000 - hiFactor) / 40;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -62,27 +70,29 @@ AML_NOINLINE void Search413::SearchFactors(Worker* worker, const NumberT* powers
 	const auto z = powers[k[0]];
 
 	// Макс. значение оставшихся коэффициентов не должно превышать значения коэффициента в левой
-	// части. Но так как они оба чётны, то мы будем перебирать значения, вдвое меньшие реальных
-	const unsigned limit = k[0] >> 1;
+	// части. Но так как они оба кратны 8, то мы будем перебирать значения, уменьшенные в 8 раз
+	const unsigned limit = k[0] >> 3;
 
-	size_t it = 0;
 	const bool zm3 = !(k[0] % 3);
 	for (unsigned k1 = 1; k1 < k[0]; k1 += 2)
 	{
+		if (((k[0] + k1) & 1023) && ((k[0] - k1) & 1023))
+			continue;
+
 		auto zd = z - powers[k1];
-		// Разность значений левой части уравнения и степени первого коэффициента правой части всегда кратна
-		// 16 (как разность биквадратов нечётных чисел). И так как другие 2 коэффициента правой части чётные,
-		// то значение разности должно быть сравнимо с 0, 16 или 32 модулю 256. Кроме этого, если коэффициент
+		// Разность значений левой части уравнения и степени первого коэффициента правой части всегда кратна 4096
+		// (как разность биквадратов, учитывая условие выше). И так как другие 2 коэффициента правой части кратны
+		// 8, то значение разности должно быть сравнимо с 0, 4096 или 8192 модулю 65536. Кроме этого, если коэф-т
 		// в левой части кратен 3, то ни один из коэффициентов правой части не должен быть кратен 3
-		if ((zd & 255) > 32 || (zm3 && !(k1 % 3)))
+		if ((zd & 65535) > 8192 || (zm3 && !(k1 % 3)))
 			continue;
 
 		k[1] = k1;
-		zd >>= 4;
+		zd >>= 12;
 
 		for (unsigned k2 = 5; k2 <= limit; k2 += 5)
 		{
-			k[2] = k2 << 1;
+			k[2] = k2 << 3;
 			const auto pk2 = powers[k2];
 			if (pk2 >= zd)
 				break;
@@ -98,7 +108,7 @@ AML_NOINLINE void Search413::SearchFactors(Worker* worker, const NumberT* powers
 						hi = mid - 1;
 					else
 					{
-						k[3] = mid << 1;
+						k[3] = mid << 3;
 						if (OnSolutionFound(worker, k))
 							return;
 						break;
@@ -106,12 +116,9 @@ AML_NOINLINE void Search413::SearchFactors(Worker* worker, const NumberT* powers
 				}
 			}
 		}
-
-		// Вывод прогресса
-		if ((it++ & 0xfff) && !(++worker->progressCounter & 0x7f))
-		{
-			if (OnProgress(worker, k))
-				return;
-		}
 	}
+
+	// Вывод прогресса
+	if (!(++worker->progressCounter & m_ProgressMask))
+		OnProgress(worker, k);
 }
