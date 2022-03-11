@@ -628,7 +628,7 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 		}
 
 		UpdateActiveThreadCount();
-		::Sleep(m_ForceShowProgress ? 1 : 20);
+		::Sleep(m_ForceShowProgress || m_NoTasks ? 1 : 20);
 	}
 
 	m_Pow64 = nullptr;
