@@ -22,11 +22,12 @@ void Search413::InitHashTable(PowersBase& powers, unsigned upperLimit)
 	// NB: так как последний коэффициент правой части всегда кратен 8 и мы ищем уменьшенное в
 	// 8 раз значение этого коэффициента, то имеет смысл проинициализировать лишь 1/8 значений
 	// хеш-таблицы. Это значительно уменьшит количество коллизий и увеличит скорость работы
+	upperLimit >>= 3;
 
 	if (m_Pow64)
-		m_Hashes.Init(upperLimit >> 3, static_cast<Powers<uint64_t>&>(powers));
+		m_Hashes.Init(upperLimit, static_cast<Powers<uint64_t>&>(powers));
 	else
-		m_Hashes.Init(upperLimit >> 3, static_cast<Powers<UInt128>&>(powers));
+		m_Hashes.Init(upperLimit, static_cast<Powers<UInt128>&>(powers));
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------

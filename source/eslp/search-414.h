@@ -5,6 +5,7 @@
 #pragma once
 
 #include "factorsearch.h"
+#include "hashtable.h"
 #include "powers.h"
 
 #include <string>
@@ -27,6 +28,7 @@ protected:
 
 	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors) override;
 	virtual void SelectNextTask(Task& task) override;
+	virtual bool MightHaveSolution(const Task& task) const override;
 
 	virtual void PerformTask(Worker* worker) override;
 
@@ -35,4 +37,5 @@ protected:
 
 protected:
 	HashTable<20> m_Hashes;
+	unsigned m_ProgressMask = 0;
 };

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "factorsearch.h"
+#include "hashtable.h"
 #include "powers.h"
 
 #include <string>

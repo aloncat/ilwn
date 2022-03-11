@@ -22,18 +22,19 @@ void Search414::InitHashTable(PowersBase& powers, unsigned upperLimit)
 	// NB: так как последний коэффициент правой части всегда чётный и мы ищем уменьшенное вдвое
 	// значение этого коэффициента, то имеет смысл проинициализировать лишь половину значений
 	// хеш-таблицы. Это уменьшит количество коллизий и увеличит скорость работы
+	upperLimit >>= 1;
 
 	if (m_Pow64)
-		m_Hashes.Init(upperLimit >> 1, static_cast<Powers<uint64_t>&>(powers));
+		m_Hashes.Init(upperLimit, static_cast<Powers<uint64_t>&>(powers));
 	else
-		m_Hashes.Init(upperLimit >> 1, static_cast<Powers<UInt128>&>(powers));
+		m_Hashes.Init(upperLimit, static_cast<Powers<UInt128>&>(powers));
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 unsigned Search414::GetChunkSize(unsigned hiFactor)
 {
-	return (hiFactor > 22000) ? 1200 :
-		1200 + (22000 - hiFactor) / 8;
+	return (hiFactor > 20000) ? 2400 :
+		2400 + (20000 - hiFactor) / 4;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -41,34 +42,27 @@ void Search414::InitFirstTask(Task& task, const std::vector<unsigned>& startFact
 {
 	Assert(!startFactors.empty());
 
-	task.factorCount = 2;
+	task.factorCount = 1;
 	task.factors[0] = startFactors[0];
-	// NB: первый коэффициент в правой части должен быть нечётным
-	task.factors[1] = (startFactors.size() > 1) ? startFactors[1] | 1 : 1;
 
-	// Пропускаем чётные и кратные 5 значения коэффициента в левой части, а также те наборы,
-	// в которых первый (заданный) коэффициент правой части больше коэффициента в левой части
-	while (!(task.factors[0] & 1) || !(task.factors[0] % 5) || task.factors[0] <= task.factors[1])
-	{
-		++task.factors[0];
-		task.factors[1] = 1;
-	}
+	const auto f = task.factors[0];
+	m_ProgressMask = (f < 6000) ? 0xff : (f < 14000) ? 0x3f : 7;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 void Search414::SelectNextTask(Task& task)
 {
-	unsigned* k = task.factors;
+	++task.factors[0];
+}
 
-	if (k[1] += 2; k[0] <= k[1])
-	{
-		++k[0];
-		k[1] = 1;
+//--------------------------------------------------------------------------------------------------------------------------------
+bool Search414::MightHaveSolution(const Task& task) const
+{
+	// Z не может быть чётным или кратным 5
+	if (!(task.factors[0] & 1) || !(task.factors[0] % 5))
+		return false;
 
-		// Z не может быть чётным или кратным 5
-		while (!(k[0] & 1) || !(k[0] % 5))
-			++k[0];
-	}
+	return true;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -89,21 +83,29 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 
 	// Коэффициент левой части
 	k[0] = worker->task.factors[0];
-	// Первый коэф-т правой части
-	k[1] = worker->task.factors[1];
 
+	// Левая часть уравнения
+	const auto z = powers[k[0]];
+
+	// Макс. значение последних 3 коэффициентов правой части не должно превышать значения коэффициента
+	// в левой части. Но так как все они чётны, то мы будем перебирать значения, вдвое меньшие реальных
+	const unsigned limit = k[0] >> 1;
+
+	for (k[1] = 1; k[1] < k[0]; k[1] += 2)
+	{
 		// Разность значений левой части уравнения и степени первого коэффициента правой части всегда
 		// кратна 16 (как разность биквадратов нечётных чисел). И так как другие 3 коэффициента правой
 		// части чётные, то значение разности должно быть сравнимо с 0, 16, 32 или 48 модулю 256
-	auto left = powers[k[0]] - powers[k[1]];
+		auto left = z - powers[k[1]];
 		if ((left & 255) > 48)
-		return;
+			continue;
 
-	// Макс. значение оставшихся коэффициентов не должно превышать значения коэффициента в левой
-	// части. Но так как все они чётны, то мы будем перебирать значения, вдвое меньшие реальных
-	const unsigned limit = k[0] >> 1;
+		// Если k[1] не кратен 5, то все оставшиеся 3 коэффициента правой части должны быть кратны 5.
+		// В этом случае значение left должно быть кратно 5^4. Если это не так, то решений не будет
+		if (k[1] % 5 && (left % 625))
+			continue;
+
 		left >>= 4;
-
 		for (unsigned k2 = 5; k2 <= limit; k2 += 5)
 		{
 			k[2] = k2 << 1;
@@ -141,9 +143,11 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 		}
 
 		// Вывод прогресса
-	if (!(++worker->progressCounter & 31))
+		if (!(++worker->progressCounter & m_ProgressMask))
 		{
-			k[2] = k[1] - k[1] % 10;
-		OnProgress(worker, k);
+			k[2] = (k[1] > 10) ? k[1] - k[1] % 10 : 10;
+			if (OnProgress(worker, k))
+				return;
 		}
+	}
 }
