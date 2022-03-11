@@ -30,6 +30,13 @@ void Search414::InitHashTable(PowersBase& powers, unsigned upperLimit)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+unsigned Search414::GetChunkSize(unsigned hiFactor)
+{
+	return (hiFactor > 22000) ? 1200 :
+		1200 + (22000 - hiFactor) / 8;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 void Search414::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
 {
 	Assert(!startFactors.empty());
@@ -65,13 +72,6 @@ void Search414::SelectNextTask(Task& task)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-unsigned Search414::GetChunkSize(unsigned hiFactor)
-{
-	return (hiFactor > 22000) ? 1200 :
-		1200 + (22000 - hiFactor) / 8;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
 void Search414::PerformTask(Worker* worker)
 {
 	if (m_Pow64)
@@ -92,58 +92,58 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 	// Первый коэф-т правой части
 	k[1] = worker->task.factors[1];
 
-	// Разность значений левой части уравнения и степени первого коэффициента правой части всегда
-	// кратна 16 (как разность биквадратов нечётных чисел). И так как другие 3 коэффициента правой
-	// части чётные, то значение разности должно быть сравнимо с 0, 16, 32 или 48 модулю 256
+		// Разность значений левой части уравнения и степени первого коэффициента правой части всегда
+		// кратна 16 (как разность биквадратов нечётных чисел). И так как другие 3 коэффициента правой
+		// части чётные, то значение разности должно быть сравнимо с 0, 16, 32 или 48 модулю 256
 	auto left = powers[k[0]] - powers[k[1]];
-	if ((left & 255) > 48)
+		if ((left & 255) > 48)
 		return;
 
 	// Макс. значение оставшихся коэффициентов не должно превышать значения коэффициента в левой
 	// части. Но так как все они чётны, то мы будем перебирать значения, вдвое меньшие реальных
 	const unsigned limit = k[0] >> 1;
-	left >>= 4;
+		left >>= 4;
 
-	for (unsigned k2 = 5; k2 <= limit; k2 += 5)
-	{
-		k[2] = k2 << 1;
-		const auto pk2 = powers[k2];
-		if (pk2 >= left)
-			break;
-
-		const auto zd = left - pk2;
-		for (unsigned k3 = 5; k3 <= k2; k3 += 5)
+		for (unsigned k2 = 5; k2 <= limit; k2 += 5)
 		{
-			k[3] = k3 << 1;
-			const auto pk3 = powers[k3];
-			if (pk3 >= zd)
+			k[2] = k2 << 1;
+			const auto pk2 = powers[k2];
+			if (pk2 >= left)
 				break;
 
-			if (const NumberT lastFP = zd - pk3; m_Hashes.Exists(lastFP))
+			const auto zd = left - pk2;
+			for (unsigned k3 = 5; k3 <= k2; k3 += 5)
 			{
-				for (unsigned lo = 1, hi = limit; lo <= hi;)
+				k[3] = k3 << 1;
+				const auto pk3 = powers[k3];
+				if (pk3 >= zd)
+					break;
+
+				if (const NumberT lastFP = zd - pk3; m_Hashes.Exists(lastFP))
 				{
-					unsigned mid = (lo + hi) >> 1;
-					if (auto v = powers[mid]; v < lastFP)
-						lo = mid + 1;
-					else if (v > lastFP)
-						hi = mid - 1;
-					else
+					for (unsigned lo = 1, hi = limit; lo <= hi;)
 					{
-						k[4] = mid << 1;
-						if (OnSolutionFound(worker, k))
-							return;
-						break;
+						unsigned mid = (lo + hi) >> 1;
+						if (auto v = powers[mid]; v < lastFP)
+							lo = mid + 1;
+						else if (v > lastFP)
+							hi = mid - 1;
+						else
+						{
+							k[4] = mid << 1;
+							if (OnSolutionFound(worker, k))
+								return;
+							break;
+						}
 					}
 				}
 			}
 		}
-	}
 
-	// Вывод прогресса
+		// Вывод прогресса
 	if (!(++worker->progressCounter & 31))
-	{
-		k[2] = k[1] - k[1] % 10;
+		{
+			k[2] = k[1] - k[1] % 10;
 		OnProgress(worker, k);
-	}
+		}
 }

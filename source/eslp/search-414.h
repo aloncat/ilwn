@@ -23,9 +23,10 @@ protected:
 	virtual std::wstring GetAdditionalInfo() const override;
 
 	virtual void InitHashTable(PowersBase& powers, unsigned upperLimit) override;
+	virtual unsigned GetChunkSize(unsigned hiFactor) override;
+
 	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors) override;
 	virtual void SelectNextTask(Task& task) override;
-	virtual unsigned GetChunkSize(unsigned hiFactor) override;
 
 	virtual void PerformTask(Worker* worker) override;
 

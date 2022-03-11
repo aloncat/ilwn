@@ -151,8 +151,24 @@ void FactorSearch::InitHashTable(PowersBase& powers, unsigned upperLimit)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+unsigned FactorSearch::GetChunkSize(unsigned hiFactor)
+{
+	const int factorCount = m_Info.leftCount + m_Info.rightCount;
+	// В зависимости от количества коэффициентов в уравнении, мы бы
+	// хотели проверять различное количество старших коэффициентов за 1 раз
+	static const unsigned countImpact[10] = { 0, 0, 0, 80000, 8000, 2200, 800, 640, 420, 240 };
+	unsigned toCheck = (factorCount >= 3 && factorCount <= 9) ? countImpact[factorCount] : 120;
+	// Для чётных степеней, не превышающих 8, увеличиваем значение в 1.5 раза
+	toCheck += ((m_Info.power & 1) || m_Info.power > 8) ? 0 : toCheck / 2;
+
+	return toCheck;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 void FactorSearch::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
 {
+	Assert(!startFactors.empty());
+
 	task.factorCount = m_Info.leftCount;
 	const int count = std::min(task.factorCount, static_cast<int>(startFactors.size()));
 
@@ -179,20 +195,6 @@ void FactorSearch::SelectNextTask(Task& task)
 	}
 
 	++k[0];
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-unsigned FactorSearch::GetChunkSize(unsigned hiFactor)
-{
-	const int factorCount = m_Info.leftCount + m_Info.rightCount;
-	// В зависимости от количества коэффициентов в уравнении, мы бы
-	// хотели проверять различное количество старших коэффициентов за 1 раз
-	static const unsigned countImpact[10] = { 0, 0, 0, 80000, 8000, 2200, 800, 640, 420, 240 };
-	unsigned toCheck = (factorCount >= 3 && factorCount <= 9) ? countImpact[factorCount] : 120;
-	// Для чётных степеней, не превышающих 8, увеличиваем значение в 1.5 раза
-	toCheck += ((m_Info.power & 1) || m_Info.power > 8) ? 0 : toCheck / 2;
-
-	return toCheck;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------

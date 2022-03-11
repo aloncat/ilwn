@@ -30,6 +30,13 @@ void Search413::InitHashTable(PowersBase& powers, unsigned upperLimit)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+unsigned Search413::GetChunkSize(unsigned hiFactor)
+{
+	return (hiFactor > 4000000) ? 150000 :
+		150000 + (4000000 - hiFactor) / 32;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 void Search413::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
 {
 	Assert(!startFactors.empty());
@@ -51,13 +58,6 @@ void Search413::SelectNextTask(Task& task)
 	task.factors[0] += 8;
 	if (!(task.factors[0] % 5))
 		task.factors[0] += 8;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-unsigned Search413::GetChunkSize(unsigned hiFactor)
-{
-	return (hiFactor > 4000000) ? 150000 :
-		150000 + (4000000 - hiFactor) / 32;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
