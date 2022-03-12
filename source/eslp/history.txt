@@ -1,5 +1,5 @@
 === Version 0.32 ===
-Released: 2022-03-xx
+Released: 2022-03-12
 
 == Bug fixes ==
  * Removed unused items from hash table for 4.1.4.
