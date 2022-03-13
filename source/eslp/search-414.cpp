@@ -33,8 +33,8 @@ void Search414::InitHashTable(PowersBase& powers, unsigned upperLimit)
 //--------------------------------------------------------------------------------------------------------------------------------
 unsigned Search414::GetChunkSize(unsigned hiFactor)
 {
-	return (hiFactor > 20000) ? 2400 :
-		2400 + (20000 - hiFactor) / 4;
+	return (hiFactor > 24000) ? 2800 :
+		2800 + (24000 - hiFactor) / 4;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -46,7 +46,7 @@ void Search414::InitFirstTask(Task& task, const std::vector<unsigned>& startFact
 	task.factors[0] = startFactors[0];
 
 	const auto f = task.factors[0];
-	m_ProgressMask = (f < 6000) ? 0xff : (f < 14000) ? 0x3f : 7;
+	m_ProgressMask = (f < 8000) ? 511 : (f < 16000) ? 63 : 15;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -106,15 +106,35 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 			continue;
 
 		left >>= 4;
-		for (unsigned k2 = 5; k2 <= limit; k2 += 5)
+		unsigned k2 = 1;
+		// Пропустиим слишком низкие значения k[2]
+		for (unsigned step = limit >> 1; step; step >>= 1)
+		{
+			auto f = k2 + step;
+			if (left > powers[f - 1] * 3)
+				k2 = f;
+		}
+
+		const unsigned k2dt = (k[1] % 5) ? 5 : 1;
+		for (k2 += (k2dt == 1) ? 0 : 4 - (k2 + 4) % 5; k2 <= limit; k2 += k2dt)
 		{
 			k[2] = k2 << 1;
 			const auto pk2 = powers[k2];
 			if (pk2 >= left)
 				break;
 
+			unsigned k3 = 1;
 			const auto zd = left - pk2;
-			for (unsigned k3 = 5; k3 <= k2; k3 += 5)
+			// Пропустиим слишком низкие значения k[3]
+			for (unsigned step = k2 >> 1; step; step >>= 1)
+			{
+				auto f = k3 + step;
+				if (zd > powers[f - 1] * 2)
+					k3 = f;
+			}
+
+			const unsigned k3dt = (k2dt != 1 || k2 % 5) ? 5 : 1;
+			for (k3 += (k3dt == 1) ? 0 : 4 - (k3 + 4) % 5; k3 <= k2; k3 += k3dt)
 			{
 				k[3] = k3 << 1;
 				const auto pk3 = powers[k3];
@@ -123,7 +143,7 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 
 				if (const NumberT lastFP = zd - pk3; m_Hashes.Exists(lastFP))
 				{
-					for (unsigned lo = 1, hi = limit; lo <= hi;)
+					for (unsigned lo = 1, hi = k3; lo <= hi;)
 					{
 						unsigned mid = (lo + hi) >> 1;
 						if (auto v = powers[mid]; v < lastFP)
