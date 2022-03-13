@@ -72,10 +72,9 @@ void ProgressManager::SetDone(unsigned taskId, bool oldest)
 			m_Items[head].isDone = true;
 		}
 
-		// Удалим из буфера задания, id которых <= taskId (если oldest == true, то есть указанный taskId
-		// является самым старым заданием), а также все "готовые" задания в начале буфера. Для того, чтобы
-		// вывод прогресса был последовательным, в буфере всегда должно оставаться хотя бы 1 задание
-		for (; m_Count > 1; --m_Count)
+		// Удалим из буфера задания, id которых <= taskId (если oldest == true, то есть указанный
+		// taskId является самым старым заданием), а также все "готовые" задания в начале буфера
+		for (; m_Count; --m_Count)
 		{
 			Item& it = m_Items[m_Head];
 			if (!it.isDone && (!oldest || taskId < it.taskId))
@@ -93,6 +92,18 @@ void ProgressManager::SetDone(unsigned taskId, bool oldest)
 			auto next = m_Head + 1;
 			m_Head = (next < MAX_TASKS) ? next : 0;
 		}
+	}
+
+	// Для того, чтобы вывод прогресса был последовательным, в буфере всегда должно оставаться
+	// хотя бы одно задание. Если буфер оказался пуст, то добавим в него завершённое задание
+	if (!m_Count && oldest)
+	{
+		m_Count = 1;
+		m_Head = 0;
+
+		m_Items[0].taskId = taskId;
+		m_Items[0].isReady = false;
+		m_Items[0].isDone = true;
 	}
 }
 
