@@ -165,7 +165,7 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 		// Вывод прогресса
 		if (!(++worker->progressCounter & m_ProgressMask))
 		{
-			k[2] = (k[1] > 10) ? k[1] - k[1] % 10 : 10;
+			k[2] = k[1] - ((k[1] > 10) ? k[1] % 10 : 0);
 			if (OnProgress(worker, k))
 				return;
 		}

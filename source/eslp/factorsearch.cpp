@@ -470,11 +470,11 @@ void FactorSearch::OnTaskDone(Worker* worker)
 	{
 		if (m_PendingTasks[i] == worker->workerId)
 		{
+			m_ProgressMan.SetDone(worker->task.taskId, !i);
 			m_PendingTasks.erase(m_PendingTasks.begin() + i);
 
 			if (!i)
 			{
-				m_ProgressMan.SetDone(worker->task.taskId);
 				m_LoPendingTask = (count > 1) ? m_PendingTasks.front() : 0;
 
 				if (!m_ForceQuit)

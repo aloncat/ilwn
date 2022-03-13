@@ -55,25 +55,44 @@ void ProgressManager::SetProgress(const unsigned* factors, unsigned taskId)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void ProgressManager::SetDone(unsigned taskId)
+void ProgressManager::SetDone(unsigned taskId, bool oldest)
 {
 	thread::Lock lock(m_CS);
 
-	// Удалим из буфера задания, id которых <= taskId
-	while (m_Count && taskId >= m_Items[m_Head].taskId)
+	if (m_Count)
 	{
-		// Если были данные прогресса, сохраним их
-		if (Item& it = m_Items[m_Head]; it.isReady)
+		// Пометим указанное задание как завершённое
+		const auto firstId = m_Items[m_Head].taskId;
+		if (taskId >= firstId && taskId < static_cast<uint64_t>(firstId) + m_Count)
 		{
-			for (size_t i = 0; i < MAX_COEFS; ++i)
-				m_Progress[i] = it.progress[i];
+			unsigned head = m_Head + taskId - firstId;
+			if (head >= MAX_TASKS)
+				head -= MAX_TASKS;
 
-			m_IsReady = true;
+			m_Items[head].isDone = true;
 		}
 
-		auto next = m_Head + 1;
-		m_Head = (next < MAX_TASKS) ? next : 0;
-		--m_Count;
+		// Удалим из буфера задания, id которых <= taskId (если oldest == true, то есть указанный taskId
+		// является самым старым заданием), а также все "готовые" задания в начале буфера. Для того, чтобы
+		// вывод прогресса был последовательным, в буфере всегда должно оставаться хотя бы 1 задание
+		for (; m_Count > 1; --m_Count)
+		{
+			Item& it = m_Items[m_Head];
+			if (!it.isDone && (!oldest || taskId < it.taskId))
+				break;
+
+			// Если были данные прогресса, сохраним их
+			if (it.isReady)
+			{
+				for (size_t i = 0; i < MAX_COEFS; ++i)
+					m_Progress[i] = it.progress[i];
+
+				m_IsReady = true;
+			}
+
+			auto next = m_Head + 1;
+			m_Head = (next < MAX_TASKS) ? next : 0;
+		}
 	}
 }
 
@@ -97,6 +116,7 @@ ProgressManager::Item* ProgressManager::GetItem(unsigned taskId)
 
 		m_Items[0].taskId = taskId;
 		m_Items[0].isReady = false;
+		m_Items[0].isDone = false;
 
 		return m_Items;
 	}
@@ -119,6 +139,7 @@ ProgressManager::Item* ProgressManager::GetItem(unsigned taskId)
 
 			it.taskId = firstId + i;
 			it.isReady = false;
+			it.isDone = false;
 		}
 
 		m_Count = newCount;

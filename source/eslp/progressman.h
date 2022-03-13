@@ -26,7 +26,7 @@ public:
 	bool GetProgress(unsigned* factors) const;
 
 	void SetProgress(const unsigned* factors, unsigned taskId);
-	void SetDone(unsigned taskId);
+	void SetDone(unsigned taskId, bool oldest);
 
 private:
 	// Макс. количество подряд идущих заданий, для
@@ -37,6 +37,7 @@ private:
 		unsigned taskId = 0;			// Номер задания
 		unsigned progress[MAX_COEFS];	// Первые коэффициенты
 		bool isReady = false;			// true, если есть данные
+		bool isDone = false;			// true, если задание завершено
 	};
 
 	Item* GetItem(unsigned taskId);
