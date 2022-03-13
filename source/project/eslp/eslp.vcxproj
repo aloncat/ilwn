@@ -193,7 +193,9 @@
     <ClInclude Include="..\..\eslp\progressman.h" />
     <ClInclude Include="..\..\eslp\search-413.h" />
     <ClInclude Include="..\..\eslp\search-414.h" />
-    <ClInclude Include="..\..\eslp\search-x1x.h" />
+    <ClInclude Include="..\..\eslp\search-x12.h" />
+    <ClInclude Include="..\..\eslp\search-x13.h" />
+    <ClInclude Include="..\..\eslp\search-e1x.h" />
     <ClInclude Include="..\..\eslp\search-x2x.h" />
     <ClInclude Include="..\..\eslp\searchbase.h" />
     <ClInclude Include="..\..\eslp\solution.h" />
@@ -215,7 +217,9 @@
     <ClCompile Include="..\..\eslp\progressman.cpp" />
     <ClCompile Include="..\..\eslp\search-413.cpp" />
     <ClCompile Include="..\..\eslp\search-414.cpp" />
-    <ClCompile Include="..\..\eslp\search-x1x.cpp" />
+    <ClCompile Include="..\..\eslp\search-x12.cpp" />
+    <ClCompile Include="..\..\eslp\search-x13.cpp" />
+    <ClCompile Include="..\..\eslp\search-e1x.cpp" />
     <ClCompile Include="..\..\eslp\search-x2x.cpp" />
     <ClCompile Include="..\..\eslp\searchbase.cpp" />
     <ClCompile Include="..\..\eslp\solution.cpp" />

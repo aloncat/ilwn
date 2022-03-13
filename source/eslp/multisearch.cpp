@@ -7,7 +7,9 @@
 
 #include "search-413.h"
 #include "search-414.h"
-#include "search-x1x.h"
+#include "search-x12.h"
+#include "search-x13.h"
+#include "search-e1x.h"
 #include "search-x2x.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
