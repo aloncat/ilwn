@@ -38,6 +38,8 @@ private:
 		unsigned progress[MAX_COEFS];	// Первые коэффициенты
 		bool isReady = false;			// true, если есть данные
 		bool isDone = false;			// true, если задание завершено
+
+		void Reset(unsigned id = 0);
 	};
 
 	Item* GetItem(unsigned taskId);
