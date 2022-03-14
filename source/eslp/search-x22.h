@@ -5,6 +5,8 @@
 #pragma once
 
 #include "factorsearch.h"
+#include "hashtable.h"
+#include "powers.h"
 
 #include <string>
 #include <vector>
@@ -27,40 +29,10 @@ protected:
 
 	virtual void PerformTask(Worker* worker) override;
 
+private:
 	template<class NumberT>
 	void SearchFactors(Worker* worker, const NumberT* powers);
 
 protected:
 	HashTable<23> m_Hashes;
-};
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//   SearchX23 - улучшенный алгоритм для уравнений x.2.3
-//
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//--------------------------------------------------------------------------------------------------------------------------------
-class SearchX23 : public FactorSearch
-{
-protected:
-	virtual std::wstring GetAdditionalInfo() const override;
-
-	virtual void PerformTask(Worker* worker) override;
-
-	template<class NumberT>
-	void SearchFactors(Worker* worker, const NumberT* powers);
-};
-
-//--------------------------------------------------------------------------------------------------------------------------------
-class SearchE23 : public SearchX23
-{
-protected:
-	virtual std::wstring GetAdditionalInfo() const override;
-
-	virtual bool MightHaveSolution(const Task& task) const override;
-	virtual void PerformTask(Worker* worker) override;
-
-	template<class NumberT>
-	void SearchFactors(Worker* worker, const NumberT* powers);
 };

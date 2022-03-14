@@ -112,8 +112,8 @@ AML_NOINLINE void SearchE1X::SearchFactors(Worker* worker, const NumberT* powers
 	for (int i = 0; i < worker->task.factorCount; ++i)
 		factors[i] = worker->task.factors[i];
 
-	// Коэффициенты, не заданные заданием, инициализируем в 1
-	const int factorCount = m_Info.leftCount + m_Info.rightCount;
+	// Остальные коэффициенты инициализируем в 1
+	const int factorCount = 1 + m_Info.rightCount;
 	for (int i = worker->task.factorCount; i < factorCount; ++i)
 		factors[i] = 1;
 
@@ -122,14 +122,14 @@ AML_NOINLINE void SearchE1X::SearchFactors(Worker* worker, const NumberT* powers
 
 	NumberT sum = 0;
 	// Сумма правой части без последнего коэффициента
-	for (int i = m_Info.leftCount; i < factorCount - 1; ++i)
+	for (int i = 1; i < factorCount - 1; ++i)
 		sum += powers[factors[i]];
 
 	// Количество "перебираемых" коэффициентов
 	const int count = factorCount - worker->task.factorCount;
-	// Массив k, начиная с индекса 1, содержит перебираемые коэффициенты правой части уравнения. В
-	// элементе с индексом 0 хранится предшествующий им коэффициент левой или правой части уравнения
-	unsigned* k = factors + (worker->task.factorCount - 1);
+	// Массив k, начиная с индекса 1, содержит перебираемые коэффициенты правой части уравнения.
+	// В элементе k[0] хранится предшествующий им коэффициент левой или правой части уравнения
+	unsigned* k = factors + worker->task.factorCount - 1;
 
 	sum -= count - 1;
 	// Пропустим часть значений 1-го перебираемого коэффициента

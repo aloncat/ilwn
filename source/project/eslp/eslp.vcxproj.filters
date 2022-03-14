@@ -49,9 +49,6 @@
     <ClInclude Include="..\..\eslp\multisearch.h">
       <Filter>search</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\eslp\search-x2x.h">
-      <Filter>search\special</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\eslp\search-414.h">
       <Filter>search\special</Filter>
     </ClInclude>
@@ -68,6 +65,15 @@
       <Filter>search\special</Filter>
     </ClInclude>
     <ClInclude Include="..\..\eslp\search-e1x.h">
+      <Filter>search\special</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\eslp\search-x22.h">
+      <Filter>search\special</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\eslp\search-x23.h">
+      <Filter>search\special</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\eslp\search-e23.h">
       <Filter>search\special</Filter>
     </ClInclude>
   </ItemGroup>
@@ -101,9 +107,6 @@
     <ClCompile Include="..\..\eslp\multisearch.cpp">
       <Filter>search</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\eslp\search-x2x.cpp">
-      <Filter>search\special</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\eslp\search-414.cpp">
       <Filter>search\special</Filter>
     </ClCompile>
@@ -120,6 +123,15 @@
       <Filter>search\special</Filter>
     </ClCompile>
     <ClCompile Include="..\..\eslp\search-e1x.cpp">
+      <Filter>search\special</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\eslp\search-x22.cpp">
+      <Filter>search\special</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\eslp\search-x23.cpp">
+      <Filter>search\special</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\eslp\search-e23.cpp">
       <Filter>search\special</Filter>
     </ClCompile>
   </ItemGroup>

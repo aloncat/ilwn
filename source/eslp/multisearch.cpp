@@ -7,10 +7,12 @@
 
 #include "search-413.h"
 #include "search-414.h"
+#include "search-e1x.h"
+#include "search-e23.h"
 #include "search-x12.h"
 #include "search-x13.h"
-#include "search-e1x.h"
-#include "search-x2x.h"
+#include "search-x22.h"
+#include "search-x23.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
