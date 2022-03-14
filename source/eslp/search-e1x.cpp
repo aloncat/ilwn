@@ -16,7 +16,7 @@ bool SearchE1X::IsSuitable(int power, int leftCount, int rightCount)
 	if ((power & 1) || power < 4 || power > 20 || leftCount != 1)
 		return false;
 
-	// NB: условия ниже основаны на свойстве чётных степеней: если z не кратно 2, то z в соответствующей
+	// NB: условия ниже основаны на свойстве чётных степеней: если z нечётно, то z в соответствующей
 	// степени будет сравнимо с 1 по модулю 8, 16, 32 или 64 (модуль зависит от показателя степени)
 
 	if (rightCount < 8)
@@ -39,6 +39,12 @@ std::wstring SearchE1X::GetAdditionalInfo() const
 {
 	Assert(IsSuitable(m_Info.power, m_Info.leftCount, m_Info.rightCount));
 	return L"#15optimized #7algorithm for #6#E.1.X";
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void SearchE1X::SelectNextTask(Task& task)
+{
+	++task.factors[0];
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------

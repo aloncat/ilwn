@@ -31,6 +31,7 @@ protected:
 
 	virtual void PerformTask(Worker* worker) override;
 
+private:
 	template<class NumberT>
 	void SearchFactors(Worker* worker, const NumberT* powers);
 

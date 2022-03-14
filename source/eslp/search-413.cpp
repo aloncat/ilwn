@@ -97,6 +97,7 @@ AML_NOINLINE void Search413::SearchFactors(Worker* worker, const NumberT* powers
 	const bool zm3 = !(k[0] % 3);
 	for (unsigned k1 = f1, dt = 0; k1 < k[0]; k1 += delta[dt], dt ^= 1)
 	{
+		k[1] = k1;
 		auto zd = z - powers[k1];
 		// Разность значений левой части уравнения и степени первого коэффициента правой части всегда кратна
 		// 4096 (как разность биквадратов, учитывая условие выше). И так как другие 2 коэффициента правой
@@ -126,9 +127,7 @@ AML_NOINLINE void Search413::SearchFactors(Worker* worker, const NumberT* powers
 		if ((0x980 & (1 << (zd % 13))) || (0x10402270 & (1 << (zd % 29))))
 			continue;
 
-		k[1] = k1;
 		zd >>= 12;
-
 		for (unsigned k2 = 5; k2 <= limit; k2 += 5)
 		{
 			k[2] = k2 << 3;

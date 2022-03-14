@@ -1,6 +1,9 @@
 === Version 0.33 ===
 Released: 2022-03-xx
 
+== Bug fixes ==
+ * Fixed progress freezes at large coefficients.
+
 == Features ==
  * Faster algorithm for 4.1.3 equation.
  * Faster algorithm for 4.1.4 equation.

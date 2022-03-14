@@ -17,15 +17,6 @@ std::wstring SearchX12::GetAdditionalInfo() const
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void SearchX12::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
-{
-	Assert(!startFactors.empty());
-
-	task.factorCount = 1;
-	task.factors[0] = startFactors[0];
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
 void SearchX12::SelectNextTask(Task& task)
 {
 	++task.factors[0];
