@@ -199,6 +199,7 @@
     <ClInclude Include="..\..\eslp\search-x22.h" />
     <ClInclude Include="..\..\eslp\search-x23.h" />
     <ClInclude Include="..\..\eslp\search-e23.h" />
+    <ClInclude Include="..\..\eslp\search-any.h" />
     <ClInclude Include="..\..\eslp\searchbase.h" />
     <ClInclude Include="..\..\eslp\solution.h" />
     <ClInclude Include="..\..\eslp\threadtimer.h" />
@@ -225,6 +226,7 @@
     <ClCompile Include="..\..\eslp\search-x22.cpp" />
     <ClCompile Include="..\..\eslp\search-x23.cpp" />
     <ClCompile Include="..\..\eslp\search-e23.cpp" />
+    <ClCompile Include="..\..\eslp\search-any.cpp" />
     <ClCompile Include="..\..\eslp\searchbase.cpp" />
     <ClCompile Include="..\..\eslp\solution.cpp" />
     <ClCompile Include="..\..\eslp\threadtimer.cpp" />
