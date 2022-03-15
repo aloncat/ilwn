@@ -12,7 +12,7 @@
 //--------------------------------------------------------------------------------------------------------------------------------
 std::wstring SearchX22::GetAdditionalInfo() const
 {
-	Assert(m_Info.power <= 20 && m_Info.leftCount == 2 && m_Info.rightCount == 2);
+	Assert(m_Info.leftCount == 2 && m_Info.rightCount == 2);
 	return L"#15optimized #7algorithm for #6#X.2.2";
 }
 
@@ -21,6 +21,11 @@ void SearchX22::BeforeCompute(unsigned upperLimit)
 {
 	SetSearchFn(this);
 	InitHashTable(m_Hashes, upperLimit);
+
+	// Оптимизация для чётных степеней проверена для всех степеней до 20-й включительно. Скорее всего,
+	// она работает и для других степеней, но я это не проверил (в программе степень ограничена 20-й)
+	static_assert(MAX_POWER <= 20, "Need to re-check optimization for even powers for x.2.2");
+	m_IsEvenPower = !(m_Info.power & 1) && (m_Info.power <= 20);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -52,7 +57,7 @@ AML_NOINLINE void SearchX22::SearchFactors(Worker* worker, const NumberT* powers
 
 	// Если значение k[0] чётно, то k[1] не может быть чётным при любой чётной степени, иначе решение будет
 	// непримитивным. Поэтому при чётных k[0] и степени мы будем проверять только нечётные значения k[1]
-	const unsigned delta = ((m_Info.power & 1) || (k[0] & 1)) ? 1 : 2;
+	const unsigned delta = (m_IsEvenPower && !(k[0] & 1)) ? 2 : 1;
 
 	// Перебор 2-го коэф-та левой части
 	for (k[1] = 1; k[1] <= k[0]; k[1] += delta)

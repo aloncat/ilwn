@@ -31,4 +31,5 @@ protected:
 
 protected:
 	HashTable<23> m_Hashes;
+	bool m_IsEvenPower = false;
 };

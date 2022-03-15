@@ -392,30 +392,27 @@ void FactorSearch::WorkerMainFn(Worker* worker)
 	for (int i = 0; i < ProgressManager::MAX_COEFS; ++i)
 		worker->task.factors[i] = 1;
 
-	if (Verify(m_SearchFn && m_Powers))
+	while (!worker->shouldQuit)
 	{
-		auto powers = m_Powers->GetData();
-
-		while (!worker->shouldQuit)
+		if (worker->shouldPause)
 		{
-			if (worker->shouldPause)
-			{
-				worker->isActive = false;
-				::SuspendThread(threadHandle);
+			worker->isActive = false;
+			::SuspendThread(threadHandle);
 
-				worker->isActive = true;
-				continue;
-			}
-
-			if (!GetNextTask(worker))
-			{
-				worker->shouldPause = true;
-				continue;
-			}
-
-			(this->*m_SearchFn)(worker, powers);
-			OnTaskDone(worker);
+			worker->isActive = true;
+			continue;
 		}
+
+		if (!GetNextTask(worker))
+		{
+			worker->shouldPause = true;
+			continue;
+		}
+
+		auto powers = m_Powers->GetData();
+		(this->*m_SearchFn)(worker, powers);
+
+		OnTaskDone(worker);
 	}
 
 	worker->isFinished = true;

@@ -50,7 +50,6 @@ AML_NOINLINE void SearchX23::SearchFactors(Worker* worker, const NumberT* powers
 	// Перебор старшего коэф-та правой части
 	for (auto pk2 = powers[k[2]];;)
 	{
-		// Левая часть без старшего коэф-та
 		const auto zd = z - pk2;
 
 		k[3] = 1;
