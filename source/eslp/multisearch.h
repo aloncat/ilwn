@@ -25,6 +25,7 @@ public:
 	static Instance CreateInstance(int power, int leftCount, int rightCount, const Options& options);
 
 protected:
+	virtual void BeforeCompute(unsigned upperLimit) override;
 	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors) override;
 	virtual void SelectNextTask(Task& task) override;
 
@@ -32,8 +33,12 @@ protected:
 	bool SkipLowSet(Task& task, const NumberT* powers) const;
 
 	virtual bool MightHaveSolution(const Task& task) const override;
-	virtual void PerformTask(Worker* worker) override;
 
 	template<class NumberT>
 	void SearchFactors(Worker* worker, const NumberT* powers);
+
+protected:
+	using SkipLowSetFn = bool (MultiSearch::*)(Task& task, const void* powers) const;
+
+	SkipLowSetFn m_SkipFn = nullptr;
 };

@@ -20,22 +20,24 @@ class PowersBase
 	AML_NONCOPYABLE(PowersBase)
 
 public:
-	int GetPower() const
-	{
-		return m_Power;
-	}
+	int GetPower() const { return m_Power; }
+	unsigned GetUpperValue() const { return m_UpperValue; }
+	const void* GetData() const { return m_Data; }
 
-	unsigned GetUpperValue() const
+	template<class NumberT>
+	bool IsType() const
 	{
-		return m_UpperValue;
+		return m_ItemSize == sizeof(NumberT);
 	}
 
 protected:
 	PowersBase() = default;
 
 protected:
-	int m_Power = 0;			// Значение степени, от 1 до 32
-	unsigned m_UpperValue = 0;	// Наибольшее корректное значение
+	int m_Power = 0;				// Значение степени, от 1 до 32
+	unsigned m_UpperValue = 0;		// Наибольшее корректное значение
+	unsigned m_ItemSize = 0;		// Размер типа данных в байтах
+	const void* m_Data = nullptr;	// Указатель на массив чисел
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -54,9 +56,11 @@ public:
 
 		m_Power = power;
 		m_UpperValue = upperValue;
+		m_ItemSize = sizeof(T);
 
 		AML_SAFE_DELETEA(m_Powers);
 		m_Powers = new T[upperValue + 1];
+		m_Data = m_Powers;
 
 		if (power == 1)
 		{
@@ -70,11 +74,6 @@ public:
 		}
 
 		return upperValue;
-	}
-
-	const T* GetData() const
-	{
-		return m_Powers;
 	}
 
 	const T& operator [](size_t index) const
@@ -101,7 +100,7 @@ public:
 		if (!Verify(power >= 1 && power <= 32 && factor >= 1))
 			return 0;
 
-		// NB: максимальное значение ограничено размером массива в 1 гигабайт
+		// Максимальное значение ограничено размером массива в 1 гигабайт
 		const unsigned upperBound = static_cast<unsigned>((1024 * 1024 * 1024) / sizeof(T)) - 1;
 
 		if (power == 1)

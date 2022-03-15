@@ -12,6 +12,7 @@
 #include "threadtimer.h"
 #include "uint128.h"
 
+#include <core/debug.h>
 #include <core/platform.h>
 #include <core/threadsync.h>
 
@@ -36,17 +37,15 @@ protected:
 	struct Task;
 	struct Worker;
 
-	// Максимальное количество выводимых решений
-	static constexpr size_t MAX_SOLUTIONS = 100000;
-
 	// Выполняет поиск решений (начиная с указанных значений коэффициентов)
 	virtual void Search(const Options& options, const std::vector<unsigned>& startFactors) override;
 
 	// Обновляет заголовок окна консоли
 	virtual void UpdateConsoleTitle() override;
 
-	// Инициализирует хеш-таблицу
-	virtual void InitHashTable(PowersBase& powers, unsigned upperLimit);
+	// Эта функция вызывается перед началом обработки блока заданий. Она должна
+	// проинициализировать хеш-таблицу и установить функцию выполнения заданий
+	virtual void BeforeCompute(unsigned upperLimit);
 
 	// Возвращает значение между указанным стартовым значением старшего коэффициента левой части hiFactor
 	// и желаемым конечным значением в блоке вычислений. Влияет на количество инициализируемых элементов
@@ -64,11 +63,14 @@ protected:
 	// гарантируется, что решений быть не может, то функция должна вернуть false
 	virtual bool MightHaveSolution(const Task& task) const { return true; }
 
-	// Выполняет задание в рабочем потоке
-	virtual void PerformTask(Worker* worker) = 0;
+	// Инициализирует указатель на функцию выполнения задания (значение m_SearchFn), выбирая подходящую
+	// шаблонную функциию Derived::SearchFactors в классе наследнике в зависимости от типа чисел m_Powers
+	template<class Derived>
+	void SetSearchFn(Derived* searcher);
 
-	template<class NumberT>
-	const NumberT*& PowersArray();
+	// Инициализирует хеш-таблицу hashes значениями степеней от 1 до upperLimit
+	template<size_t HASH_BITS>
+	void InitHashTable(HashTable<HASH_BITS>& hashes, unsigned upperLimit);
 
 	// Функция вернёт true, если установлен флаг m_ForceQuit.
 	// Вызывается рабочим потоком для вывода прогресса поиска
@@ -78,9 +80,15 @@ protected:
 	bool OnSolutionFound(const Worker* worker, const unsigned* factors);
 
 protected:
-	const uint64_t* m_Pow64 = nullptr;		// Массив степеней (64 бита)
-	const UInt128* m_Powers = nullptr;		// Массив степеней (128 бит)
-	HashTable<19> m_Hashes;					// Хеш-таблица значений степеней
+	// Максимальное количество выводимых решений
+	static constexpr size_t MAX_SOLUTIONS = 100000;
+
+	// Прототип функции, выполняющей задание в рабочем потоке
+	using SearchFn = void (FactorSearch::*)(Worker* worker, const void* powers);
+
+	SearchFn m_SearchFn = nullptr;		// Функция выполнения задания
+	PowersBase* m_Powers = nullptr;		// Указатель на объект массива степеней
+	HashTable<19> m_Hashes;				// Хеш-таблица значений степеней чисел
 
 private:
 	// Создаёт указанное количество рабочих потоков в приостановленном состоянии
@@ -103,6 +111,9 @@ private:
 
 	bool GetNextTask(Worker* worker);
 	void OnTaskDone(Worker* worker);
+
+	template<class Derived, class NumberT>
+	static SearchFn GetSearchFn();
 
 	template<class NumberT>
 	std::pair<unsigned, unsigned> CalcUpperValue(unsigned leftHigh = UINT_MAX) const;
@@ -155,9 +166,54 @@ private:
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------
+template<class Derived>
+void FactorSearch::SetSearchFn(Derived* searcher)
+{
+	m_SearchFn = nullptr;
+	if (Verify(m_Powers && this == searcher))
+	{
+		if (m_Powers->IsType<uint64_t>())
+			m_SearchFn = GetSearchFn<Derived, uint64_t>();
+		else if (m_Powers->IsType<UInt128>())
+			m_SearchFn = GetSearchFn<Derived, UInt128>();
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+template<size_t HASH_BITS>
+void FactorSearch::InitHashTable(HashTable<HASH_BITS>& hashes, unsigned upperLimit)
+{
+	Assert(m_Powers);
+
+	if (m_Powers->IsType<uint64_t>())
+	{
+		auto powers = static_cast<Powers<uint64_t>*>(m_Powers);
+		hashes.Init(upperLimit, *powers);
+	}
+	else if (m_Powers->IsType<UInt128>())
+	{
+		auto powers = static_cast<Powers<UInt128>*>(m_Powers);
+		hashes.Init(upperLimit, *powers);
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+template<class Derived, class NumberT>
+FactorSearch::SearchFn FactorSearch::GetSearchFn()
+{
+	class Helper : public Derived {
+	public:
+		using Fn = void (FactorSearch::*)(Worker*, const NumberT*);
+		static Fn GetFn() { return static_cast<Fn>(&Helper::template SearchFactors); }
+	};
+
+	return reinterpret_cast<SearchFn>(Helper::GetFn());
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 struct FactorSearch::Task final
 {
-	// NB: рабочие потоки обычно не перебирают коэффициенты левой части уравнения (они все обычно
+	// Рабочие потоки обычно не перебирают коэффициенты левой части уравнения (они все обычно
 	// заданы заданием). Однако задание может задавать вместе со всеми коэффициентами левой части
 	// и первые коэффициенты правой. Суммарное количество заданных коэффициентов в любом случае
 	// не может превышать максимально возможного количества коэффициентов в левой части

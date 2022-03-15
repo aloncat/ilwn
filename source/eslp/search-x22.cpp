@@ -17,12 +17,10 @@ std::wstring SearchX22::GetAdditionalInfo() const
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void SearchX22::InitHashTable(PowersBase& powers, unsigned upperLimit)
+void SearchX22::BeforeCompute(unsigned upperLimit)
 {
-	if (m_Pow64)
-		m_Hashes.Init(upperLimit, static_cast<Powers<uint64_t>&>(powers));
-	else
-		m_Hashes.Init(upperLimit, static_cast<Powers<UInt128>&>(powers));
+	SetSearchFn(this);
+	InitHashTable(m_Hashes, upperLimit);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -40,15 +38,6 @@ void SearchX22::InitFirstTask(Task& task, const std::vector<unsigned>& startFact
 void SearchX22::SelectNextTask(Task& task)
 {
 	++task.factors[0];
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-void SearchX22::PerformTask(Worker* worker)
-{
-	if (m_Pow64)
-		SearchFactors(worker, m_Pow64);
-	else
-		SearchFactors(worker, m_Powers);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------

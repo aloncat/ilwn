@@ -6,7 +6,6 @@
 
 #include "factorsearch.h"
 #include "hashtable.h"
-#include "powers.h"
 
 #include <string>
 #include <vector>
@@ -23,13 +22,10 @@ class SearchX22 : public FactorSearch
 protected:
 	virtual std::wstring GetAdditionalInfo() const override;
 
-	virtual void InitHashTable(PowersBase& powers, unsigned upperLimit) override;
+	virtual void BeforeCompute(unsigned upperLimit) override;
 	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors) override;
 	virtual void SelectNextTask(Task& task) override;
 
-	virtual void PerformTask(Worker* worker) override;
-
-private:
 	template<class NumberT>
 	void SearchFactors(Worker* worker, const NumberT* powers);
 

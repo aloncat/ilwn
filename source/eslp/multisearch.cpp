@@ -68,6 +68,18 @@ MultiSearch::Instance MultiSearch::CreateInstance(int power, int leftCount, int 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------------------------------------
+void MultiSearch::BeforeCompute(unsigned upperLimit)
+{
+	FactorSearch::BeforeCompute(upperLimit);
+	SetSearchFn(this);
+
+	if (m_Powers->IsType<uint64_t>())
+		m_SkipFn = reinterpret_cast<SkipLowSetFn>(static_cast<bool (MultiSearch::*)(Task&, const uint64_t*) const>(&MultiSearch::template SkipLowSet));
+	else if (m_Powers->IsType<UInt128>())
+		m_SkipFn = reinterpret_cast<SkipLowSetFn>(static_cast<bool (MultiSearch::*)(Task&, const UInt128*) const>(&MultiSearch::template SkipLowSet));
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 void MultiSearch::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
 {
 	// Для универсального алгоритма все коэффициенты
@@ -138,7 +150,7 @@ void MultiSearch::SelectNextTask(Task& task)
 			idx = i;
 		}
 
-		if (!idx || (m_Pow64 ? SkipLowSet(task, m_Pow64) : SkipLowSet(task, m_Powers)))
+		if (!idx || (this->*m_SkipFn)(task, m_Powers->GetData()))
 			break;
 	}
 }
@@ -287,15 +299,6 @@ bool MultiSearch::MightHaveSolution(const Task& task) const
 	}
 
 	return true;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-void MultiSearch::PerformTask(Worker* worker)
-{
-	if (m_Pow64)
-		SearchFactors(worker, m_Pow64);
-	else
-		SearchFactors(worker, m_Powers);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------

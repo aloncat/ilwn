@@ -17,12 +17,10 @@ std::wstring SearchX23::GetAdditionalInfo() const
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void SearchX23::PerformTask(Worker* worker)
+void SearchX23::BeforeCompute(unsigned upperLimit)
 {
-	if (m_Pow64)
-		SearchFactors(worker, m_Pow64);
-	else
-		SearchFactors(worker, m_Powers);
+	FactorSearch::BeforeCompute(upperLimit);
+	SetSearchFn(this);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------

@@ -9,7 +9,6 @@
 
 #include <auxlib/print.h>
 #include <core/console.h>
-#include <core/debug.h>
 #include <core/strformat.h>
 #include <core/sysinfo.h>
 #include <core/util.h>
@@ -69,7 +68,7 @@ void FactorSearch::Search(const Options& options, const std::vector<unsigned>& s
 
 	if (m_Info.power == 1)
 	{
-		// NB: для степени 1 принудительно ограничиваем количество рабочих
+		// Для степени 1 принудительно ограничиваем количество рабочих
 		// потоков, так как для этой степени решения ищутся очень быстро
 		m_ActiveWorkers = 1;
 	}
@@ -98,7 +97,7 @@ void FactorSearch::Search(const Options& options, const std::vector<unsigned>& s
 		"\rTask %s#7, solutions found: #6#%u\n", m_IsCancelled ?
 		"#12cancelled" : "finished", m_SolutionsFound);
 
-	// NB: если было найдено максимально допустимое количество решений, то не все
+	// Если было найдено максимально допустимое количество решений, то не все
 	// решения попали в вывод, и m_LastDoneHiFactor не соответствует последнему
 	// выведенному решению. Поэтому в этом случае значение выводить не стоит
 	if (m_SolutionsFound < MAX_SOLUTIONS && m_LastDoneHiFactor < UINT_MAX)
@@ -142,12 +141,10 @@ void FactorSearch::UpdateConsoleTitle()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void FactorSearch::InitHashTable(PowersBase& powers, unsigned upperLimit)
+void FactorSearch::BeforeCompute(unsigned upperLimit)
 {
-	if (m_Pow64)
-		m_Hashes.Init(upperLimit, static_cast<Powers<uint64_t>&>(powers));
-	else
-		m_Hashes.Init(upperLimit, static_cast<Powers<UInt128>&>(powers));
+	m_SearchFn = nullptr;
+	InitHashTable(m_Hashes, upperLimit);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -198,16 +195,6 @@ void FactorSearch::SelectNextTask(Task& task)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-template<class NumberT>
-const NumberT*& FactorSearch::PowersArray()
-{
-	if constexpr (std::is_same_v<NumberT, uint64_t>)
-		return m_Pow64;
-	else
-		return m_Powers;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
 AML_NOINLINE bool FactorSearch::OnProgress(const Worker* worker, const unsigned* factors)
 {
 	m_ProgressMan.SetProgress(factors, worker->task.taskId);
@@ -244,7 +231,7 @@ AML_NOINLINE bool FactorSearch::OnSolutionFound(const Worker* worker, const unsi
 				m_IsAborted = true;
 				m_ForceQuit = true;
 			}
-			// Отсеиваем непримитивные решения. NB: так как проверка делается функцией класса Solutions,
+			// Отсеиваем непримитивные решения. Так как проверка делается функцией класса Solutions,
 			// который не потокобезопасен, то проверяем примитивность решения внутри критической секции
 			else if (m_Solutions.IsPrimitive(solution))
 			{
@@ -284,7 +271,7 @@ void FactorSearch::CreateWorkers(size_t threadCount)
 		});
 	}
 
-	// NB: ждём пока все потоки войдут в главные функции и приостановятся. Т.к.
+	// Ждём пока все потоки войдут в главные функции и приостановятся. Т.к.
 	// оба флага isActive и shouldPause были установлены, то потоки считаются
 	// активными, не зависимо от того, начали они работу или ещё нет
 	while (GetActiveThreads(true))
@@ -405,25 +392,30 @@ void FactorSearch::WorkerMainFn(Worker* worker)
 	for (int i = 0; i < ProgressManager::MAX_COEFS; ++i)
 		worker->task.factors[i] = 1;
 
-	while (!worker->shouldQuit)
+	if (Verify(m_SearchFn && m_Powers))
 	{
-		if (worker->shouldPause)
+		auto powers = m_Powers->GetData();
+
+		while (!worker->shouldQuit)
 		{
-			worker->isActive = false;
-			::SuspendThread(threadHandle);
+			if (worker->shouldPause)
+			{
+				worker->isActive = false;
+				::SuspendThread(threadHandle);
 
-			worker->isActive = true;
-			continue;
+				worker->isActive = true;
+				continue;
+			}
+
+			if (!GetNextTask(worker))
+			{
+				worker->shouldPause = true;
+				continue;
+			}
+
+			(this->*m_SearchFn)(worker, powers);
+			OnTaskDone(worker);
 		}
-
-		if (!GetNextTask(worker))
-		{
-			worker->shouldPause = true;
-			continue;
-		}
-
-		PerformTask(worker);
-		OnTaskDone(worker);
 	}
 
 	worker->isFinished = true;
@@ -451,8 +443,8 @@ bool FactorSearch::GetNextTask(Worker* worker)
 				return true;
 			}
 
-			// NB: выбираем следующее задание, но не меняем его
-			// номер, так как задание не отправлено в обработку
+			// Выбираем следующее задание, но не меняем его номер,
+			// так как задание не будет отправлено на обработку
 			SelectNextTask(*m_NextTask);
 		}
 	}
@@ -510,18 +502,18 @@ std::pair<unsigned, unsigned> FactorSearch::CalcUpperValue(unsigned leftHigh) co
 	const unsigned upperLimit = Powers<NumberT>::CalcUpperValue(m_Info.power, maxFactorCount);
 
 	// Рассчитываем желаемые максимальные значения старших коэффициентов левой и правой частей.
-	// NB: так как в алгоритме перебора мы иногда используем большие приращения, нам необходимо,
-	// чтобы значения коэффициентов не вышли за пределы 32-бит. Для этого немного ограничим лимит
-	leftHigh = std::min(leftHigh, std::min(upperLimit, UINT_MAX - 999));
+	// Так как в алгоритме перебора мы иногда используем приращения большие 1, то нам необходимо,
+	// чтобы значения коэффициентов не вышли за пределы 32 бит. Для этого немного ограничим лимит
+	leftHigh = std::min(leftHigh, std::min(upperLimit, UINT_MAX - 1023));
 	unsigned rightHigh = leftHigh;
 
 	if (m_Info.leftCount > 1)
 	{
-		// NB: для уравнений, в которых в левой части 2 и более коэффициента, макс. значение старшего
-		// коэффициента в правой части может быть выше значения старшего коэффициента в левой. Поэтому
-		// нам нужно найти такое значение для старшего коэффициента правой части, при котором мин. возможная
-		// сумма в правой части будет выше макс. возможной суммы в левой (при таких условиях мы не пропустим
-		// возможных наборов коэффициентов правой части, которые могут дать решение)
+		// Для уравнений, у которых в левой части 2 и более коэффициента, максимальное значение старшего
+		// коэффициента в правой части может быть выше значения старшего коэффициента в левой. Поэтому мы
+		// должны найти такое значение для старшего коэффициента правой части, при котором мин. возможная
+		// сумма в правой части будет выше макс. возможной суммы в левой (при таких условиях мы не
+		// пропустим возможных наборов коэффициентов правой части, которые могут дать решение)
 
 		// Макс. возможные значения сумм степеней коэффициентов левой и правой частей
 		auto leftPowHi = Powers<NumberT>::CalcPower(leftHigh, m_Info.power) * m_Info.leftCount;
@@ -577,9 +569,10 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 
 	Powers<NumberT> powers;
 	powers.Init(m_Info.power, 1, upperLimit.second);
-	PowersArray<NumberT>() = powers.GetData();
+	m_Powers = &powers;
 
-	InitHashTable(powers, upperLimit.second);
+	BeforeCompute(upperLimit.second);
+	Assert(m_SearchFn);
 
 	InitFirstTask(*m_NextTask, startFactors);
 	m_LastDoneHiFactor = hiFactor - 1;
@@ -633,7 +626,6 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 		::Sleep(m_ForceShowProgress || m_NoTasks ? 1 : 20);
 	}
 
-	m_Pow64 = nullptr;
 	m_Powers = nullptr;
 
 	Assert(!GetActiveThreads(true) && "Some threads are still active");
@@ -740,8 +732,8 @@ void FactorSearch::ProcessPendingSolutions()
 {
 	if (m_ForceQuit)
 	{
-		// NB: при форсированном выходе потоки не завершают задания, поэтому мы
-		// не можем гарантировать, что в вывод попадут все промежуточные решения
+		// При форсированном выходе потоки не завершают задания, поэтому мы не
+		// можем гарантировать, что в вывод попадут все промежуточные решения
 		m_PendingSolutions.clear();
 	}
 	else if (size_t count = m_PendingSolutions.size())
@@ -751,10 +743,10 @@ void FactorSearch::ProcessPendingSolutions()
 		{
 			ready = 0;
 			const Task& lowestTask = m_Workers[m_LoPendingTask - 1]->task;
-			// NB: если имеются ожидаемые задания (результаты которых ещё не полностью готовы), то мы можем
-			// обработать только часть решений, соответствующих полностью завершённым заданиям. Поэтому для
-			// эффективности (решений может быть довольно много) предварительно переместим все подходящие
-			// решения в начало контейнера, а затем отсортируем только эту его часть
+			// Если имеются ожидаемые задания (результаты которых ещё не полностью готовы), то мы можем
+			// обработать только часть решений, соответствующих полностью завершённым заданиям. Поэтому
+			// для эффективности (решений может быть довольно много) предварительно переместим все
+			// подходящие решения в начало контейнера, а затем отсортируем только эту его часть
 			for (size_t i = 0; i < count; ++i)
 			{
 				if (auto& s = m_PendingSolutions[i]; lowestTask > s)
@@ -827,7 +819,7 @@ void FactorSearch::UpdateActiveThreadCount()
 		}
 	}
 
-	// NB: если флаг m_IsCancelled установлен, то нет смысла менять количество активных потоков, т.к.
+	// Если флаг m_IsCancelled установлен, то нет смысла менять количество активных потоков, так как
 	// работающие потоки, завершив текущее задание, не получат нового и автоматически приостановятся
 	if (!m_IsCancelled && m_ActiveWorkers != oldValue)
 	{

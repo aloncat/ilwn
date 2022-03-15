@@ -17,6 +17,13 @@ std::wstring SearchX12::GetAdditionalInfo() const
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+void SearchX12::BeforeCompute(unsigned upperLimit)
+{
+	FactorSearch::BeforeCompute(upperLimit);
+	SetSearchFn(this);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 void SearchX12::SelectNextTask(Task& task)
 {
 	++task.factors[0];
@@ -58,15 +65,6 @@ bool SearchX12::MightHaveSolution(const Task& task) const
 	}
 
 	return true;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-void SearchX12::PerformTask(Worker* worker)
-{
-	if (m_Pow64)
-		SearchFactors(worker, m_Pow64);
-	else
-		SearchFactors(worker, m_Powers);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
