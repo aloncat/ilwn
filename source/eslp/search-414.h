@@ -27,7 +27,6 @@ protected:
 
 	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors) override;
 	virtual void SelectNextTask(Task& task) override;
-	virtual bool MightHaveSolution(const Task& task) const override;
 
 	template<class NumberT>
 	void SearchFactors(Worker* worker, const NumberT* powers);

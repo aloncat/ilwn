@@ -47,7 +47,7 @@ MultiSearch::Instance MultiSearch::CreateInstance(int power, int leftCount, int 
 			if (rightCount == 2)
 				return std::make_unique<SearchX22>();
 
-			if (rightCount == 3)
+			if (rightCount == 3 && power <= 20)
 			{
 				// X23 и E23 - оптимизированные алгоритмы для уравнения вида x.2.3. X23 подходит для любых степеней;
 				// но E23 имеет дополнительные оптимизации и подходит только для чётных степеней до 20-й включительно
@@ -71,12 +71,126 @@ MultiSearch::Instance MultiSearch::CreateInstance(int power, int leftCount, int 
 void MultiSearch::BeforeCompute(unsigned upperLimit)
 {
 	FactorSearch::BeforeCompute(upperLimit);
+
 	SetSearchFn(this);
+	m_CheckTaskFn = GetCheckTaskFn();
 
 	if (m_Powers->IsType<uint64_t>())
-		m_SkipFn = reinterpret_cast<SkipLowSetFn>(static_cast<bool (MultiSearch::*)(Task&, const uint64_t*) const>(&MultiSearch::template SkipLowSet));
+	{
+		using Fn = bool (MultiSearch::*)(Task&, const uint64_t*) const;
+		m_SkipFn = reinterpret_cast<SkipLowSetFn>(static_cast<Fn>(&MultiSearch::template SkipLowSet));
+	}
 	else if (m_Powers->IsType<UInt128>())
-		m_SkipFn = reinterpret_cast<SkipLowSetFn>(static_cast<bool (MultiSearch::*)(Task&, const UInt128*) const>(&MultiSearch::template SkipLowSet));
+	{
+		using Fn = bool (MultiSearch::*)(Task&, const UInt128*) const;
+		m_SkipFn = reinterpret_cast<SkipLowSetFn>(static_cast<Fn>(&MultiSearch::template SkipLowSet));
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+FactorSearch::CheckTaskFn MultiSearch::GetCheckTaskFn() const
+{
+	if (!(m_Info.power & 1))
+	{
+		// Эта переменная будет иметь значение true, если актуальна оптимизация кратности 2, то есть если
+		// количество коэффициентов в правой части меньше модуля, по которому степень числа сравнима с единицей
+		const bool pow2Cond = (m_Info.power == 2 && m_Info.rightCount < 4) || (m_Info.power >= 4 && m_Info.power <= 20 &&
+			(m_Info.rightCount < 8 || (!(m_Info.power & 3) && m_Info.rightCount < 16) || (!(m_Info.power & 7) &&
+			m_Info.rightCount < 32) || (m_Info.power == 16 && m_Info.rightCount < 64)));
+
+		if (m_Info.leftCount == 1)
+		{
+			// Уравнение 2.1.n (n < 4): Z не может быть чётным
+			// для n < 4; Z не может быть кратным 3 для n < 3
+			if (m_Info.power == 2 && m_Info.rightCount < 3)
+			{
+				return [](const Task& task) {
+					return (task.factors[0] & 1) && (task.factors[0] % 3);
+				};
+			}
+
+			// Уравнения 4.1.n (n < 16) и 8.1.n (n < 32): Z не может быть чётным для n < 16 (4.1.n) или
+			// n < 32 (8.1.n); Z не может быть кратным 3 для n < 3; Z не может быть кратным 5 для n < 5
+			if ((m_Info.power == 4 || m_Info.power == 8) && m_Info.rightCount < 5)
+			{
+				if (m_Info.rightCount < 3)
+				{
+					return [](const Task& task) {
+						return (task.factors[0] & 1) && (task.factors[0] % 3) && (task.factors[0] % 5);
+					};
+				}
+
+				return [](const Task& task) {
+					return (task.factors[0] & 1) && (task.factors[0] % 5);
+				};
+			}
+
+			// Уравнение 6.1.n (n < 8): Z не может быть чётным для n < 8; Z не может
+			// быть кратным 3 для n < 9; Z не может быть кратным 7 для n < 7
+			if (m_Info.power == 6 && m_Info.rightCount < 9)
+			{
+				if (m_Info.rightCount < 7)
+				{
+					return [](const Task& task) {
+						return (task.factors[0] & 1) && (task.factors[0] % 3) && (task.factors[0] % 7);
+					};
+				}
+				if (pow2Cond)
+				{
+					return [](const Task& task) {
+						return (task.factors[0] & 1) && (task.factors[0] % 3);
+					};
+				}
+
+				return [](const Task& task) -> bool {
+					return task.factors[0] % 3;
+				};
+			}
+
+			// Уравнение 10.1.n (n < 8): Z не может быть чётным
+			// для n < 8; Z не может быть кратным 11 для n < 11
+			if (m_Info.power == 10 && m_Info.rightCount < 11)
+			{
+				if (pow2Cond)
+				{
+					return [](const Task& task) {
+						return (task.factors[0] & 1) && (task.factors[0] % 11);
+					};
+				}
+
+				return [](const Task& task) -> bool {
+					return task.factors[0] % 11;
+				};
+			}
+
+			// Уравнение 12.1.n (n < 16): Z не может быть чётным
+			// для n < 16; Z не может быть кратным 13 для n < 13
+			if (m_Info.power == 12 && m_Info.rightCount < 13)
+			{
+				return [](const Task& task) {
+					return (task.factors[0] & 1) && (task.factors[0] % 13);
+				};
+			}
+
+			if (pow2Cond)
+			{
+				// Чётные степени: Z не может быть чётным
+				return [](const Task& task) -> bool {
+					return task.factors[0] & 1;
+				};
+			}
+		}
+		// Для p.2.n при чётных p коэффициенты левой части не могут быть чётными одновременно
+		else if (m_Info.leftCount == 2 && pow2Cond)
+		{
+			return [](const Task& task) {
+				return (task.factors[0] & 1) || (task.factors[1] & 1);
+			};
+		}
+	}
+
+	// Для других случаев оптимизаций нет
+	return [](const Task&) { return true; };
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -172,133 +286,6 @@ bool MultiSearch::SkipLowSet(Task& task, const NumberT* powers) const
 	}
 
 	return k[0] > k[1];
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-bool MultiSearch::MightHaveSolution(const Task& task) const
-{
-	// NB: оптимизация (фильтр заданий) для универсального алгоритма ограничена
-	// только чётными степенями уравнения и 1-2 коэффициентом в его левой части
-	if ((m_Info.power & 1) || (m_Info.leftCount > 2))
-		return true;
-
-	if (m_Info.leftCount == 1)
-	{
-		// Уравнение 2.1.n
-		if (m_Info.power == 2)
-		{
-			// Z не может быть чётным для n < 4
-			if (m_Info.rightCount < 4 && !(task.factors[0] & 1))
-				return false;
-		}
-		// Уравнение 4.1.n
-		else if (m_Info.power == 4)
-		{
-			// Для n < 16
-			if (m_Info.rightCount < 16)
-			{
-				// Z не может быть чётным
-				if (!(task.factors[0] & 1))
-					return false;
-				// Z не может быть кратным 5 для n < 5
-				if (m_Info.rightCount < 5 && !(task.factors[0] % 5))
-					return false;
-			}
-		}
-		// Уравнение 6.1.n
-		else if (m_Info.power == 6)
-		{
-			// Z не может быть чётным для n < 8
-			if (m_Info.rightCount < 8 && !(task.factors[0] & 1))
-				return false;
-
-			// Для n < 9
-			if (m_Info.rightCount < 9)
-			{
-				// Z не может быть кратно 3
-				if (!(task.factors[0] % 3))
-					return false;
-				// Z не может быть кратным 7 для n < 7
-				if (m_Info.rightCount < 7 && !(task.factors[0] % 7))
-					return false;
-			}
-		}
-		// Уравнение 8.1.n
-		else if (m_Info.power == 8)
-		{
-			// Для n < 32
-			if (m_Info.rightCount < 32)
-			{
-				// Z не может быть чётным
-				if (!(task.factors[0] & 1))
-					return false;
-				// Z не может быть кратным 5 для n < 5
-				if (m_Info.rightCount < 5 && !(task.factors[0] % 5))
-					return false;
-			}
-		}
-		// Степени 10, 12, ..., 20
-		else if (m_Info.power <= 20)
-		{
-			// Z не может быть чётным...
-			if (!(task.factors[0] & 1))
-			{
-				// ...если n < 8
-				if (m_Info.rightCount < 8)
-					return false;
-				// ...если n < 16 (для степеней, кратных 4)
-				if (!(m_Info.power & 3))
-				{
-					if (m_Info.rightCount < 16)
-						return false;
-					// ...если n < 64 (для 16-й степени)
-					if (m_Info.power == 16 && m_Info.rightCount < 64)
-						return false;
-				}
-			}
-
-			// Уравнение 10.1.n
-			if (m_Info.power == 10)
-			{
-				// Z не может быть кратным 11 для n < 11
-				if (m_Info.rightCount < 11 && !(task.factors[0] % 11))
-					return false;
-			}
-		}
-	}
-	// Уравнения p.2.n, где p - чётное, и оба коэффициента в левой части чётные
-	else if (!(task.factors[0] & 1) && !(task.factors[1] & 1))
-	{
-		if (m_Info.power == 2)
-		{
-			// Невозможно при n < 4
-			if (m_Info.rightCount < 4)
-				return false;
-		}
-		else if (m_Info.power <= 20)
-		{
-			// Невозможно при n < 4
-			if (m_Info.rightCount < 8)
-				return false;
-
-			if (!(m_Info.power & 3))
-			{
-				if (m_Info.rightCount < 16)
-					return false;
-
-				if (!(m_Info.power & 7))
-				{
-					if (m_Info.rightCount < 32)
-						return false;
-
-					if (m_Info.power == 16 && m_Info.rightCount < 64)
-						return false;
-				}
-			}
-		}
-	}
-
-	return true;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------

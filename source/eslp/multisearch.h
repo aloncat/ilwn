@@ -26,13 +26,13 @@ public:
 
 protected:
 	virtual void BeforeCompute(unsigned upperLimit) override;
+	CheckTaskFn GetCheckTaskFn() const;
+
 	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors) override;
 	virtual void SelectNextTask(Task& task) override;
 
 	template<class NumberT>
 	bool SkipLowSet(Task& task, const NumberT* powers) const;
-
-	virtual bool MightHaveSolution(const Task& task) const override;
 
 	template<class NumberT>
 	void SearchFactors(Worker* worker, const NumberT* powers);

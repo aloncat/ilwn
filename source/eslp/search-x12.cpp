@@ -20,51 +20,62 @@ std::wstring SearchX12::GetAdditionalInfo() const
 void SearchX12::BeforeCompute(unsigned upperLimit)
 {
 	FactorSearch::BeforeCompute(upperLimit);
+
 	SetSearchFn(this);
+	m_CheckTaskFn = GetCheckTaskFn();
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+FactorSearch::CheckTaskFn SearchX12::GetCheckTaskFn() const
+{
+	// Оптимизаций для нечётных степеней и степеней выше 20-й нет.
+	// Часть перечисленных оптимизаций используется также для x.1.3
+	if ((m_Info.power & 1) || m_Info.power > 20)
+		return [](const Task&) { return true; };
+
+	// Уравнение 2.1.2: Z не может быть чётным и кратным 3
+	if (m_Info.power == 2 && m_Info.rightCount == 2)
+	{
+		return [](const Task& task) {
+			return (task.factors[0] & 1) && (task.factors[0] % 3);
+		};
+	}
+
+	// Уравнения 4.1.n и 8.1.n: Z не может быть чётным для n < 16 (32); Z не
+	// может быть кратным 3 для n < 3; Z не может быть кратным 5 для n < 5
+	if (m_Info.power == 4 || m_Info.power == 8)
+	{
+		if (m_Info.rightCount < 3)
+		{
+			return [](const Task& task) {
+				return (task.factors[0] & 1) && (task.factors[0] % 3) && (task.factors[0] % 5);
+			};
+		}
+
+		return [](const Task& task) {
+			return (task.factors[0] & 1) && (task.factors[0] % 5);
+		};
+	}
+
+	// Уравнение 6.1.n: Z не может быть чётным для n < 8; Z не может
+	// быть кратным 3 для n < 9; Z не может быть кратным 7 для n < 7
+	if (m_Info.power == 6)
+	{
+		return [](const Task& task) {
+			return (task.factors[0] & 1) && (task.factors[0] % 3) && (task.factors[0] % 7);
+		};
+	}
+
+	// Другие случаи: Z не может быть чётным
+	return [](const Task& task) -> bool {
+		return task.factors[0] & 1;
+	};
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 void SearchX12::SelectNextTask(Task& task)
 {
 	++task.factors[0];
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-bool SearchX12::MightHaveSolution(const Task& task) const
-{
-	// Все чётные степени от 2 до 20 включительно
-	if (!(m_Info.power & 1) && m_Info.power <= 20)
-	{
-		// Z не может быть чётным для p.1.2 и p.1.3 (для чётных p).
-		// NB: все эти оптимизации используются также и для x.1.3
-		if (!(task.factors[0] & 1))
-			return false;
-
-		if (m_Info.power == 2)
-		{
-			if (m_Info.rightCount == 2 && !(task.factors[0] % 3))
-				return false;
-		}
-		else if (m_Info.power == 4)
-		{
-			if (m_Info.rightCount == 2 && !(task.factors[0] % 3))
-				return false;
-			if (!(task.factors[0] % 5))
-				return false;
-		}
-		else if (m_Info.power == 6)
-		{
-			if (!(task.factors[0] % 3) || !(task.factors[0] % 7))
-				return false;
-		}
-		else if (m_Info.power == 8)
-		{
-			if (!(task.factors[0] % 5))
-				return false;
-		}
-	}
-
-	return true;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------

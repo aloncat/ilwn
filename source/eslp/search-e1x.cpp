@@ -45,58 +45,70 @@ std::wstring SearchE1X::GetAdditionalInfo() const
 void SearchE1X::BeforeCompute(unsigned upperLimit)
 {
 	FactorSearch::BeforeCompute(upperLimit);
+
 	SetSearchFn(this);
+	m_CheckTaskFn = GetCheckTaskFn();
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+FactorSearch::CheckTaskFn SearchE1X::GetCheckTaskFn() const
+{
+	// Для уравнений p.1.2 и p.1.3 оптимизации не нужны, т.к. для них есть отдельные
+	// оптимизированные алгоритмы. Оптимизаций для уравнения 2.1.n при n >= 4 - нет
+
+	// Уравнения 4.1.n (n < 16) и 8.1.n (n < 32): Z не может быть чётным для
+	// n < 16 (4.1.n) или n < 32 (8.1.n); Z не может быть кратным 5 для n < 5
+	if ((m_Info.power == 4 || m_Info.power == 8) && m_Info.rightCount < 5)
+	{
+		return [](const Task& task) {
+			return (task.factors[0] & 1) && (task.factors[0] % 5);
+		};
+	}
+
+	// Уравнение 6.1.n (n < 8): Z не может быть чётным для n < 8; Z не может
+	// быть кратным 3 для n < 9; Z не может быть кратным 7 для n < 7
+	if (m_Info.power == 6)
+	{
+		if (m_Info.rightCount < 7)
+		{
+			return [](const Task& task) {
+				return (task.factors[0] & 1) && (task.factors[0] % 3) && (task.factors[0] % 7);
+			};
+		}
+
+		return [](const Task& task) {
+			return (task.factors[0] & 1) && (task.factors[0] % 3);
+		};
+	}
+
+	// Уравнение 10.1.n (n < 8): Z не может быть чётным
+	// для n < 8; Z не может быть кратным 11 для n < 11
+	if (m_Info.power == 10)
+	{
+		return [](const Task& task) {
+			return (task.factors[0] & 1) && (task.factors[0] % 11);
+		};
+	}
+
+	// Уравнение 12.1.n (n < 16): Z не может быть чётным
+	// для n < 16; Z не может быть кратным 13 для n < 13
+	if (m_Info.power == 12 && m_Info.rightCount < 13)
+	{
+		return [](const Task& task) {
+			return (task.factors[0] & 1) && (task.factors[0] % 13);
+		};
+	}
+
+	// Другие случаи: Z не может быть чётным
+	return [](const Task& task) -> bool {
+		return task.factors[0] & 1;
+	};
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 void SearchE1X::SelectNextTask(Task& task)
 {
 	++task.factors[0];
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-bool SearchE1X::MightHaveSolution(const Task& task) const
-{
-	// Z не может быть чётным
-	if (!(task.factors[0] & 1))
-		return false;
-
-	// Для уравнений p.1.2 и p.1.3 оптимизации не нужны, т.к для них есть отдельные
-	// оптимизированные алгоритмы. Оптимизаций для 2.1.n при n >= 4 - вообще нет
-
-	// Уравнение 4.1.n (n < 16)
-	if (m_Info.power == 4)
-	{
-		// Z не может быть кратным 5 для n < 5
-		if (m_Info.rightCount < 5 && !(task.factors[0] % 5))
-			return false;
-	}
-	// Уравнение 6.1.n (n < 8)
-	else if (m_Info.power == 6)
-	{
-		// Z не может быть кратно 3
-		if (!(task.factors[0] % 3))
-			return false;
-		// Z не может быть кратным 7 для n < 7
-		if (m_Info.rightCount < 7 && !(task.factors[0] % 7))
-			return false;
-	}
-	// Уравнение 8.1.n (n < 32)
-	else if (m_Info.power == 8)
-	{
-		// Z не может быть кратным 5 для n < 5
-		if (m_Info.rightCount < 5 && !(task.factors[0] % 5))
-			return false;
-	}
-	// Уравнение 10.1.n (n < 8)
-	else if (m_Info.power == 10)
-	{
-		// Z не может быть кратным 11 для n < 11
-		if (!(task.factors[0] % 11))
-			return false;
-	}
-
-	return true;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------

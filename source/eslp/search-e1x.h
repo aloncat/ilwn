@@ -24,8 +24,9 @@ protected:
 	virtual std::wstring GetAdditionalInfo() const override;
 
 	virtual void BeforeCompute(unsigned upperLimit) override;
+	CheckTaskFn GetCheckTaskFn() const;
+
 	virtual void SelectNextTask(Task& task) override;
-	virtual bool MightHaveSolution(const Task& task) const override;
 
 	template<class NumberT>
 	void SearchFactors(Worker* worker, const NumberT* powers);

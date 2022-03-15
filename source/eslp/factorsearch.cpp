@@ -143,7 +143,6 @@ void FactorSearch::UpdateConsoleTitle()
 //--------------------------------------------------------------------------------------------------------------------------------
 void FactorSearch::BeforeCompute(unsigned upperLimit)
 {
-	m_SearchFn = nullptr;
 	InitHashTable(m_Hashes, upperLimit);
 }
 
@@ -427,7 +426,7 @@ bool FactorSearch::GetNextTask(Worker* worker)
 
 		while (m_NextTask->factors[0] <= m_LastHiFactor)
 		{
-			if (MightHaveSolution(*m_NextTask))
+			if (m_CheckTaskFn(*m_NextTask))
 			{
 				worker->task = *m_NextTask;
 
@@ -568,6 +567,8 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 	powers.Init(m_Info.power, 1, upperLimit.second);
 	m_Powers = &powers;
 
+	m_SearchFn = nullptr;
+	m_CheckTaskFn = [](const Task&) { return true; };
 	BeforeCompute(upperLimit.second);
 	Assert(m_SearchFn);
 

@@ -59,10 +59,6 @@ protected:
 	// Выбирает следующее задание
 	virtual void SelectNextTask(Task& task);
 
-	// Проверяет, могут ли существовать решения для указанного задания task. Если
-	// гарантируется, что решений быть не может, то функция должна вернуть false
-	virtual bool MightHaveSolution(const Task& task) const { return true; }
-
 	// Инициализирует указатель на функцию выполнения задания (значение m_SearchFn), выбирая подходящую
 	// шаблонную функциию Derived::SearchFactors в классе наследнике в зависимости от типа чисел m_Powers
 	template<class Derived>
@@ -86,9 +82,14 @@ protected:
 	// Прототип функции, выполняющей задание в рабочем потоке
 	using SearchFn = void (FactorSearch::*)(Worker* worker, const void* powers);
 
-	SearchFn m_SearchFn = nullptr;		// Функция выполнения задания
-	PowersBase* m_Powers = nullptr;		// Указатель на объект массива степеней
-	HashTable<19> m_Hashes;				// Хеш-таблица значений степеней чисел
+	// Прототип функции, проверяющей задание на отсутствие решений. Если для указанного
+	// задания task гарантируется отсутствие решений, то функция должна вернуть false
+	using CheckTaskFn = bool (*)(const Task& task);
+
+	SearchFn m_SearchFn = nullptr;			// Функция выполнения задания
+	CheckTaskFn m_CheckTaskFn = nullptr;	// Функция проверки отсутствия решений
+	PowersBase* m_Powers = nullptr;			// Указатель на объект массива степеней
+	HashTable<19> m_Hashes;					// Хеш-таблица значений степеней чисел
 
 private:
 	// Создаёт указанное количество рабочих потоков в приостановленном состоянии

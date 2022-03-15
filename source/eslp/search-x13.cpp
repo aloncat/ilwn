@@ -20,7 +20,9 @@ std::wstring SearchX13::GetAdditionalInfo() const
 void SearchX13::BeforeCompute(unsigned upperLimit)
 {
 	FactorSearch::BeforeCompute(upperLimit);
+
 	SetSearchFn(this);
+	m_CheckTaskFn = GetCheckTaskFn();
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
