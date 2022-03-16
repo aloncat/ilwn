@@ -93,6 +93,7 @@ bool SearchBase::Run(int power, int leftCount, int rightCount, const Options& op
 void SearchBase::PrintOptionsHelp()
 {
 	aux::Printc("#15Options:\n"
+		"#3  --allowall     #8Allow all (experimental) algorithms\n"
 		"#3  --nocustom     #8Disable all custom (optimized) algorithms\n"
 		"#3  --printall     #7Print all found solutions (first 1K otherwise)\n"
 		"#3  --thread <N>   #7Set initial count of active threads to N\n"
@@ -127,7 +128,15 @@ bool SearchBase::InitOptions(Options& options)
 
 			if (!key.empty())
 			{
+				// Опция "--allowall", разрешает все алгоритмы
+				if (!util::StrInsCmp(key, L"allowall"))
+				{
+					options.AddOption(key);
+					continue;
+				}
+
 				// Опция "--nocustom", отключает все кастомные алгоритмы
+				// (эта опция имеет приоритет над опцией "--allowall")
 				if (!util::StrInsCmp(key, L"nocustom"))
 				{
 					options.AddOption(key);

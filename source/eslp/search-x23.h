@@ -18,6 +18,7 @@
 class SearchX23 : public FactorSearch
 {
 protected:
+	static bool IsSuitable(int power, int leftCount, int rightCount, bool allowAll);
 	virtual std::wstring GetAdditionalInfo() const override;
 
 	virtual void BeforeCompute(unsigned upperLimit) override;

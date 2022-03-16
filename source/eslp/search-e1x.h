@@ -17,10 +17,8 @@
 //--------------------------------------------------------------------------------------------------------------------------------
 class SearchE1X : public FactorSearch
 {
-public:
-	static bool IsSuitable(int power, int leftCount, int rightCount);
-
 protected:
+	static bool IsSuitable(int power, int leftCount, int rightCount, bool allowAll);
 	virtual std::wstring GetAdditionalInfo() const override;
 
 	virtual void BeforeCompute(unsigned upperLimit) override;

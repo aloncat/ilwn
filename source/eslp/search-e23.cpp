@@ -10,6 +10,12 @@
 #include <core/debug.h>
 
 //--------------------------------------------------------------------------------------------------------------------------------
+bool SearchE23::IsSuitable(int power, int leftCount, int rightCount, bool allowAll)
+{
+	return !(power & 1) && power <= 20 && leftCount == 2 && rightCount == 3;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 std::wstring SearchE23::GetAdditionalInfo() const
 {
 	Assert(!(m_Info.power & 1) && m_Info.power <= 20);

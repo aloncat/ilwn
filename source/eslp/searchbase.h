@@ -53,6 +53,10 @@ protected:
 	// Возвращает время работы в секундах
 	float GetRunningTime() const;
 
+	// Возвращает true, если алгоритм подходит для указаанных параметров уравнения. Если параметр
+	// allowAll равен true, то значит, что разрешены любые алгоритмы, в том числе экспериментальные
+	static bool IsSuitable(int power, int leftCount, int rightCount, bool allowAll) { return false; }
+
 	// Возвращает строку с дополнительной информацией об алгоритме. Используется
 	// в классах наследниках, реализующих специализированные алгоритмы поиска
 	virtual std::wstring GetAdditionalInfo() const;

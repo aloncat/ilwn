@@ -52,9 +52,6 @@
     <ClInclude Include="..\..\eslp\options.h">
       <Filter>util</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\eslp\multisearch.h">
-      <Filter>search</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\eslp\progressman.h">
       <Filter>search</Filter>
     </ClInclude>
@@ -85,6 +82,9 @@
     <ClInclude Include="..\..\eslp\search-any.h">
       <Filter>search\algorithm</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\eslp\searchfactory.h">
+      <Filter>search</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\eslp\prefix.cpp">
@@ -112,9 +112,6 @@
     </ClCompile>
     <ClCompile Include="..\..\eslp\options.cpp">
       <Filter>util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\eslp\multisearch.cpp">
-      <Filter>search</Filter>
     </ClCompile>
     <ClCompile Include="..\..\eslp\progressman.cpp">
       <Filter>search</Filter>
@@ -145,6 +142,9 @@
     </ClCompile>
     <ClCompile Include="..\..\eslp\search-any.cpp">
       <Filter>search\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\eslp\searchfactory.cpp">
+      <Filter>search</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

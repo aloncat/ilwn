@@ -10,6 +10,12 @@
 #include <core/debug.h>
 
 //--------------------------------------------------------------------------------------------------------------------------------
+bool SearchX13::IsSuitable(int power, int leftCount, int rightCount, bool allowAll)
+{
+	return leftCount == 1 && rightCount == 3;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 std::wstring SearchX13::GetAdditionalInfo() const
 {
 	Assert(m_Info.leftCount == 1 && m_Info.rightCount == 3);

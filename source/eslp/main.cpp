@@ -4,9 +4,10 @@
 
 #include "pch.h"
 
-#include "multisearch.h"
+#include "factorsearch.h"
 #include "options.h"
 #include "searchbase.h"
+#include "searchfactory.h"
 #include "util.h"
 
 #include <auxlib/print.h>
@@ -46,9 +47,8 @@ static int Main(int argCount, const wchar_t* args[])
 			if (!SearchBase::InitOptions(options))
 				return 1;
 
-			// Создаём подходящий объект (универсального класса MultiSearch
-			// или класса со спецализированным алгоритмом, если такой имеется)
-			auto instance = MultiSearch::CreateInstance(power, leftCount, rightCount, options);
+			// Создаём подходящий объект (с наиболее оптимальным алгоритмом поиска)
+			auto instance = SearchFactory::CreateInstance(power, leftCount, rightCount, options);
 
 			// Ищем решения. Передаём в функцию только значение степени и количество коэффициентов
 			// уравнения (начальные значения старших коэффициентов функция получит самостоятельно).

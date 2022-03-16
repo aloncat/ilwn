@@ -10,6 +10,12 @@
 #include <core/debug.h>
 
 //--------------------------------------------------------------------------------------------------------------------------------
+bool Search413::IsSuitable(int power, int leftCount, int rightCount, bool allowAll)
+{
+	return power == 4 && leftCount == 1 && rightCount == 3;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 std::wstring Search413::GetAdditionalInfo() const
 {
 	Assert(m_Info.power == 4 && m_Info.leftCount == 1 && m_Info.rightCount == 3);

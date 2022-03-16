@@ -10,6 +10,12 @@
 #include <core/debug.h>
 
 //--------------------------------------------------------------------------------------------------------------------------------
+bool SearchX22::IsSuitable(int power, int leftCount, int rightCount, bool allowAll)
+{
+	return leftCount == 2 && rightCount == 2;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 std::wstring SearchX22::GetAdditionalInfo() const
 {
 	Assert(m_Info.leftCount == 2 && m_Info.rightCount == 2);

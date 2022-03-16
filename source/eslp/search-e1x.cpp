@@ -10,26 +10,26 @@
 #include <core/debug.h>
 
 //--------------------------------------------------------------------------------------------------------------------------------
-bool SearchE1X::IsSuitable(int power, int leftCount, int rightCount)
+bool SearchE1X::IsSuitable(int power, int leftCount, int rightCount, bool allowAll)
 {
-	// Степень должна быть чётной, >= 4 и <= 20; слева 1 коэф-т
-	if ((power & 1) || power < 4 || power > 20 || leftCount != 1)
-		return false;
+	// Степень должна быть чётной, >= 4 и <= 20; слева 1 коэффициент
+	if (!(power & 1) && power >= 4 && power <= 20 && leftCount == 1)
+	{
+		// Условия ниже основаны на свойстве чётных степеней: если z нечётно, то z в соответствующей
+		// степени будет сравнимо с 1 по модулю 8, 16, 32 или 64 (в зависимости от степени уравнения)
 
-	// Условия ниже основаны на свойстве чётных степеней: если z нечётно, то z в соответствующей
-	// степени будет сравнимо с 1 по модулю 8, 16, 32 или 64 (в зависимости от степени уравнения)
+		if (rightCount < 8)
+			return true;
 
-	if (rightCount < 8)
-		return true;
+		if (!(power & 3) && rightCount < 16)
+			return true;
 
-	if (!(power & 3) && rightCount < 16)
-		return true;
+		if (!(power & 7) && rightCount < 32)
+			return true;
 
-	if (!(power & 7) && rightCount < 32)
-		return true;
-
-	if (power == 16 && rightCount < 64)
-		return true;
+		if (power == 16 && rightCount < 64)
+			return true;
+	}
 
 	return false;
 }
@@ -37,7 +37,7 @@ bool SearchE1X::IsSuitable(int power, int leftCount, int rightCount)
 //--------------------------------------------------------------------------------------------------------------------------------
 std::wstring SearchE1X::GetAdditionalInfo() const
 {
-	Assert(IsSuitable(m_Info.power, m_Info.leftCount, m_Info.rightCount));
+	Assert(IsSuitable(m_Info.power, m_Info.leftCount, m_Info.rightCount, true));
 	return L"#15optimized #7algorithm for #6#E.1.X";
 }
 
