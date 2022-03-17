@@ -6,10 +6,9 @@
 
 #include <core/util.h>
 
+#include <set>
 #include <string>
 #include <string_view>
-
-#include <set>
 
 //--------------------------------------------------------------------------------------------------------------------------------
 struct OptionKey {

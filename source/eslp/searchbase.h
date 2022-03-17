@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "options.h"
+#include "forward.h"
 
 #include <core/file.h>
 #include <core/platform.h>

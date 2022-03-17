@@ -185,6 +185,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\eslp\factorsearch.h" />
+    <ClInclude Include="..\..\eslp\forward.h" />
     <ClInclude Include="..\..\eslp\hashtable.h" />
     <ClInclude Include="..\..\eslp\searchfactory.h" />
     <ClInclude Include="..\..\eslp\options.h" />

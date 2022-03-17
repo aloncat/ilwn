@@ -85,6 +85,7 @@
     <ClInclude Include="..\..\eslp\searchfactory.h">
       <Filter>search</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\eslp\forward.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\eslp\prefix.cpp">

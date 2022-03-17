@@ -225,7 +225,7 @@ void Solutions::GetFactors(std::vector<unsigned>& factors, unsigned value)
 	{
 		if (m_Primes.empty())
 		{
-			// NB: для максимального значения value 2^32-1 достаточно проверки делимости на простые
+			// Для максимального значения value 2^32-1 достаточно проверки делимости на простые
 			// числа, не превышающие округлённого вниз до целого корня квадратного из этого значения
 			m_Primes = GetPrimes(65535);
 		}
@@ -255,7 +255,7 @@ void Solutions::GetFactors(std::vector<unsigned>& factors, unsigned value)
 			}
 		}
 
-		// NB: если мы вышли из цикла, то value > 1 и это последний
+		// Если мы вышли из цикла, то value > 1 и это последний
 		// простой множитель, поэтому также добавим его в список
 		factors.push_back(value);
 	}

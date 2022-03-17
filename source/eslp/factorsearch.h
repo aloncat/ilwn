@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "forward.h"
 #include "hashtable.h"
 #include "powers.h"
 #include "progressman.h"

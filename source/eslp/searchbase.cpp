@@ -5,6 +5,7 @@
 #include "pch.h"
 #include "searchbase.h"
 
+#include "options.h"
 #include "powers.h"
 #include "uint128.h"
 #include "util.h"
@@ -56,9 +57,9 @@ bool SearchBase::Run(int power, int leftCount, int rightCount, const Options& op
 		m_Info.power, m_Info.leftCount, m_Info.rightCount, startFactors[0]);
 
 	const auto maxFactorCount = std::max(m_Info.leftCount, m_Info.rightCount);
-	// NB: в процессе перебора решений алгоритм вычисляет суммы левой и правой частей по отдельности. Мы должны
-	// быть уверены, что ни для каких значений коэффициентов, сумма их степеней не вызовет переполнения. Поэтому
-	// при нахождении макс. значения старшего коэффициента используем maxFactorCount в качестве множителя
+	// В процессе перебора решений алгоритм вычисляет суммы левой и правой частей по отдельности. Мы должны быть
+	// уверены, что ни для каких значений коэффициентов, сумма их степеней не вызовет переполнения. Поэтому при
+	// нахождении максимального значения старшего коэффициента используем maxFactorCount в качестве множителя
 	const unsigned upperLimit = Powers<UInt128>::CalcUpperValue(m_Info.power, maxFactorCount);
 	aux::Printf("Factor limit is set to #10#%s #8(128 bits)\n", SeparateWithCommas(upperLimit).c_str());
 
@@ -216,8 +217,8 @@ std::vector<unsigned> SearchBase::GetStartFactors()
 {
 	std::vector<unsigned> factors;
 
-	// NB: первые 3 параметра - это всегда параметры уравнения. Далее опционально следуют стартовые
-	// коэффициенты (любое количество, меньшее суммарного количества коэффициентов). Затем следуют
+	// Первые 3 параметра - это всегда параметры уравнения. Далее опционально следуют стартовые
+	// коэффициенты (любое количество, меньшее суммарного количества коэффициентов). Затем идут
 	// опции, начинающиеся на "--". После первой опции не должно быть ничего, кроме опций
 	auto& params = util::SystemInfo::Instance().GetCommandLineParameters();
 

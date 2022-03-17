@@ -132,10 +132,9 @@ public:
 	}
 
 	UInt128 operator /(uint32_t rhs) const;
-	//UInt128& operator /=(uint32_t rhs);
+	UInt128& operator /=(uint32_t rhs);
 
 	uint32_t operator %(uint32_t rhs) const;
-	//UInt128& operator %=(uint32_t rhs);
 
 	uint64_t operator &(uint64_t rhs) const noexcept
 	{
@@ -150,8 +149,25 @@ public:
 		return *this;
 	}
 
-	//UInt128 operator <<(size_t bits) const noexcept
-	//UInt128& operator <<=(size_t bits) noexcept
+	UInt128 operator <<(size_t bits) const noexcept
+	{
+		UInt128 result;
+
+		const auto shift = static_cast<uint8_t>(bits);
+		result.hiPart = __shiftleft128(loPart, hiPart, shift);
+		result.loPart = loPart << shift;
+
+		return result;
+	}
+
+	UInt128& operator <<=(size_t bits) noexcept
+	{
+		const auto shift = static_cast<uint8_t>(bits);
+		hiPart = __shiftleft128(loPart, hiPart, shift);
+		loPart <<= shift;
+
+		return *this;
+	}
 
 	UInt128 operator >>(size_t bits) const noexcept
 	{

@@ -5,6 +5,7 @@
 #include "pch.h"
 #include "searchfactory.h"
 
+#include "options.h"
 #include "search-413.h"
 #include "search-414.h"
 #include "search-any.h"

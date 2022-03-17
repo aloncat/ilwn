@@ -31,6 +31,27 @@ UInt128 UInt128::operator /(uint32_t rhs) const
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+UInt128& UInt128::operator /=(uint32_t rhs)
+{
+	if (rhs > 1)
+	{
+		uint32_t rest = 0;
+		uint32_t* number = reinterpret_cast<uint32_t*>(this);
+
+		Divide32(number + 3, rhs, &rest);
+		Divide32(number + 2, rhs, &rest);
+		Divide32(number + 1, rhs, &rest);
+		Divide32(number + 0, rhs, &rest);
+	}
+	else if (!rhs)
+	{
+		throw util::ELogic("Division by zero");
+	}
+
+	return *this;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 uint32_t UInt128::operator %(uint32_t rhs) const
 {
 	if (rhs > 1)

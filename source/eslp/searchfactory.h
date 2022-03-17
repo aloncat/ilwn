@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include "options.h"
-#include "searchbase.h"
+#include "forward.h"
 
 #include <core/util.h>
 
