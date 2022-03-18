@@ -16,6 +16,9 @@
     <Filter Include="search\algorithm\custom">
       <UniqueIdentifier>{e63eefbb-dc51-423e-8972-10b77f96bcef}</UniqueIdentifier>
     </Filter>
+    <Filter Include="search\algorithm\experiment">
+      <UniqueIdentifier>{783eee47-6d17-4b9c-b223-49fe78216cac}</UniqueIdentifier>
+    </Filter>
     <Filter Include="search\algorithm\special">
       <UniqueIdentifier>{b929f375-f1de-4ff8-ab17-f4477d6e8499}</UniqueIdentifier>
     </Filter>
@@ -86,6 +89,9 @@
       <Filter>search</Filter>
     </ClInclude>
     <ClInclude Include="..\..\eslp\forward.h" />
+    <ClInclude Include="..\..\eslp\search-x22i.h">
+      <Filter>search\algorithm\experiment</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\eslp\prefix.cpp">
@@ -146,6 +152,9 @@
     </ClCompile>
     <ClCompile Include="..\..\eslp\searchfactory.cpp">
       <Filter>search</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\eslp\search-x22i.cpp">
+      <Filter>search\algorithm\experiment</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
