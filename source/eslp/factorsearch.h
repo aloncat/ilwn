@@ -65,8 +65,22 @@ protected:
 	virtual void SelectNextTask(Task& task);
 
 	// Функция рабочего потока, которая вызывается в цикле
-	// до тех пор, пока не будет установлен флаг shouldQuit
+	// до тех пор,  пока не будет установлен флаг shouldQuit
 	virtual void WorkerFunction(Worker* worker);
+
+	// Назначает указанному рабочему потоку следующее задание. Если задание было назначено, функция
+	// вернёт true. Еси заданий больше нет (или работа была прервана), то функция вернёт false
+	bool GetNextTask(Worker* worker);
+
+	// Эта функция вызывается рабочим потоком после завершения им обработки задания
+	void OnTaskDone(Worker* worker);
+
+	// Функция вернёт true, если установлен флаг m_ForceQuit.
+	// Вызывается рабочим потоком для вывода прогресса поиска
+	bool OnProgress(const Worker* worker, const unsigned* factors);
+
+	// Эта функция вызывается рабочим потоком при нахождении решения
+	bool OnSolutionFound(const Worker* worker, const unsigned* factors);
 
 	// Инициализирует указатель на функцию выполнения задания (значение m_SearchFn), выбирая подходящую
 	// шаблонную функциию Derived::SearchFactors в классе наследнике в зависимости от типа чисел m_Powers
@@ -76,13 +90,6 @@ protected:
 	// Инициализирует хеш-таблицу hashes значениями степеней от 1 до upperLimit
 	template<size_t HASH_BITS>
 	void InitHashTable(HashTable<HASH_BITS>& hashes, unsigned upperLimit);
-
-	// Функция вернёт true, если установлен флаг m_ForceQuit.
-	// Вызывается рабочим потоком для вывода прогресса поиска
-	bool OnProgress(const Worker* worker, const unsigned* factors);
-
-	// Эта функция вызывается рабочим потоком при нахождении решения
-	bool OnSolutionFound(const Worker* worker, const unsigned* factors);
 
 protected:
 	// Максимальное количество выводимых решений
@@ -118,9 +125,6 @@ private:
 
 	// Главная функция рабочего потока
 	void WorkerThreadFn(Worker* worker);
-
-	bool GetNextTask(Worker* worker);
-	void OnTaskDone(Worker* worker);
 
 	template<class Derived, class NumberT>
 	static SearchFn GetSearchFn();

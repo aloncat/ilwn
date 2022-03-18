@@ -209,6 +209,78 @@ void FactorSearch::WorkerFunction(Worker* worker)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+bool FactorSearch::GetNextTask(Worker* worker)
+{
+	if (!m_NoTasks && !m_IsCancelled)
+	{
+		thread::Lock lock(m_TaskCS);
+
+		while (m_NextTask->factors[0] <= m_LastHiFactor)
+		{
+			if (m_CheckTaskFn(*m_NextTask))
+			{
+				worker->task = *m_NextTask;
+
+				m_PendingTasks.push_back(worker->workerId);
+				m_LoPendingTask = m_PendingTasks.front();
+
+				SelectNextTask(*m_NextTask);
+				++m_NextTask->taskId;
+
+				return true;
+			}
+
+			// Выбираем следующее задание, но не меняем его номер,
+			// так как задание не будет отправлено на обработку
+			SelectNextTask(*m_NextTask);
+		}
+	}
+
+	m_NoTasks = true;
+	return false;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void FactorSearch::OnTaskDone(Worker* worker)
+{
+	thread::Lock lock(m_TaskCS);
+
+	for (size_t i = 0, count = m_PendingTasks.size(); i < count; ++i)
+	{
+		if (m_PendingTasks[i] == worker->workerId)
+		{
+			m_ProgressMan.SetDone(worker->task.taskId, !i);
+			m_PendingTasks.erase(m_PendingTasks.begin() + i);
+
+			if (!i)
+			{
+				m_LoPendingTask = (count > 1) ? m_PendingTasks.front() : 0;
+
+				if (!m_ForceQuit)
+				{
+					if (!m_PendingTasks.empty())
+					{
+						// Список ожидаемых заданий не пуст, значит последнее полностью завершённое
+						// задание было расположено непосредственно перед самым первым ожидаемым
+						Worker* nextWorker = m_Workers[m_PendingTasks.front() - 1];
+						m_LastDoneHiFactor = nextWorker->task.factors[0] - 1;
+					}
+					// Если же список пуст, то последнее полностью завершённое задание
+					// было расположено непосредственно перед следующим (неназначенным)
+					else if (unsigned nextHiFactor = m_NextTask->factors[0]; nextHiFactor > m_LastDoneHiFactor)
+						m_LastDoneHiFactor = nextHiFactor - 1;
+				}
+
+				if (!m_PendingSolutions.empty())
+					ProcessPendingSolutions();
+			}
+
+			break;
+		}
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 AML_NOINLINE bool FactorSearch::OnProgress(const Worker* worker, const unsigned* factors)
 {
 	m_ProgressMan.SetProgress(factors, worker->task.taskId);
@@ -424,78 +496,6 @@ void FactorSearch::WorkerThreadFn(Worker* worker)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-bool FactorSearch::GetNextTask(Worker* worker)
-{
-	if (!m_NoTasks && !m_IsCancelled)
-	{
-		thread::Lock lock(m_TaskCS);
-
-		while (m_NextTask->factors[0] <= m_LastHiFactor)
-		{
-			if (m_CheckTaskFn(*m_NextTask))
-			{
-				worker->task = *m_NextTask;
-
-				m_PendingTasks.push_back(worker->workerId);
-				m_LoPendingTask = m_PendingTasks.front();
-
-				SelectNextTask(*m_NextTask);
-				++m_NextTask->taskId;
-
-				return true;
-			}
-
-			// Выбираем следующее задание, но не меняем его номер,
-			// так как задание не будет отправлено на обработку
-			SelectNextTask(*m_NextTask);
-		}
-	}
-
-	m_NoTasks = true;
-	return false;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-void FactorSearch::OnTaskDone(Worker* worker)
-{
-	thread::Lock lock(m_TaskCS);
-
-	for (size_t i = 0, count = m_PendingTasks.size(); i < count; ++i)
-	{
-		if (m_PendingTasks[i] == worker->workerId)
-		{
-			m_ProgressMan.SetDone(worker->task.taskId, !i);
-			m_PendingTasks.erase(m_PendingTasks.begin() + i);
-
-			if (!i)
-			{
-				m_LoPendingTask = (count > 1) ? m_PendingTasks.front() : 0;
-
-				if (!m_ForceQuit)
-				{
-					if (!m_PendingTasks.empty())
-					{
-						// Список ожидаемых заданий не пуст, значит последнее полностью завершённое
-						// задание было расположено непосредственно перед самым первым ожидаемым
-						Worker* nextWorker = m_Workers[m_PendingTasks.front() - 1];
-						m_LastDoneHiFactor = nextWorker->task.factors[0] - 1;
-					}
-					// Если же список пуст, то последнее полностью завершённое задание
-					// было расположено непосредственно перед следующим (неназначенным)
-					else if (unsigned nextHiFactor = m_NextTask->factors[0]; nextHiFactor > m_LastDoneHiFactor)
-						m_LastDoneHiFactor = nextHiFactor - 1;
-				}
-
-				if (!m_PendingSolutions.empty())
-					ProcessPendingSolutions();
-			}
-
-			break;
-		}
-	}
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
 template<class NumberT>
 std::pair<unsigned, unsigned> FactorSearch::CalcUpperValue(unsigned leftHigh) const
 {
@@ -590,44 +590,53 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 	m_ForceShowProgress = true;
 	m_NeedUpdateTitle = true;
 
-	// Активируем рабочие потоки
-	SetActiveThreads(m_ActiveWorkers);
-
-	uint32_t lastProgressTick = 0;
-	while (!m_NoTasks || GetActiveThreads(true))
+	// Перед активацией рабочих потоков проверим, не была ли нажата комбинация Ctrl-C. Если BeforeCompute
+	// или InitFirstTask прервали инициализацию по этой причине, то мы не должны даже начинать вычисления
+	if (util::SystemConsole::Instance().IsCtrlCPressed())
 	{
-		if (m_ForceShowProgress || ::GetTickCount() - lastProgressTick >= 500)
+		m_IsCancelled = true;
+		m_NoTasks = true;
+	} else
+	{
+		// Активируем рабочие потоки
+		SetActiveThreads(m_ActiveWorkers);
+
+		uint32_t lastProgressTick = 0;
+		while (!m_NoTasks || GetActiveThreads(true))
 		{
-			unsigned factors[8];
-			if (m_ProgressMan.GetProgress(factors))
+			if (m_ForceShowProgress || ::GetTickCount() - lastProgressTick >= 500)
 			{
-				ShowProgress(factors);
-				m_ForceShowProgress = false;
-				lastProgressTick = ::GetTickCount();
+				unsigned factors[8];
+				if (m_ProgressMan.GetProgress(factors))
+				{
+					ShowProgress(factors);
+					m_ForceShowProgress = false;
+					lastProgressTick = ::GetTickCount();
+				}
+
+				UpdateRunningTime();
 			}
 
-			UpdateRunningTime();
-		}
-
-		if (m_NeedUpdateTitle || m_IsCancelled)
-		{
-			m_NeedUpdateTitle = false;
-			UpdateConsoleTitle();
-		}
-
-		if (util::SystemConsole::Instance().IsCtrlCPressed(true))
-		{
-			if (m_IsCancelled)
-				m_ForceQuit = true;
-			else
+			if (m_NeedUpdateTitle || m_IsCancelled)
 			{
-				m_IsCancelled = true;
-				m_ForceShowProgress = true;
+				m_NeedUpdateTitle = false;
+				UpdateConsoleTitle();
 			}
-		}
 
-		UpdateActiveThreadCount();
-		::Sleep(m_ForceShowProgress || m_NoTasks ? 1 : 20);
+			if (util::SystemConsole::Instance().IsCtrlCPressed(true))
+			{
+				if (m_IsCancelled)
+					m_ForceQuit = true;
+				else
+				{
+					m_IsCancelled = true;
+					m_ForceShowProgress = true;
+				}
+			}
+
+			UpdateActiveThreadCount();
+			::Sleep(m_ForceShowProgress || m_NoTasks ? 1 : 20);
+		}
 	}
 
 	AfterCompute();
