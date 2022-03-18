@@ -309,7 +309,7 @@ AML_NOINLINE bool FactorSearch::OnSolutionFound(const Worker* worker, const unsi
 		// Если это решение самого младшего (старого) задания, то мы всегда добавляем его в контейнер.
 		// В ином случае проверяем, сколько решений в контейнере, и если он "переполнен", то остальные
 		// потоки (решения других заданий) должны подождать, когда освободится место
-		if (auto count = m_PendingSolutions.size(); count < 5000 || worker->workerId <= m_LoPendingTask)
+		if (auto count = m_PendingSolutions.size(); count < 5000 || worker->workerId == m_LoPendingTask)
 		{
 			if (count >= 1000000)
 			{

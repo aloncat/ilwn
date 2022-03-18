@@ -91,6 +91,9 @@ protected:
 	template<size_t HASH_BITS>
 	void InitHashTable(HashTable<HASH_BITS>& hashes, unsigned upperLimit);
 
+	// Возвращает максимально возможное число потоков
+	size_t GetMaxThreadCount() const { return m_Workers.size(); }
+
 protected:
 	// Максимальное количество выводимых решений
 	static constexpr size_t MAX_SOLUTIONS = 100000;
@@ -253,6 +256,7 @@ struct FactorSearch::Worker final
 
 	Task task;							// Задание (первые коэффициенты)
 	unsigned progressCounter = 0;		// Вспомогательный счётчик вывода прогресса
+	unsigned userData = 0;				// Свободная переменная для любых целей
 
 	volatile bool isActive = false;		// true, если поток выполняет вычисления
 	volatile bool isFinished = false;	// true, если поток завершился (вышел из своей функции)

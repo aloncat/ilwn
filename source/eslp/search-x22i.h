@@ -22,6 +22,9 @@
 //--------------------------------------------------------------------------------------------------------------------------------
 class SearchX22i : public FactorSearch
 {
+public:
+	virtual ~SearchX22i() override;
+
 protected:
 	static bool IsSuitable(int power, int leftCount, int rightCount, bool allowAll);
 	virtual std::wstring GetAdditionalInfo() const override;
@@ -35,6 +38,8 @@ protected:
 	virtual void SelectNextTask(Task& task) override;
 
 	virtual void WorkerFunction(Worker* worker) override;
+
+	unsigned GetLowestPair() const;
 
 	template<class NumberT>
 	void InitSuperHashes(unsigned startFactor);
@@ -50,7 +55,7 @@ protected:
 
 protected:
 	// Макс. количество пар в m_Pairs
-	static constexpr int MAX_PAIRS = 2048;
+	static constexpr int MAX_PAIRS = 4096;
 
 	struct Pair {
 		unsigned k0;	// Старший коэффициент
@@ -65,6 +70,7 @@ protected:
 	Pair m_Pairs[MAX_PAIRS];			// Кольцевой буфер пар коэффициентов
 	std::atomic<int> m_Head = 0;		// Индекс первого элемента (голова списка)
 	std::atomic<int> m_Tail = 0;		// Индекс элемента, следующего за последним
+	unsigned* m_WorkerPairs = nullptr;	// Старшие коэф-ты обрабатываемых потоками пар
 
 	bool m_IsEvenPower = false;			// true, если степень уравнения чётная
 };
