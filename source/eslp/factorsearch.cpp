@@ -54,7 +54,7 @@ void FactorSearch::Search(const Options& options, const std::vector<unsigned>& s
 	m_ForceQuit = false;
 
 	m_LastProgressLength = 15;
-	aux::Print("Initializing...");
+	aux::Printc("#8Initializing...");
 	util::SystemConsole::Instance().ShowCursor(false);
 
 	size_t maxWorkerCount = util::SystemInfo::Instance().GetCoreCount().logical;
@@ -194,6 +194,21 @@ void FactorSearch::SelectNextTask(Task& task)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+void FactorSearch::WorkerFunction(Worker* worker)
+{
+	if (!GetNextTask(worker))
+	{
+		worker->shouldPause = true;
+		return;
+	}
+
+	auto powers = m_Powers->GetData();
+	(this->*m_SearchFn)(worker, powers);
+
+	OnTaskDone(worker);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 AML_NOINLINE bool FactorSearch::OnProgress(const Worker* worker, const unsigned* factors)
 {
 	m_ProgressMan.SetProgress(factors, worker->task.taskId);
@@ -266,7 +281,7 @@ void FactorSearch::CreateWorkers(size_t threadCount)
 
 		worker->threadObj = std::thread([this, worker]() {
 			worker->timer = new ThreadTimer;
-			WorkerMainFn(worker);
+			WorkerThreadFn(worker);
 		});
 	}
 
@@ -382,7 +397,7 @@ uint64_t FactorSearch::GetThreadTimes()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void FactorSearch::WorkerMainFn(Worker* worker)
+void FactorSearch::WorkerThreadFn(Worker* worker)
 {
 	HANDLE threadHandle = ::GetCurrentThread();
 	::SetThreadPriority(threadHandle, THREAD_PRIORITY_IDLE);
@@ -402,16 +417,7 @@ void FactorSearch::WorkerMainFn(Worker* worker)
 			continue;
 		}
 
-		if (!GetNextTask(worker))
-		{
-			worker->shouldPause = true;
-			continue;
-		}
-
-		auto powers = m_Powers->GetData();
-		(this->*m_SearchFn)(worker, powers);
-
-		OnTaskDone(worker);
+		WorkerFunction(worker);
 	}
 
 	worker->isFinished = true;
@@ -538,7 +544,7 @@ std::pair<unsigned, unsigned> FactorSearch::CalcUpperValue(unsigned leftHigh) co
 unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors)
 {
 	Assert(!startFactors.empty());
-	aux::Print("\rRe-initializing...");
+	aux::Printc("#8\rRe-initializing...");
 
 	// Определяем размер блока вычислений
 	const unsigned toCheck = GetChunkSize(startFactors[0]);
@@ -624,6 +630,7 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 		::Sleep(m_ForceShowProgress || m_NoTasks ? 1 : 20);
 	}
 
+	AfterCompute();
 	m_Powers = nullptr;
 
 	Assert(!GetActiveThreads(true) && "Some threads are still active");
