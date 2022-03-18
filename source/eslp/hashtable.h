@@ -35,6 +35,12 @@ public:
 		AML_SAFE_DELETEA(m_Table);
 	}
 
+	size_t GetSize() const
+	{
+		// Размер массива в KiB
+		return ARRAY_SIZE >> 10;
+	}
+
 	template<class T>
 	void Init(unsigned upperValue, const T& powers)
 	{
@@ -99,6 +105,12 @@ public:
 	~SuperHashTable()
 	{
 		AML_SAFE_DELETEA(m_Table);
+	}
+
+	size_t GetSize() const
+	{
+		// Размер массива в KiB
+		return ARRAY_SIZE >> 8;
 	}
 
 	void Init()
