@@ -13,12 +13,6 @@
 #include <core/strformat.h>
 
 //--------------------------------------------------------------------------------------------------------------------------------
-SearchX22i::SearchX22i()
-	: m_TaskCS(1000)
-{
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
 bool SearchX22i::IsSuitable(int power, int leftCount, int rightCount, bool allowAll)
 {
 	// Экспериментальный алгоритм подходит для любых степеней. Но для степеней <3 его
@@ -59,7 +53,7 @@ void SearchX22i::BeforeCompute(unsigned upperLimit)
 //--------------------------------------------------------------------------------------------------------------------------------
 void SearchX22i::AfterCompute()
 {
-	// После обработки блока задания и остановки рабочих потоков в буфере не должно оставаться необработанных пар,
+	// После обработки блока заданий и остановки рабочих потоков в буфере не должно оставаться необработанных пар,
 	// иначе мы можем пропустить решение. При завершении блока заданий или прерывании поиска рабочие потоки перед
 	// тем, как приостановиться, должны были закончить обработку оставшихся в буфере пар
 	Assert(m_Head == m_Tail && "Some pairs are still unprocessed");
@@ -104,16 +98,13 @@ void SearchX22i::SelectNextTask(Task& task)
 //--------------------------------------------------------------------------------------------------------------------------------
 void SearchX22i::WorkerFunction(Worker* worker)
 {
-	int head = m_Head.load(std::memory_order_acquire);
-	int tail = m_Tail.load(std::memory_order_relaxed);
-
-	int count = tail - head;
-	count += (count < 0) ? MAX_PAIRS : 0;
-
-	if (count < MAX_PAIRS * 3 / 4 && m_TaskCS.TryEnter())
+	// Если критическая секция свободна, то любой поток её сразу захватит. Этот поток далее будет обрабатывать
+	// задание, добавляя новые пары в буфер, а другие потоки будут искать декомпозиции для этих пар из буфера
+	if (m_TaskCS.TryEnter())
 	{
 		thread::Lock lock(m_TaskCS, false);
 
+		// Получаем задание
 		if (GetNextTask(worker))
 		{
 			const unsigned task = worker->task.factors[0];
@@ -122,11 +113,13 @@ void SearchX22i::WorkerFunction(Worker* worker)
 
 			for (;;)
 			{
+				// Обработаем некоторую часть пар буфера. После завершения task.factors[0] будет содержать
+				// значение старшего коэффициента последней обработанной пары (или 0, если пар больше нет)
 				(this->*m_DecomposeFn)(worker, m_Powers->GetData());
 
-				head = m_Head.load(std::memory_order_acquire);
-				tail = m_Tail.load(std::memory_order_relaxed);
-				if (head == tail || m_Pairs[head].k0 > task)
+				// Будем продолжать обработку пар в этом потоке до тех пор, пока в буфере не закончатся все
+				// пары, соответствующие обработанному заданию. И только затем отметим его как завершённое
+				if (unsigned k0 = worker->task.factors[0]; !k0 || k0 > task)
 				{
 					OnTaskDone(worker);
 					return;
@@ -134,9 +127,13 @@ void SearchX22i::WorkerFunction(Worker* worker)
 			}
 		}
 
+		// Если заданий больше нет, то поток должен "уснуть" (после выхода из этой функции).
+		// Но так как в буфере ещё могут быть необработанные пары, то поможем их обработать
 		worker->shouldPause = true;
 	}
 
+	// Если секция уже была захвачена (или заданий больше нет), то
+	// обрабатаем некоторое количество пар коэффициентов из буфера
 	(this->*m_DecomposeFn)(worker, m_Powers->GetData());
 }
 
@@ -148,17 +145,20 @@ void SearchX22i::InitSuperHashes(unsigned startFactor)
 	const NumberT* powers = static_cast<const NumberT*>(m_Powers->GetData());
 
 	unsigned k0;
+	// Мин. значение пары стартового задания
 	const auto uv = powers[startFactor] + 1;
+
 	// Пропустим задания, для которых макс. сумма степеней двух коэф-в
 	// меньше мин. суммы степеней коэффициентов стартового задания (uv)
 	for (k0 = 2; k0 < startFactor && uv > (powers[k0] << 1); ++k0);
 
+	// Добавим в хеш-таблицу значения всех пар
 	for (size_t it = 0; k0 < startFactor; ++k0)
 	{
-		const auto pk0 = powers[k0] & ~0llu;
-		const unsigned delta = (m_IsEvenPower && !(k0 & 1)) ? 2 : 1;
+		const uint64_t pk0 = powers[k0] & ~0llu;
+		const unsigned dt = (m_IsEvenPower && !(k0 & 1)) ? 2 : 1;
 
-		for (unsigned k1 = 1; k1 <= k0; k1 += delta)
+		for (unsigned k1 = 1; k1 <= k0; k1 += dt)
 		{
 			auto v = pk0 + (powers[k1] & ~0llu);
 			m_SuperHashes.Insert(v);
@@ -178,6 +178,7 @@ AML_NOINLINE void SearchX22i::SearchFactors(Worker* worker, const NumberT* power
 
 	// Старший коэф-т левой части
 	k[0] = worker->task.factors[0];
+	const auto pk0 = powers[k[0]];
 
 	// Если значение k[0] чётно, то k[1] не может быть чётным при любой чётной степени, иначе решение будет
 	// непримитивным. Поэтому при чётных k[0] и степени мы будем проверять только нечётные значения k[1]
@@ -186,20 +187,29 @@ AML_NOINLINE void SearchX22i::SearchFactors(Worker* worker, const NumberT* power
 	// Перебор 2-го коэф-та левой части
 	for (k[1] = 1; k[1] <= k[0]; k[1] += delta)
 	{
-		// Сумма в левой части уравнения
-		const auto z = powers[k[0]] + powers[k[1]];
-
-		if (!m_SuperHashes.Exists(z))
+		// Сумма в левой части уравнения, ищем в хеш-таблице
+		if (auto z = pk0 + powers[k[1]]; !m_SuperHashes.Exists(z))
 		{
+			// Если такого значения нет, то добавим его.
+			// Решений для этой пары гарантированно нет
 			m_SuperHashes.Insert(z);
 			continue;
 		}
 
-		// TODO: добавление пары в буфер
-		//
+		const int tail = m_Tail.load(std::memory_order_acquire);
+		const int nextTail = (tail < MAX_PAIRS - 1) ? tail + 1 : 0;
+
+		// Если буфер заполнен, то поможем другим потокам
+		if (nextTail == m_Head.load(std::memory_order_relaxed))
+			(this->*m_DecomposeFn)(worker, m_Powers->GetData());
+
+		// Добавим пару
+		m_Pairs[tail].k0 = k[0];
+		m_Pairs[tail].k1 = k[1];
+		m_Tail.store(nextTail, std::memory_order_release);
 
 		// Вывод прогресса
-		if (!(++worker->progressCounter & 0xfff))
+		if (!(++worker->progressCounter & 0x7ff))
 		{
 			if (OnProgress(worker, k))
 				return;
@@ -214,38 +224,43 @@ AML_NOINLINE void SearchX22i::Decompose(Worker* worker, const NumberT* powers)
 	// Массив коэффициентов
 	unsigned k[ProgressManager::MAX_COEFS];
 
-	// TODO: получение пары из буфера
-	//
-
-	// Сумма в левой части уравнения
-	const auto z = powers[k[0]] + powers[k[1]];
-
-	k[2] = 1;
-	// Пропускаем низкие значения старшего коэф-та
-	for (unsigned step = k[0] >> 1; step; step >>= 1)
+	// Обработаем пары
+	for (int count = 0; count < 32;)
 	{
-		auto f = k[2] + step;
-		if (z > powers[f - 1] * 2)
-			k[2] = f;
-	}
+		// TODO: получение пары из буфера
+		//
 
-	for (; k[2] < k[0]; ++k[2])
-	{
-		if (const auto lastFP = z - powers[k[2]]; m_Hashes.Exists(lastFP))
+		// Сумма в левой части уравнения
+		const auto z = powers[k[0]] + powers[k[1]];
+
+		unsigned k2 = 1;
+		// Пропускаем низкие значения старшего коэф-та
+		for (unsigned step = k[0] >> 1; step; step >>= 1)
 		{
-			for (unsigned lo = 1, hi = k[2]; lo <= hi;)
+			auto f = k2 + step;
+			if (z > powers[f - 1] << 1)
+				k2 = f;
+		}
+
+		for (; k2 < k[0]; ++k2)
+		{
+			k[2] = k2;
+			if (const auto lastFP = z - powers[k2]; m_Hashes.Exists(lastFP))
 			{
-				unsigned mid = (lo + hi) >> 1;
-				if (auto v = powers[mid]; v < lastFP)
-					lo = mid + 1;
-				else if (v > lastFP)
-					hi = mid - 1;
-				else
+				for (unsigned lo = 1, hi = k2; lo <= hi;)
 				{
-					k[3] = mid;
-					if (OnSolutionFound(worker, k))
-						return;
-					break;
+					unsigned mid = (lo + hi) >> 1;
+					if (auto v = powers[mid]; v < lastFP)
+						lo = mid + 1;
+					else if (v > lastFP)
+						hi = mid - 1;
+					else
+					{
+						k[3] = mid;
+						if (OnSolutionFound(worker, k))
+							return;
+						break;
+					}
 				}
 			}
 		}

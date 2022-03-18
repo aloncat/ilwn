@@ -22,9 +22,6 @@
 //--------------------------------------------------------------------------------------------------------------------------------
 class SearchX22i : public FactorSearch
 {
-public:
-	SearchX22i();
-
 protected:
 	static bool IsSuitable(int power, int leftCount, int rightCount, bool allowAll);
 	virtual std::wstring GetAdditionalInfo() const override;
@@ -56,18 +53,18 @@ protected:
 	static constexpr int MAX_PAIRS = 2048;
 
 	struct Pair {
-		unsigned k0;	// Старший коэффициент левой части
-		unsigned k1;	// Младший коэффициент левой части
+		unsigned k0;	// Старший коэффициент
+		unsigned k1;	// Младший коэффициент
 	};
 
 	HashTable<23> m_Hashes;				// Обычная хеш-таблица (для поиска коэффициента)
-	thread::CriticalSection m_TaskCS;	// Критическая секция для потока задания
+	thread::CriticalSection m_TaskCS;	// Критическая секция для обработки задания
 	SuperHashTable<35> m_SuperHashes;	// Большая хеш-таблица для значений пар
 	SearchFn m_DecomposeFn = nullptr;	// Указатель на функцию декомпозиции
 
 	Pair m_Pairs[MAX_PAIRS];			// Кольцевой буфер пар коэффициентов
-	std::atomic<int> m_Head;			// Индекс первого элемента (голова списка)
-	std::atomic<int> m_Tail;			// Индекс элемента, следующего за последним
+	std::atomic<int> m_Head = 0;		// Индекс первого элемента (голова списка)
+	std::atomic<int> m_Tail = 0;		// Индекс элемента, следующего за последним
 
 	bool m_IsEvenPower = false;			// true, если степень уравнения чётная
 };
