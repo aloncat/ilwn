@@ -327,7 +327,7 @@ AML_NOINLINE void SearchX22i::Decompose(Worker* worker, const NumberT* powers)
 			k[2] = k2;
 			if (const auto lastFP = z - powers[k2]; m_Hashes.Exists(lastFP))
 			{
-				for (unsigned lo = 1, hi = k2; lo <= hi;)
+				for (unsigned lo = k[1] + 1, hi = k2; lo <= hi;)
 				{
 					unsigned mid = (lo + hi) >> 1;
 					if (auto v = powers[mid]; v < lastFP)

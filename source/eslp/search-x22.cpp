@@ -84,7 +84,7 @@ AML_NOINLINE void SearchX22::SearchFactors(Worker* worker, const NumberT* powers
 		{
 			if (const auto lastFP = z - powers[k[2]]; m_Hashes.Exists(lastFP))
 			{
-				for (unsigned lo = 1, hi = k[2]; lo <= hi;)
+				for (unsigned lo = k[1] + 1, hi = k[2]; lo <= hi;)
 				{
 					unsigned mid = (lo + hi) >> 1;
 					if (auto v = powers[mid]; v < lastFP)
