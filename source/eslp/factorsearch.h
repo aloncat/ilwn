@@ -246,7 +246,7 @@ struct FactorSearch::Task final
 
 	// Сравниваниет коэффициенты задания с коэффициентами указанного
 	// решения. Возвращает true, если задание "старше" указанного решения
-	bool operator >(const Solution& rhs) const noexcept { return rhs.IsLower(factors, factorCount);	}
+	bool operator >(const Solution& rhs) const { return rhs.IsLower(factors, factorCount); }
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------

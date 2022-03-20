@@ -10,16 +10,17 @@
 #include <vector>
 
 //--------------------------------------------------------------------------------------------------------------------------------
-struct Solution
+class Solution
 {
-	// Коэффициенты левой части
-	std::vector<unsigned> left;
-	// Коэффициенты правой части
-	std::vector<unsigned> right;
-
 public:
 	Solution(const unsigned* allFactors, int leftCount, int rightCount);
 	Solution(const unsigned* leftFactors, const unsigned* rightFactors, int leftCount, int rightCount);
+
+	int GetLCount() const { return m_LeftCount; }
+	int GetRCount() const { return static_cast<int>(m_Factors.size()) - m_LeftCount; }
+
+	const unsigned* GetLFactors() const { return m_Factors.data(); }
+	const unsigned* GetRFactors() const { return m_Factors.data() + m_LeftCount; }
 
 	void SortFactors();
 
@@ -34,7 +35,11 @@ public:
 
 	// Возвращает true, если указанные старшие коэффициенты
 	// (обычно задания) меньше старших коэффициентов решения
-	bool IsLower(const unsigned* factors, int count) const noexcept;
+	bool IsLower(const unsigned* factors, int count) const;
+
+protected:
+	int m_LeftCount = 0;				// Количество коэф-в в левой части
+	std::vector<unsigned> m_Factors;	// Коэффициенты решения
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------

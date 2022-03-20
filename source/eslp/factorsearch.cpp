@@ -301,7 +301,7 @@ AML_NOINLINE bool FactorSearch::OnSolutionFound(const Worker* worker, const unsi
 
 	// Будем пропускать решения, в которых количество коэффициентов слева и справа одинаково и
 	// при этом старший коэффициент правой части больше или равен старшего коэффициента в левой
-	if (m_Info.leftCount == m_Info.rightCount && solution.left[0] <= solution.right[0])
+	if (m_Info.leftCount == m_Info.rightCount && *solution.GetLFactors() <= *solution.GetRFactors())
 		return m_IsAborted;
 
 	// Если решение вырождено, то также пропустим его
@@ -724,8 +724,8 @@ void FactorSearch::OnSolutionReady(const Solution& solution)
 {
 	util::Formatter<char> fmt;
 
-	auto fn = [&](const std::vector<unsigned>& factors) {
-		for (size_t i = 0, k, count = factors.size(); i < count; i += k)
+	auto fn = [&](const unsigned* factors, int count) {
+		for (int i = 0, k; i < count; i += k)
 		{
 			k = 1;
 			const unsigned f = factors[i];
@@ -744,9 +744,10 @@ void FactorSearch::OnSolutionReady(const Solution& solution)
 		}
 	};
 
-	fn(solution.left);
+	fn(solution.GetLFactors(), solution.GetLCount());
 	fmt << '=';
-	fn(solution.right);
+
+	fn(solution.GetRFactors(), solution.GetRCount());
 	fmt << '\n';
 
 	// Выводим решение в файл

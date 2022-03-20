@@ -17,45 +17,47 @@
 //--------------------------------------------------------------------------------------------------------------------------------
 Solution::Solution(const unsigned* allFactors, int leftCount, int rightCount)
 {
-	Assert(leftCount > 0);
-	left.reserve(leftCount);
-	for (int i = 0; i < leftCount; ++i)
-		left.push_back(allFactors[i]);
+	Assert(leftCount > 0 && rightCount > 0);
 
-	Assert(rightCount > 0);
+	m_LeftCount = leftCount;
+	m_Factors.reserve(leftCount + rightCount);
+
+	for (int i = 0; i < leftCount; ++i)
+		m_Factors.push_back(allFactors[i]);
+
 	allFactors += leftCount;
-	right.reserve(rightCount);
 	for (int i = 0; i < rightCount; ++i)
-		right.push_back(allFactors[i]);
+		m_Factors.push_back(allFactors[i]);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 Solution::Solution(const unsigned* leftFactors, const unsigned* rightFactors, int leftCount, int rightCount)
 {
-	Assert(leftCount > 0);
-	left.reserve(leftCount);
-	for (int i = 0; i < leftCount; ++i)
-		left.push_back(leftFactors[i]);
+	Assert(leftCount > 0 && rightCount > 0);
 
-	Assert(rightCount > 0);
-	right.reserve(rightCount);
+	m_LeftCount = leftCount;
+	m_Factors.reserve(leftCount + rightCount);
+
+	for (int i = 0; i < leftCount; ++i)
+		m_Factors.push_back(leftFactors[i]);
+
 	for (int i = 0; i < rightCount; ++i)
-		right.push_back(rightFactors[i]);
+		m_Factors.push_back(rightFactors[i]);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 void Solution::SortFactors()
 {
-	if (left.size() > 1)
+	if (!m_Factors.empty())
 	{
-		std::sort(left.begin(), left.end(), [](unsigned lhs, unsigned rhs) {
-			return lhs > rhs;
-		});
-	}
+		if (m_LeftCount > 1)
+		{
+			std::sort(m_Factors.begin(), m_Factors.begin() + m_LeftCount, [](unsigned lhs, unsigned rhs) {
+				return lhs > rhs;
+			});
+		}
 
-	if (right.size() > 1)
-	{
-		std::sort(right.begin(), right.end(), [](unsigned lhs, unsigned rhs) {
+		std::sort(m_Factors.begin() + m_LeftCount, m_Factors.end(), [](unsigned lhs, unsigned rhs) {
 			return lhs > rhs;
 		});
 	}
@@ -66,19 +68,25 @@ void Solution::Swap(Solution& that)
 {
 	if (this != &that)
 	{
-		left.swap(that.left);
-		right.swap(that.right);
+		int t = m_LeftCount;
+		m_LeftCount = that.m_LeftCount;
+		that.m_LeftCount = t;
+
+		m_Factors.swap(that.m_Factors);
 	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 bool Solution::IsConfluent() const
 {
-	for (unsigned l : left)
+	auto factors = m_Factors.data();
+	const auto count = m_Factors.size();
+
+	for (int i = 0; i < m_LeftCount; ++i)
 	{
-		for (unsigned r : right)
+		for (size_t j = m_LeftCount; j < count; ++j)
 		{
-			if (l == r)
+			if (factors[i] == factors[j])
 				return true;
 		}
 	}
@@ -89,24 +97,15 @@ bool Solution::IsConfluent() const
 //--------------------------------------------------------------------------------------------------------------------------------
 bool Solution::operator ==(const Solution& rhs) const
 {
-	if (size_t count = left.size(); Verify(count && count == rhs.left.size()))
+	if (size_t count = m_Factors.size(); Verify(count && count == rhs.m_Factors.size()))
 	{
 		for (size_t i = 0; i < count; ++i)
 		{
-			if (left[i] != rhs.left[i])
+			if (m_Factors[i] != rhs.m_Factors[i])
 				return false;
 		}
 
-		if (count = right.size(); Verify(count && count == rhs.right.size()))
-		{
-			for (size_t i = 0; i < count; ++i)
-			{
-				if (right[i] != rhs.right[i])
-					return false;
-			}
-
-			return true;
-		}
+		return true;
 	}
 
 	return false;
@@ -115,24 +114,13 @@ bool Solution::operator ==(const Solution& rhs) const
 //--------------------------------------------------------------------------------------------------------------------------------
 bool Solution::operator <(const Solution& rhs) const
 {
-	if (size_t count = left.size(); Verify(count && count == rhs.left.size()))
+	if (size_t count = m_Factors.size(); Verify(count && count == rhs.m_Factors.size()))
 	{
 		for (size_t i = 0; i < count; ++i)
 		{
-			if (left[i] != rhs.left[i])
+			if (m_Factors[i] != rhs.m_Factors[i])
 			{
-				return left[i] < rhs.left[i];
-			}
-		}
-
-		if (count = right.size(); Verify(count && count == rhs.right.size()))
-		{
-			for (size_t i = 0; i < count; ++i)
-			{
-				if (right[i] != rhs.right[i])
-				{
-					return right[i] < rhs.right[i];
-				}
+				return m_Factors[i] < rhs.m_Factors[i];
 			}
 		}
 	}
@@ -141,26 +129,13 @@ bool Solution::operator <(const Solution& rhs) const
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-bool Solution::IsLower(const unsigned* factors, int count) const noexcept
+bool Solution::IsLower(const unsigned* factors, int count) const
 {
-	if (const int leftCount = static_cast<int>(left.size()); count <= leftCount)
+	if (Verify(count < m_Factors.size()))
 	{
 		for (int i = 0; i < count; ++i)
 		{
-			if (auto f = left[i]; factors[i] != f)
-				return f < factors[i];
-		}
-	} else
-	{
-		for (int i = 0; i < leftCount; ++i)
-		{
-			if (auto f = left[i]; factors[i] != f)
-				return f < factors[i];
-		}
-
-		for (int i = leftCount; i < count; ++i)
-		{
-			if (auto f = right[i - leftCount]; factors[i] != f)
+			if (auto f = m_Factors[i]; factors[i] != f)
 				return f < factors[i];
 		}
 	}
@@ -217,25 +192,19 @@ void Solutions::Prune(const unsigned* factors, int count)
 //--------------------------------------------------------------------------------------------------------------------------------
 bool Solutions::IsPrimitive(const Solution& solution)
 {
-	const size_t leftCount = solution.left.size();
-	const size_t rightCount = solution.right.size();
+	const int leftCount = solution.GetLCount();
+	const int rightCount = solution.GetRCount();
 
-	if (!Verify(leftCount && rightCount))
+	if (!Verify(leftCount > 0 && rightCount > 0))
 		return false;
 
-	const size_t total = leftCount + rightCount;
-	util::SmartArray<unsigned, 500> allFactors(total);
-	unsigned lowest = UINT_MAX;
+	const int total = leftCount + rightCount;
+	auto allFactors = solution.GetLFactors();
 
-	size_t k = 0;
-	for (auto f : solution.left)
+	unsigned lowest = UINT_MAX;
+	for (int i = 0; i < total; ++i)
 	{
-		allFactors[k++] = f;
-		lowest = (f < lowest) ? f : lowest;
-	}
-	for (auto f : solution.right)
-	{
-		allFactors[k++] = f;
+		auto f = allFactors[i];
 		lowest = (f < lowest) ? f : lowest;
 	}
 
@@ -245,7 +214,7 @@ bool Solutions::IsPrimitive(const Solution& solution)
 	for (unsigned p : m_Factors)
 	{
 		bool allDivisible = true;
-		for (size_t i = 0; i < total; ++i)
+		for (int i = 0; i < total; ++i)
 		{
 			if (allFactors[i] % p)
 			{

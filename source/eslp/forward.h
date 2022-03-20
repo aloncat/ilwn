@@ -13,9 +13,9 @@ class PowersBase;
 class ProgressManager;
 class SearchBase;
 class SearchFactory;
+class Solution;
 class Solutions;
 class ThreadTimer;
 
 struct OptionKey;
-struct Solution;
 struct UInt128;
