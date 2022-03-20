@@ -276,9 +276,8 @@ void FactorSearch::OnTaskDone(Worker* worker)
 				{
 					ProcessPendingSolutions();
 
-					// Удалим старые решения для экономии памяти
-					const Task& task = m_Workers[m_LoPendingTask]->task;
-					m_Solutions.Prune(task.factors, task.factorCount);
+					// Удалим решения завершённых заданий для экономии памяти
+					m_Solutions.Prune(worker->task.factors, worker->task.factorCount);
 				}
 			}
 

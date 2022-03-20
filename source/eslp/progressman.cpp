@@ -102,7 +102,7 @@ void ProgressManager::SetDone(unsigned taskId, bool oldest)
 
 	// Для того, чтобы вывод прогресса был последовательным, в буфере всегда должно оставаться
 	// хотя бы одно задание. Если буфер оказался пуст, то добавим в него завершённое задание
-	if (!m_Count && oldest)
+	if (!m_Count)
 	{
 		m_Count = 1;
 		m_Items[m_Head].Reset(taskId);
@@ -127,18 +127,20 @@ ProgressManager::Item* ProgressManager::GetItem(unsigned taskId)
 
 		m_Count = 1;
 		m_Items[m_Head].Reset(taskId);
-
-		return m_Items;
+		return m_Items + m_Head;
 	}
 
 	if (taskId >= static_cast<uint64_t>(firstId) + m_Count)
 	{
-		// Если в буфере всего 1 задание и оно завершено, то заменим его. Эта ситуация возникает
-		// только тогда, когда задание было "оставлено" лишь для сохранения порядка следования
-		if (m_Count == 1 && m_Items[m_Head].isDone)
+		// Если самое первое задание в буфере завершено, не имеет прогресса и находится
+		// непосредственно перед текущим, то удалим его. Эта ситуация возникает только
+		// тогда, когда задание было "оставлено" лишь для сохранения порядка следования
+		if (Item it = m_Items[m_Head]; it.isDone && !it.isReady && it.taskId + 1 == taskId)
 		{
+			auto next = m_Head + 1;
+			m_Head = (next < MAX_TASKS) ? next : 0;
 			m_Items[m_Head].Reset(taskId);
-			return &m_Items[m_Head];
+			return m_Items + m_Head;
 		}
 
 		// Если расстояние между id больше размера буфера, то проигнорируем прогресс
