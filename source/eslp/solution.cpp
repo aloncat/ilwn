@@ -140,6 +140,34 @@ bool Solution::operator <(const Solution& rhs) const
 	return false;
 }
 
+//--------------------------------------------------------------------------------------------------------------------------------
+bool Solution::IsLower(const unsigned* factors, int count) const noexcept
+{
+	if (const int leftCount = static_cast<int>(left.size()); count <= leftCount)
+	{
+		for (int i = 0; i < count; ++i)
+		{
+			if (auto f = left[i]; factors[i] != f)
+				return f < factors[i];
+		}
+	} else
+	{
+		for (int i = 0; i < leftCount; ++i)
+		{
+			if (auto f = left[i]; factors[i] != f)
+				return f < factors[i];
+		}
+
+		for (int i = leftCount; i < count; ++i)
+		{
+			if (auto f = right[i - leftCount]; factors[i] != f)
+				return f < factors[i];
+		}
+	}
+
+	return false;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   Solutions
@@ -169,6 +197,21 @@ bool Solutions::Insert(Solution&& solution, bool verify)
 
 	auto result = m_Solutions.insert(std::move(solution));
 	return result.second;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void Solutions::Prune(const unsigned* factors, int count)
+{
+	if (m_Solutions.size() > 10000)
+	{
+		for (auto it = m_Solutions.begin(); it != m_Solutions.end();)
+		{
+			if (it->IsLower(factors, count))
+				it = m_Solutions.erase(it);
+			else
+				++it;
+		}
+	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------

@@ -31,6 +31,10 @@ public:
 
 	bool operator ==(const Solution& rhs) const;
 	bool operator <(const Solution& rhs) const;
+
+	// Возвращает true, если указанные старшие коэффициенты
+	// (обычно задания) меньше старших коэффициентов решения
+	bool IsLower(const unsigned* factors, int count) const noexcept;
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -48,6 +52,9 @@ public:
 	bool Insert(Solution&& solution, bool verify = true);
 
 	void Clear() { m_Solutions.clear(); }
+
+	// Удаляет все решения, старшие коэффициенты которых меньше указанных коэффициентов задания
+	void Prune(const unsigned* factors, int count);
 
 	size_t Count() const { return m_Solutions.size(); }
 

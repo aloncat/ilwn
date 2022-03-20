@@ -143,6 +143,7 @@ private:
 	unsigned Compute(const std::vector<unsigned>& startFactors, unsigned toCheck);
 
 	void ShowProgress(const unsigned* factors);
+	void HideProgress();
 
 	void OnSolutionReady(const Solution& solution);
 	void ProcessPendingSolutions();
@@ -180,6 +181,7 @@ private:
 
 	volatile bool m_PrintSolutions = false;		// true, если вывод решений на экран разрешён
 	bool m_PrintAllSolutions = false;			// true, если указана опция "--printall"
+	bool m_StopOnLimit = true;					// false, если указана опция --nolimit
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -242,9 +244,9 @@ struct FactorSearch::Task final
 
 	Task& operator =(const Task& that) noexcept;
 
-	// Сравниваниет коэффициенты задания с коэффициентами решения.
-	// Возвращает true, если задание "старше" указанного решения
-	bool operator >(const Solution& rhs) const noexcept;
+	// Сравниваниет коэффициенты задания с коэффициентами указанного
+	// решения. Возвращает true, если задание "старше" указанного решения
+	bool operator >(const Solution& rhs) const noexcept { return rhs.IsLower(factors, factorCount);	}
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------

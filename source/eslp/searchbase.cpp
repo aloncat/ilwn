@@ -96,6 +96,7 @@ void SearchBase::PrintOptionsHelp()
 	aux::Printc("#15Options:\n"
 		"#3  --allowall     #8Allow all (experimental) algorithms\n"
 		"#3  --nocustom     #8Disable all custom (optimized) algorithms\n"
+		"#3  --nolimit      #7Do not stop searching after 100K solutions\n"
 		"#3  --printall     #7Print all found solutions (first 1K otherwise)\n"
 		"#3  --thread <N>   #7Set initial count of active threads to N\n"
 	);
@@ -139,6 +140,13 @@ bool SearchBase::InitOptions(Options& options)
 				// Опция "--nocustom", отключает все кастомные алгоритмы
 				// (эта опция имеет приоритет над опцией "--allowall")
 				if (!util::StrInsCmp(key, L"nocustom"))
+				{
+					options.AddOption(key);
+					continue;
+				}
+
+				// Опция "--nolimit", отключает ограничение на количество решений
+				if (!util::StrInsCmp(key, L"nolimit"))
 				{
 					options.AddOption(key);
 					continue;

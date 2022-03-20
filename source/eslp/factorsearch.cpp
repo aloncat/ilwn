@@ -75,6 +75,7 @@ void FactorSearch::Search(const Options& options, const std::vector<unsigned>& s
 
 	m_PrintSolutions = true;
 	m_PrintAllSolutions = options.HasOption("printall");
+	m_StopOnLimit = !options.HasOption("nolimit");
 
 	m_NextTask = new Task;
 	CreateWorkers(maxWorkerCount);
@@ -272,7 +273,13 @@ void FactorSearch::OnTaskDone(Worker* worker)
 				}
 
 				if (!m_PendingSolutions.empty())
+				{
 					ProcessPendingSolutions();
+
+					// Удалим старые решения для экономии памяти
+					const Task& task = m_Workers[m_LoPendingTask]->task;
+					m_Solutions.Prune(task.factors, task.factorCount);
+				}
 			}
 
 			break;
@@ -311,12 +318,16 @@ AML_NOINLINE bool FactorSearch::OnSolutionFound(const Worker* worker, const unsi
 		// потоки (решения других заданий) должны подождать, когда освободится место
 		if (auto count = m_PendingSolutions.size(); count < 5000 || worker->workerId == m_LoPendingTask)
 		{
-			if (count >= 1000000)
+			// Для некоторых уравнений 1-й степени (m+n > 6), количество решений на одно
+			// задание превышает 1M. Тем не менее, если количество превысит 3M прервём
+			// работу программы, чтобы избежать падения из-за нехватки памяти
+			if (count >= 3000000)
 			{
 				m_IsCancelled = true;
 				m_IsAborted = true;
 				m_ForceQuit = true;
 			}
+
 			// Отсеиваем непримитивные решения. Так как проверка делается функцией класса Solutions,
 			// который не потокобезопасен, то проверяем примитивность решения внутри критической секции
 			else if (m_Solutions.IsPrimitive(solution))
@@ -544,6 +555,8 @@ std::pair<unsigned, unsigned> FactorSearch::CalcUpperValue(unsigned leftHigh) co
 unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors)
 {
 	Assert(!startFactors.empty());
+
+	m_LastProgressLength = 18;
 	aux::Printc("#8\rRe-initializing...");
 
 	// Определяем размер блока вычислений
@@ -590,6 +603,8 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 	m_ForceShowProgress = true;
 	m_NeedUpdateTitle = true;
 
+	HideProgress();
+
 	// Перед активацией рабочих потоков проверим, не была ли нажата комбинация Ctrl-C. Если BeforeCompute
 	// или InitFirstTask прервали инициализацию по этой причине, то мы не должны даже начинать вычисления
 	if (util::SystemConsole::Instance().IsCtrlCPressed())
@@ -598,6 +613,9 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 		m_NoTasks = true;
 	} else
 	{
+		m_LastProgressLength = 10;
+		aux::Print("\rTesting...");
+
 		// Активируем рабочие потоки
 		SetActiveThreads(m_ActiveWorkers);
 
@@ -645,11 +663,10 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 	Assert(!GetActiveThreads(true) && "Some threads are still active");
 	Assert(m_IsCancelled || m_NextTask->factors[0] >= upperLimit.first + 1);
 
-	if (m_LastProgressLength)
+	HideProgress();
+	if (m_IsCancelled)
 	{
-		// Очистим строку на экране, в которой выводился прогресс
-		aux::Print("\r" + std::string(m_LastProgressLength, ' ') + "\r");
-		m_LastProgressLength = 0;
+		aux::Print("Shutting down...");
 	}
 
 	return upperLimit.first + 1;
@@ -690,6 +707,17 @@ void FactorSearch::ShowProgress(const unsigned* factors)
 
 	thread::Lock lock(m_ConsoleCS);
 	aux::Printc(fmt);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void FactorSearch::HideProgress()
+{
+	if (m_LastProgressLength)
+	{
+		// Очистим строку на экране, в которой выводился прогресс
+		aux::Print("\r" + std::string(m_LastProgressLength, ' ') + "\r");
+		m_LastProgressLength = 0;
+	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -790,7 +818,7 @@ void FactorSearch::ProcessPendingSolutions()
 				// Выводим решение
 				OnSolutionReady(*it);
 
-				if (found >= MAX_SOLUTIONS)
+				if (found >= MAX_SOLUTIONS && m_StopOnLimit)
 				{
 					m_IsCancelled = true;
 					m_ForceQuit = true;
@@ -867,32 +895,4 @@ FactorSearch::Task& FactorSearch::Task::operator =(const Task& that) noexcept
 	}
 
 	return *this;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-bool FactorSearch::Task::operator >(const Solution& rhs) const noexcept
-{
-	if (const int leftCount = static_cast<int>(rhs.left.size()); factorCount <= leftCount)
-	{
-		for (int i = 0; i < factorCount; ++i)
-		{
-			if (auto f = rhs.left[i]; factors[i] != f)
-				return factors[i] > f;
-		}
-	} else
-	{
-		for (int i = 0; i < leftCount; ++i)
-		{
-			if (auto f = rhs.left[i]; factors[i] != f)
-				return factors[i] > f;
-		}
-
-		for (int i = leftCount; i < factorCount; ++i)
-		{
-			if (auto f = rhs.right[i - leftCount]; factors[i] != f)
-				return factors[i] > f;
-		}
-	}
-
-	return false;
 }
