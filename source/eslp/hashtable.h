@@ -72,12 +72,12 @@ protected:
 
 	static unsigned GetHash(uint64_t value) noexcept
 	{
-		return value & BIT_MASK;
+		return (value >> 10) & BIT_MASK;
 	}
 
 	static unsigned GetHash(const UInt128& value) noexcept
 	{
-		return value.loPart & BIT_MASK;
+		return (value.loPart >> 10) & BIT_MASK;
 	}
 
 protected:
@@ -142,12 +142,12 @@ protected:
 
 	static uint64_t GetHash(uint64_t value) noexcept
 	{
-		return value & BIT_MASK;
+		return (value >> 12) & BIT_MASK;
 	}
 
 	static uint64_t GetHash(const UInt128& value) noexcept
 	{
-		return value.loPart & BIT_MASK;
+		return (value.loPart >> 12) & BIT_MASK;
 	}
 
 protected:

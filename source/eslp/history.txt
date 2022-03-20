@@ -7,11 +7,13 @@ Released: 2022-03-xx
 
 == Bug fixes ==
  * Fixed progress freezes at large coefficients.
+ * Reduced memory consumption in some cases.
 
 == Features ==
  * Faster algorithm for 4.1.3 equation.
  * Faster algorithm for 4.1.4 equation.
  * Experimental (faster) algorithm for x.2.2 equation.
+ * Optimized hash function (for all algorithms).
 
 
 === Version 0.32 ===
