@@ -11,6 +11,8 @@
 #include <core/console.h>
 #include <core/debug.h>
 #include <core/strformat.h>
+#include <core/thread.h>
+#include <core/util.h>
 
 //--------------------------------------------------------------------------------------------------------------------------------
 SearchX22i::~SearchX22i()
@@ -51,6 +53,7 @@ void SearchX22i::BeforeCompute(unsigned upperLimit)
 
 	memset(m_Pairs, 0, sizeof(m_Pairs));
 	m_Tail = m_Head = 0;
+	m_Lock = 0;
 
 	auto threads = GetMaxThreadCount();
 	m_WorkerPairs = new unsigned[threads + 1];
@@ -76,8 +79,8 @@ void SearchX22i::AfterCompute()
 //--------------------------------------------------------------------------------------------------------------------------------
 unsigned SearchX22i::GetChunkSize(unsigned hiFactor)
 {
-	return (hiFactor > 60000) ? 7200 :
-		7200 + (60000 - hiFactor) / 8;
+	return (hiFactor > 72000) ? 7600 :
+		7600 + (72000 - hiFactor) / 8;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -165,13 +168,22 @@ unsigned SearchX22i::GetLowestPair() const
 	unsigned k0 = UINT_MAX;
 
 	auto threads = GetMaxThreadCount();
-	for (size_t i = 1; i <= threads; ++i)
+	for (size_t id = 1; id <= threads; ++id)
 	{
-		if (unsigned k = m_WorkerPairs[i]; k && k < k0)
+		if (unsigned k = m_WorkerPairs[id]; k && k < k0)
 			lowest = k0 = k;
 	}
 
 	return lowest;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+template<class NumberT>
+FactorSearch::SearchFn SearchX22i::GetDecomposeFn()
+{
+	using Fn = void (SearchX22i::*)(Worker*, const NumberT*);
+	auto fn = static_cast<Fn>(&SearchX22i::template Decompose);
+	return reinterpret_cast<SearchFn>(fn);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -182,15 +194,13 @@ void SearchX22i::InitSuperHashes(unsigned startFactor)
 	const NumberT* powers = static_cast<const NumberT*>(m_Powers->GetData());
 
 	unsigned k0;
-	// Мин. значение пары стартового задания
 	const auto uv = powers[startFactor] + 1;
-
 	// Пропустим задания, для которых макс. сумма степеней двух коэф-в
-	// меньше мин. суммы степеней коэффициентов стартового задания (uv)
+	// меньше мин. суммы степеней коэффициентов стартового задания uv
 	for (k0 = 2; k0 < startFactor && uv > (powers[k0] << 1); ++k0);
 
-	// Добавим в хеш-таблицу значения всех пар. Зная, что хеш - это N младших бит суммы, мы
-	// можем не искать реальную сумму, а просто сложить младшие 64 бита двух коэффициентов
+	// Добавим в хеш-таблицу значения всех пар. Зная, что хеш - это N бит суммы (биты 12..46), вместо нахождения
+	// реальной (128-битной для UInt128) суммы, будет достаточно сложить лишь младшие 64 бита двух коэффициентов
 	for (size_t it = 0; k0 < startFactor; ++k0)
 	{
 		const uint64_t pk0 = powers[k0] & ~0llu;
@@ -202,6 +212,8 @@ void SearchX22i::InitSuperHashes(unsigned startFactor)
 			m_SuperHashes.Insert(v);
 		}
 
+		// Если пользователь нажмёт Ctrl-C в процессе подготовки хеш-таблицы, то корректная
+		// работа алгоритма будет невозможна. Поэтому в этом случае поиск не будет начат
 		if (!(++it & 63) && console.IsCtrlCPressed())
 			break;
 	}
@@ -216,7 +228,7 @@ AML_NOINLINE void SearchX22i::SearchFactors(Worker* worker, const NumberT* power
 
 	// Старший коэф-т левой части
 	k[0] = worker->task.factors[0];
-	const auto pk0 = powers[k[0]];
+	const uint64_t pk0 = powers[k[0]] & ~0llu;
 
 	// Если значение k[0] чётно, то k[1] не может быть чётным при любой чётной степени, иначе решение будет
 	// непримитивным. Поэтому при чётных k[0] и степени мы будем проверять только нечётные значения k[1]
@@ -225,30 +237,35 @@ AML_NOINLINE void SearchX22i::SearchFactors(Worker* worker, const NumberT* power
 	// Перебор 2-го коэф-та левой части
 	for (k[1] = 1; k[1] <= k[0]; k[1] += delta)
 	{
-		// Сумма в левой части уравнения; ищем её в хеш-таблице
-		if (auto z = pk0 + powers[k[1]]; !m_SuperHashes.Exists(z))
+		// Сумма в левой части уравнения (младшие 64 бита); ищем в хеш-таблице
+		if (auto v = pk0 + (powers[k[1]] & ~0llu); !m_SuperHashes.Exists(v))
 		{
 			// Если такого значения нет, то добавим.
 			// Решений для пары гарантированно нет
-			m_SuperHashes.Insert(z);
+			m_SuperHashes.Insert(v);
 			continue;
 		}
 
 		const int tail = m_Tail.load(std::memory_order_acquire);
 		const int nextTail = (tail < MAX_PAIRS - 1) ? tail + 1 : 0;
 
-		// Если буфер заполнен (голова списка находится сразу за хвостом), то поможем другим
-		// потокам, освободив место в буфере. Также убедимся, что "головной" элемент обнулён
-		if (nextTail == m_Head.load(std::memory_order_relaxed) || m_Pairs[tail].k0)
+		// Если буфер заполнен (голова списка находится сразу за хвостом), то поможем другим потокам (обработаем часть
+		// пар сами), освободив место в буфере. Перед записью в хвостовой элемент буфера мы должны убедиться, что другой
+		// поток, переместив голову списка с этого элемента, обнулил значение k0 после чтения пары. Если он этого ещё не
+		// сделал, то мы также должны подождать. Ждать необходимо в цикле, т.к. обработка нами нескольких пар из буфера
+		// не гарантирует, что поток, читающий сейчас хвостовой элемент, завершит за это время свою операцию
+		while (nextTail == m_Head.load(std::memory_order_relaxed) || m_Pairs[tail].k0)
 			(this->*m_DecomposeFn)(worker, m_Powers->GetData());
+		std::atomic_thread_fence(std::memory_order_acquire);
 
-		// Добавим пару
+		// Сохраним пару
 		m_Pairs[tail].k0 = k[0];
 		m_Pairs[tail].k1 = k[1];
+		// И переместим вправо хвост списка
 		m_Tail.store(nextTail, std::memory_order_release);
 
 		// Вывод прогресса
-		if (!(++worker->progressCounter & 0x1fff))
+		if (!(++worker->progressCounter & 0xfff))
 		{
 			if (OnProgress(worker, k))
 				return;
@@ -263,52 +280,46 @@ AML_NOINLINE void SearchX22i::Decompose(Worker* worker, const NumberT* powers)
 	// Массив коэффициентов
 	unsigned k[ProgressManager::MAX_COEFS];
 
-	// Обработаем пары
+	// Обработаем некоторое количество пар
 	for (int count = 0; count < 64; ++count)
 	{
-		// Извлечём из буфера следующую пару для обработки
-		for (int head = m_Head.load(std::memory_order_acquire);;)
+		// Захватим спин-лок перед тем, как извлечь из буфера следующую пару для обработки
+		for (int lock = 0; !m_Lock.compare_exchange_weak(lock, 1, std::memory_order_acquire);)
 		{
-			// Проверим, что буфер был не пуст
-			const int tail = m_Tail.load(std::memory_order_acquire);
-			if (const unsigned headK0 = m_Pairs[head].k0; head != tail && headK0)
-			{
-				// Перед "взятием" головы списка, загрузим в m_WorkerPairs знчение старшего коэффициента пары, которую
-				// мы планируем обработать. Важно сделать это до смещения головы списка, чтобы эта пара не исчезла для
-				// функции GetLowestPair (иначе эта пара может быть посчитана обработанной). Если другой поток успеет
-				// сместить голову раньше нас, то мы перезапишем это значение позже правильным значением коэффициента
-				m_WorkerPairs[worker->workerId] = headK0;
-
-				// Пытаемся сместить голову списка вправо
-				const int nextHead = (head < MAX_PAIRS - 1) ? head + 1 : 0;
-				if (m_Head.compare_exchange_weak(head, nextHead, std::memory_order_release))
-				{
-					// Читаем значение пары
-					const Pair pair = m_Pairs[head];
-					// Обновляем значение в m_WorkerPairs
-					m_WorkerPairs[worker->workerId] = pair.k0;
-					// Голова списка перемещена, значение пары загружено. Чтобы
-					// элемент буфера мог быть использован снова, "обнулим" его
-					std::atomic_thread_fence(std::memory_order_release);
-					m_Pairs[head].k0 = 0;
-
-					k[0] = pair.k0;
-					k[1] = pair.k1;
-					break;
-				}
-			} else
-			{
-				const int oldHead = head;
-				// Головной элемент оказался нулевым: либо буфер
-				// пуст, либо другой поток успел переместить голову
-				if (head = m_Head.load(std::memory_order_acquire); oldHead == head)
-				{
-					m_WorkerPairs[worker->workerId] = 0;
-					worker->userData = 0;
-					return;
-				}
-			}
+			thread::CPUPause();
+			lock = 0;
 		}
+
+		// Проверим, что буфер не пуст
+		const int head = m_Head.load(std::memory_order_relaxed);
+		if (head == m_Tail.load(std::memory_order_acquire))
+		{
+			// Буфер пуст, работы для нас нет
+			m_Lock.store(0, std::memory_order_relaxed);
+			m_WorkerPairs[worker->workerId] = 0;
+			worker->userData = 0;
+			return;
+		}
+
+		// Читаем значение пары
+		const Pair pair = m_Pairs[head];
+		// Перед изменением головы списка, загрузим в m_WorkerPairs знчение старшего коэффициента пары,
+		// которую мы планируем обработать. Важно сделать это до освобождения спин-лока, иначе функция
+		// GetLowestPair при определённых обстоятельствах может посчитать эту пару обработанной
+		m_WorkerPairs[worker->workerId] = pair.k0;
+
+		// Перемещаем голову и освобождаем спин-лок
+		const int nextHead = (head < MAX_PAIRS - 1) ? head + 1 : 0;
+		m_Head.store(nextHead, std::memory_order_relaxed);
+		m_Lock.store(0, std::memory_order_release);
+
+		// Голова списка перемещена, значение пары загружено. Чтобы
+		// элемент буфера мог быть использован снова, "обнулим" его
+		std::atomic_thread_fence(std::memory_order_release);
+		m_Pairs[head].k0 = 0;
+
+		k[0] = pair.k0;
+		k[1] = pair.k1;
 
 		// Сумма в левой части уравнения
 		const auto z = powers[k[0]] + powers[k[1]];
@@ -340,6 +351,7 @@ AML_NOINLINE void SearchX22i::Decompose(Worker* worker, const NumberT* powers)
 						if (OnSolutionFound(worker, k))
 						{
 							m_WorkerPairs[worker->workerId] = 0;
+							worker->userData = 0;
 							return;
 						}
 						break;
@@ -349,15 +361,7 @@ AML_NOINLINE void SearchX22i::Decompose(Worker* worker, const NumberT* powers)
 		}
 	}
 
+	// Обработка пар потоком завершена
 	m_WorkerPairs[worker->workerId] = 0;
 	worker->userData = k[0];
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-template<class NumberT>
-FactorSearch::SearchFn SearchX22i::GetDecomposeFn()
-{
-	using Fn = void (SearchX22i::*)(Worker*, const NumberT*);
-	auto fn = static_cast<Fn>(&SearchX22i::template Decompose);
-	return reinterpret_cast<SearchFn>(fn);
 }

@@ -63,7 +63,7 @@ void FactorSearch::Search(const Options& options, const std::vector<unsigned>& s
 	if (options.HasOption("thread"))
 	{
 		int count = options["thread"].GetNumericValue();
-		m_ActiveWorkers = util::Clamp(count, 1, static_cast<int>(m_ActiveWorkers));
+		m_ActiveWorkers = util::Clamp(count, 1, static_cast<int>(maxWorkerCount));
 	}
 
 	if (m_Info.power == 1)
