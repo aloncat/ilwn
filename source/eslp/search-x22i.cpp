@@ -6,6 +6,7 @@
 #include "search-x22i.h"
 
 #include "progressman.h"
+#include "uint128.h"
 
 #include <auxlib/print.h>
 #include <core/console.h>

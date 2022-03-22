@@ -6,6 +6,7 @@
 #include "search-any.h"
 
 #include "progressman.h"
+#include "uint128.h"
 
 #include <core/debug.h>
 
@@ -13,20 +14,16 @@
 void SearchAny::BeforeCompute(unsigned upperLimit)
 {
 	FactorSearch::BeforeCompute(upperLimit);
-
 	SetSearchFn(this);
+
 	m_CheckTaskFn = GetCheckTaskFn();
 
+	m_SelectNextFn = nullptr;
 	if (m_Powers->IsType<uint64_t>())
-	{
-		using Fn = bool (SearchAny::*)(Task&, const uint64_t*) const;
-		m_SkipFn = reinterpret_cast<SkipLowSetFn>(static_cast<Fn>(&SearchAny::template SkipLowSet));
-	}
+		m_SelectNextFn = GetSelectNextFn<uint64_t>();
 	else if (m_Powers->IsType<UInt128>())
-	{
-		using Fn = bool (SearchAny::*)(Task&, const UInt128*) const;
-		m_SkipFn = reinterpret_cast<SkipLowSetFn>(static_cast<Fn>(&SearchAny::template SkipLowSet));
-	}
+		m_SelectNextFn = GetSelectNextFn<UInt128>();
+	Assert(m_SelectNextFn);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -34,7 +31,7 @@ FactorSearch::CheckTaskFn SearchAny::GetCheckTaskFn() const
 {
 	if (!(m_Info.power & 1))
 	{
-		// Эта переменная будет иметь значение true, если актуальна оптимизация кратности 2, то есть если
+		// Переменная pow2Cond будет иметь значение true, если актуальна оптимизация кратности 2, то есть если
 		// количество коэффициентов в правой части меньше модуля, по которому степень числа сравнима с единицей
 		const bool pow2Cond = (m_Info.power == 2 && m_Info.rightCount < 4) || (m_Info.power >= 4 && m_Info.power <= 20 &&
 			(m_Info.rightCount < 8 || (!(m_Info.power & 3) && m_Info.rightCount < 16) || (!(m_Info.power & 7) &&
@@ -142,6 +139,7 @@ void SearchAny::InitFirstTask(Task& task, const std::vector<unsigned>& startFact
 	// левой части уравнения всегда заданы заданием
 	task.factorCount = m_Info.leftCount;
 
+	// TODO: это нужно доработать (-1..3 коэф-та)
 	if (m_Info.power > 5 && m_Info.leftCount == 1)
 	{
 		const int p = m_Info.power;
@@ -161,15 +159,37 @@ void SearchAny::InitFirstTask(Task& task, const std::vector<unsigned>& startFact
 
 	for (int i = count; i < task.factorCount; ++i)
 		task.factors[i] = 1;
+
+	// При количестве перебираемых коэффициентов 2 или 3 заменим функцию поиска
+	if (int freeFactors = m_Info.leftCount + m_Info.rightCount - task.factorCount; freeFactors < 4)
+	{
+		// Функции поиска для 2 и 3 свободных коэффициентов предполагают, что
+		// перебираемые коэффициенты составляют всю правую часть уравнения
+		Assert(freeFactors > 1 && freeFactors == m_Info.rightCount);
+
+		m_SearchFn = nullptr;
+		if (m_Powers->IsType<uint64_t>())
+		{
+			m_SearchFn = (freeFactors == 2) ? GetSearchFn2<uint64_t>() :
+				GetSearchFn3<uint64_t>();
+		}
+		else if (m_Powers->IsType<UInt128>())
+		{
+			m_SearchFn = (freeFactors == 2) ? GetSearchFn2<UInt128>() :
+				m_SearchFn = GetSearchFn3<UInt128>();
+		}
+
+		Assert(m_SearchFn);
+	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 void SearchAny::SelectNextTask(Task& task)
 {
-	unsigned* k = task.factors;
-
+	// Перебираем только коэф-ты левой части
 	if (task.factorCount <= m_Info.leftCount)
 	{
+		unsigned* k = task.factors;
 		for (int i = task.factorCount - 1; i; --i)
 		{
 			if (k[i - 1] > k[i])
@@ -185,50 +205,112 @@ void SearchAny::SelectNextTask(Task& task)
 		return;
 	}
 
-	for (;;)
-	{
-		int idx = 0;
-		for (int i = task.factorCount - 1;; --i)
-		{
-			if (!i)
-			{
-				++k[0];
-				break;
-			}
-
-			if (k[i - 1] > k[i])
-			{
-				++k[i];
-				break;
-			}
-
-			k[i] = 1;
-			idx = i;
-		}
-
-		if (!idx || (this->*m_SkipFn)(task, m_Powers->GetData()))
-			break;
-	}
+	// Перебираем коэффициенты левой и правой частей
+	(this->*m_SelectNextFn)(task, m_Powers->GetData());
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 template<class NumberT>
-bool SearchAny::SkipLowSet(Task& task, const NumberT* powers) const
+SearchAny::SelectNextFn SearchAny::GetSelectNextFn()
+{
+	using Fn = void (SearchAny::*)(Task&, const NumberT*) const;
+	auto fn = static_cast<Fn>(&SearchAny::template SelectNext);
+	return reinterpret_cast<SelectNextFn>(fn);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+template<class NumberT>
+void SearchAny::SelectNext(Task& task, const NumberT* powers) const
 {
 	unsigned* k = task.factors;
-	const auto z = powers[k[0]];
-	const int rem = m_Info.rightCount;
+	const int m = m_Info.leftCount;
 
-	// Пропускаем низкие значения старшего коэф-та
-	for (unsigned step = k[0] >> 1; step; step >>= 1)
+	// Сумма в левой части
+	auto z = powers[k[0]];
+	for (int i = 1; i < m; ++i)
+		z += powers[k[i]];
+
+	// Отнимаем n-1 заданных коэффициентов правой
+	for (int i = m; i < task.factorCount - 1; ++i)
+		z -= powers[k[i]];
+
+	int idx = 0;
+	bool ready = false;
+
+	// Выбираем следующий набор коэф-в правой части
+	int rem = m + m_Info.rightCount - task.factorCount;
+	for (int i = task.factorCount - 1; i > m; --i, ++rem)
 	{
-		auto f = k[1] + step;
-		if (z > powers[f - 1] * rem)
-			k[1] = f;
+		if (k[i - 1] > k[i])
+		{
+			auto f = ++k[i];
+			if (z >= powers[f] + rem)
+			{
+				ready = true;
+				break;
+			}
+		}
+
+		idx = i;
+		k[i] = 1;
+
+		z += powers[k[i - 1]];
 	}
 
-	return k[0] > k[1];
+	if (!ready)
+	{
+		auto f = ++k[m];
+		// Если в левой и правой частях одинаковое количество коэф-в, то значение
+		// старшего коэф-та правой части должно быть строго меньше значения k[0]
+		if ((m != m_Info.rightCount || f < k[0]) && z >= powers[f] + m)
+			ready = true;
+		else
+		{
+			idx = m;
+			k[m] = 1;
+		}
+	}
+
+	// Левая часть
+	while (!ready)
+	{
+		int i;
+		for (i = m - 1; i; --i)
+		{
+			if (k[i - 1] > k[i])
+				break;
+			k[i] = 1;
+		}
+
+		++k[i];
+		ready = m_CheckTaskFn(task);
+	}
+
+	if (idx)
+	{
+		// Если idx != 0, то мы сбросили коэффициенты в 1, начиная от idx,
+		// и поэтому теперь нужно пропустить низкие значения этих коэф-в
+		for (int i = idx; i < task.factorCount; ++i)
+		{
+			unsigned hi = (i == m) ? k[0] : k[i - 1];
+			for (unsigned step = hi >> 1; step; step >>= 1)
+			{
+				auto f = k[i] + step;
+				if (z > powers[f - 1] * rem)
+					k[i] = f;
+			}
+
+			// Если hi не является степенью двойки, то k[i] может быть немного
+			// меньше, чем необходимо. Поэтому попробуем уточнить его значение
+			for (; z > powers[k[i]] * rem; ++k[i]);
+
+			z -= powers[k[i]];
+			--rem;
+		}
+	}
 }
+
+////--->
 
 //--------------------------------------------------------------------------------------------------------------------------------
 template<class NumberT>
@@ -373,6 +455,178 @@ AML_NOINLINE void SearchAny::SearchFactors(Worker* worker, const NumberT* powers
 				hi = k[idx++];
 				sum += powers[hi] - 1;
 			}
+		}
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+template<class NumberT>
+AML_NOINLINE void SearchAny::SearchLast(NumberT z, unsigned* k, const NumberT* powers)
+{
+	// TODO
+}
+
+////<---
+
+//--------------------------------------------------------------------------------------------------------------------------------
+template<class NumberT>
+FactorSearch::SearchFn SearchAny::GetSearchFn2()
+{
+	using Fn = void (SearchAny::*)(Worker*, const NumberT*);
+	auto fn = static_cast<Fn>(&SearchAny::template SearchFactors2);
+	return reinterpret_cast<SearchFn>(fn);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+template<class NumberT>
+AML_NOINLINE void SearchAny::SearchFactors2(Worker* worker, const NumberT* powers)
+{
+	// Коэффициенты уравнения: 1-2 в левой части, 2 в правой
+	static_assert(ProgressManager::MAX_COEFS >= 4);
+	unsigned factors[ProgressManager::MAX_COEFS];
+
+	// Копируем коэффициенты из задания
+	for (int i = 0; i < worker->task.factorCount; ++i)
+		factors[i] = worker->task.factors[i];
+
+	// Значение левой части
+	auto z = powers[factors[0]];
+	for (int i = 1; i < m_Info.leftCount; ++i)
+		z += powers[factors[i]];
+
+	// Массив k, начиная с индекса 1, содержит перебираемые коэффициенты правой части уравнения.
+	// В элементе k[0] хранится предшествующий им коэффициент левой или правой части уравнения
+	unsigned* k = factors + worker->task.factorCount - 1;
+
+	k[1] = 1;
+	// Пропускаем низкие значения старшего коэф-та
+	for (unsigned step = factors[0] >> 1; step; step >>= 1)
+	{
+		auto f = k[1] + step;
+		if (z > powers[f - 1] * 2)
+			k[1] = f;
+	}
+
+	for (; k[1] < factors[0]; ++k[1])
+	{
+		if (const auto lastFP = z - powers[k[1]]; m_Hashes.Exists(lastFP))
+		{
+			for (unsigned lo = 1, hi = k[1]; lo <= hi;)
+			{
+				unsigned mid = (lo + hi) >> 1;
+				if (auto v = powers[mid]; v < lastFP)
+					lo = mid + 1;
+				else if (v > lastFP)
+					hi = mid - 1;
+				else
+				{
+					k[2] = mid;
+					if (OnSolutionFound(worker, factors))
+						return;
+					break;
+				}
+			}
+		}
+	}
+
+	// Вывод прогресса
+	if (!(++worker->progressCounter & 0xff))
+		OnProgress(worker, factors);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+template<class NumberT>
+FactorSearch::SearchFn SearchAny::GetSearchFn3()
+{
+	using Fn = void (SearchAny::*)(Worker*, const NumberT*);
+	auto fn = static_cast<Fn>(&SearchAny::template SearchFactors3);
+	return reinterpret_cast<SearchFn>(fn);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+template<class NumberT>
+AML_NOINLINE void SearchAny::SearchFactors3(Worker* worker, const NumberT* powers)
+{
+	// Коэффициенты уравнения: 1-3 в левой части, 3 в правой
+	static_assert(ProgressManager::MAX_COEFS >= 6);
+	unsigned factors[ProgressManager::MAX_COEFS];
+
+	// Копируем коэффициенты из задания
+	for (int i = 0; i < worker->task.factorCount; ++i)
+		factors[i] = worker->task.factors[i];
+
+	// Значение левой части
+	auto z = powers[factors[0]];
+	for (int i = 1; i < m_Info.leftCount; ++i)
+		z += powers[factors[i]];
+
+	// Массив k, начиная с индекса 1, содержит перебираемые коэффициенты правой части уравнения.
+	// В элементе k[0] хранится предшествующий им коэффициент левой или правой части уравнения
+	unsigned* k = factors + worker->task.factorCount - 1;
+
+	// Если в левой части 2 коэффициента (в правой всегда 3), то значение k[1]
+	// (старшего коэффициента правой части) ограничено только значением суммы
+	const unsigned high = (m_Info.leftCount != 2) ? factors[0] : UINT_MAX;
+
+	k[1] = 1;
+	// Пропускаем низкие значения старшего коэф-та
+	for (unsigned step = factors[0] >> 1; step; step >>= 1)
+	{
+		auto f = k[1] + step;
+		if (z > powers[f - 1] * 3)
+			k[1] = f;
+	}
+
+	// Перебор старшего коэф-та правой части
+	for (size_t it = 0; k[1] < high; ++k[1])
+	{
+		const auto pk1 = powers[k[1]];
+		if (pk1 >= z)
+			break;
+
+		k[2] = 1;
+		const auto zd = z - pk1;
+		// Пропускаем низкие значения 2-го коэф-та
+		for (unsigned step = k[1] >> 1; step; step >>= 1)
+		{
+			auto f = k[2] + step;
+			if (zd > powers[f - 1] * 2)
+				k[2] = f;
+		}
+
+		// Перебор 2-го коэф-та
+		for (; k[2] <= k[1]; ++k[2])
+		{
+			const auto pk2 = powers[k[2]];
+			if (pk2 >= zd)
+				break;
+
+			// Поиск 3-го коэффициента
+			if (const auto lastFP = zd - pk2; m_Hashes.Exists(lastFP))
+			{
+				for (unsigned lo = 1, hi = k[2]; lo <= hi;)
+				{
+					unsigned mid = (lo + hi) >> 1;
+					if (auto v = powers[mid]; v < lastFP)
+						lo = mid + 1;
+					else if (v > lastFP)
+						hi = mid - 1;
+					else
+					{
+						k[3] = mid;
+						if (OnSolutionFound(worker, factors))
+							return;
+						break;
+					}
+				}
+			}
+		}
+
+		// Вывод прогресса
+		if (!(it++ & 0xff) && !(++worker->progressCounter & 0x7f))
+		{
+			if (OnProgress(worker, factors))
+				return;
 		}
 	}
 }

@@ -75,6 +75,7 @@ AML_NOINLINE void SearchX13::SearchFactors(Worker* worker, const NumberT* powers
 			if (pk2 >= zd)
 				break;
 
+			// Поиск 3-го коэффициента
 			if (const auto lastFP = zd - pk2; m_Hashes.Exists(lastFP))
 			{
 				for (unsigned lo = 1, hi = k[2]; lo <= hi;)

@@ -11,7 +11,7 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//   SearchAny - универсальный алгоритм для уравнений p.m.n
+//   SearchAny - универсальный алгоритм для уравнений k.m.n
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -19,6 +19,8 @@
 class SearchAny : public FactorSearch
 {
 protected:
+	using SelectNextFn = void (SearchAny::*)(Task& task, const void* powers) const;
+
 	virtual void BeforeCompute(unsigned upperLimit) override;
 	CheckTaskFn GetCheckTaskFn() const;
 
@@ -26,13 +28,29 @@ protected:
 	virtual void SelectNextTask(Task& task) override;
 
 	template<class NumberT>
-	bool SkipLowSet(Task& task, const NumberT* powers) const;
+	SelectNextFn GetSelectNextFn();
+
+	template<class NumberT>
+	void SelectNext(Task& task, const NumberT* powers) const;
 
 	template<class NumberT>
 	void SearchFactors(Worker* worker, const NumberT* powers);
 
-protected:
-	using SkipLowSetFn = bool (SearchAny::*)(Task& task, const void* powers) const;
+	template<class NumberT>
+	void SearchLast(NumberT z, unsigned* k, const NumberT* powers);
 
-	SkipLowSetFn m_SkipFn = nullptr;
+	template<class NumberT>
+	SearchFn GetSearchFn2();
+
+	template<class NumberT>
+	void SearchFactors2(Worker* worker, const NumberT* powers);
+
+	template<class NumberT>
+	SearchFn GetSearchFn3();
+
+	template<class NumberT>
+	void SearchFactors3(Worker* worker, const NumberT* powers);
+
+protected:
+	SelectNextFn m_SelectNextFn = nullptr;
 };
