@@ -75,7 +75,7 @@ AML_NOINLINE void SearchE23::SearchFactors(Worker* worker, const NumberT* powers
 		for (unsigned step = k[2] >> 1; step; step >>= 1)
 		{
 			auto f = k[3] + step;
-			if (zd > powers[f - 1] * 2)
+			if (zd > powers[f - 1] << 1)
 				k[3] = f;
 		}
 

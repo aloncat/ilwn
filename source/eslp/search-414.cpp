@@ -118,7 +118,7 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 			for (unsigned step = k2 >> 1; step; step >>= 1)
 			{
 				auto f = k3 + step;
-				if (zd > powers[f - 1] * 2)
+				if (zd > powers[f - 1] << 1)
 					k3 = f;
 			}
 

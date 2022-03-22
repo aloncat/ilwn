@@ -139,7 +139,7 @@ void SearchAny::InitFirstTask(Task& task, const std::vector<unsigned>& startFact
 	// левой части уравнения всегда заданы заданием
 	task.factorCount = m_Info.leftCount;
 
-	// TODO: это нужно доработать (-1..3 коэф-та)
+	// TODO: это нужно доработать (-2..+3 коэф-та)
 	if (m_Info.power > 5 && m_Info.leftCount == 1)
 	{
 		const int p = m_Info.power;
@@ -160,25 +160,18 @@ void SearchAny::InitFirstTask(Task& task, const std::vector<unsigned>& startFact
 	for (int i = count; i < task.factorCount; ++i)
 		task.factors[i] = 1;
 
-	// При количестве перебираемых коэффициентов 2 или 3 заменим функцию поиска
+	// При количестве перебираемых коэффициентов равном 2 или 3 заменим функцию поиска
 	if (int freeFactors = m_Info.leftCount + m_Info.rightCount - task.factorCount; freeFactors < 4)
 	{
-		// Функции поиска для 2 и 3 свободных коэффициентов предполагают, что
-		// перебираемые коэффициенты составляют всю правую часть уравнения
+		// Функции поиска для 2 и 3 свободных коэффициентов полагают, что
+		// эти коэффициенты полностью формируют правую часть уравнения
 		Assert(freeFactors > 1 && freeFactors == m_Info.rightCount);
 
 		m_SearchFn = nullptr;
 		if (m_Powers->IsType<uint64_t>())
-		{
-			m_SearchFn = (freeFactors == 2) ? GetSearchFn2<uint64_t>() :
-				GetSearchFn3<uint64_t>();
-		}
+			m_SearchFn = GetSearchFn<uint64_t>(freeFactors);
 		else if (m_Powers->IsType<UInt128>())
-		{
-			m_SearchFn = (freeFactors == 2) ? GetSearchFn2<UInt128>() :
-				m_SearchFn = GetSearchFn3<UInt128>();
-		}
-
+			m_SearchFn = GetSearchFn<UInt128>(freeFactors);
 		Assert(m_SearchFn);
 	}
 }
@@ -470,10 +463,14 @@ AML_NOINLINE void SearchAny::SearchLast(NumberT z, unsigned* k, const NumberT* p
 
 //--------------------------------------------------------------------------------------------------------------------------------
 template<class NumberT>
-FactorSearch::SearchFn SearchAny::GetSearchFn2()
+FactorSearch::SearchFn SearchAny::GetSearchFn(int freeFactors)
 {
+	Assert(freeFactors == 2 || freeFactors == 3);
+
 	using Fn = void (SearchAny::*)(Worker*, const NumberT*);
-	auto fn = static_cast<Fn>(&SearchAny::template SearchFactors2);
+	Fn fn = (freeFactors == 2) ? static_cast<Fn>(&SearchAny::template SearchFactors2) :
+		static_cast<Fn>(&SearchAny::template SearchFactors3);
+
 	return reinterpret_cast<SearchFn>(fn);
 }
 
@@ -503,7 +500,7 @@ AML_NOINLINE void SearchAny::SearchFactors2(Worker* worker, const NumberT* power
 	for (unsigned step = factors[0] >> 1; step; step >>= 1)
 	{
 		auto f = k[1] + step;
-		if (z > powers[f - 1] * 2)
+		if (z > powers[f - 1] << 1)
 			k[1] = f;
 	}
 
@@ -532,15 +529,6 @@ AML_NOINLINE void SearchAny::SearchFactors2(Worker* worker, const NumberT* power
 	// Вывод прогресса
 	if (!(++worker->progressCounter & 0xff))
 		OnProgress(worker, factors);
-}
-
-//--------------------------------------------------------------------------------------------------------------------------------
-template<class NumberT>
-FactorSearch::SearchFn SearchAny::GetSearchFn3()
-{
-	using Fn = void (SearchAny::*)(Worker*, const NumberT*);
-	auto fn = static_cast<Fn>(&SearchAny::template SearchFactors3);
-	return reinterpret_cast<SearchFn>(fn);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -581,7 +569,7 @@ AML_NOINLINE void SearchAny::SearchFactors3(Worker* worker, const NumberT* power
 	for (size_t it = 0; k[1] < high; ++k[1])
 	{
 		const auto pk1 = powers[k[1]];
-		if (pk1 >= z)
+		if (pk1 + 2 > z)
 			break;
 
 		k[2] = 1;
@@ -590,7 +578,7 @@ AML_NOINLINE void SearchAny::SearchFactors3(Worker* worker, const NumberT* power
 		for (unsigned step = k[1] >> 1; step; step >>= 1)
 		{
 			auto f = k[2] + step;
-			if (zd > powers[f - 1] * 2)
+			if (zd > powers[f - 1] << 1)
 				k[2] = f;
 		}
 

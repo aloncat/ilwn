@@ -40,13 +40,10 @@ protected:
 	void SearchLast(NumberT z, unsigned* k, const NumberT* powers);
 
 	template<class NumberT>
-	SearchFn GetSearchFn2();
+	SearchFn GetSearchFn(int freeFactors);
 
 	template<class NumberT>
 	void SearchFactors2(Worker* worker, const NumberT* powers);
-
-	template<class NumberT>
-	SearchFn GetSearchFn3();
 
 	template<class NumberT>
 	void SearchFactors3(Worker* worker, const NumberT* powers);
