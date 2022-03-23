@@ -79,9 +79,6 @@
     <ClInclude Include="..\..\eslp\search-x23.h">
       <Filter>search\algorithm\custom</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\eslp\search-e1x.h">
-      <Filter>search\algorithm</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\eslp\search-any.h">
       <Filter>search\algorithm</Filter>
     </ClInclude>
@@ -91,6 +88,9 @@
     <ClInclude Include="..\..\eslp\forward.h" />
     <ClInclude Include="..\..\eslp\search-x22i.h">
       <Filter>search\algorithm\experiment</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\eslp\search-e1x.h">
+      <Filter>search\algorithm\custom</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -144,9 +144,6 @@
     <ClCompile Include="..\..\eslp\search-x23.cpp">
       <Filter>search\algorithm\custom</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\eslp\search-e1x.cpp">
-      <Filter>search\algorithm</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\eslp\search-any.cpp">
       <Filter>search\algorithm</Filter>
     </ClCompile>
@@ -155,6 +152,9 @@
     </ClCompile>
     <ClCompile Include="..\..\eslp\search-x22i.cpp">
       <Filter>search\algorithm\experiment</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\eslp\search-e1x.cpp">
+      <Filter>search\algorithm\custom</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

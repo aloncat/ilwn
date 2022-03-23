@@ -37,7 +37,7 @@ protected:
 	void SearchFactors(Worker* worker, const NumberT* powers);
 
 	template<class NumberT>
-	void SearchLast(NumberT z, unsigned* k, const NumberT* powers);
+	bool SearchLast(Worker* worker, NumberT z, unsigned* k, const NumberT* powers);
 
 	template<class NumberT>
 	SearchFn GetSearchFn(int freeFactors);
@@ -50,4 +50,5 @@ protected:
 
 protected:
 	SelectNextFn m_SelectNextFn = nullptr;
+	int m_FactorCount = 0;
 };

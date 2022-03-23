@@ -24,6 +24,8 @@ void SearchAny::BeforeCompute(unsigned upperLimit)
 	else if (m_Powers->IsType<UInt128>())
 		m_SelectNextFn = GetSelectNextFn<UInt128>();
 	Assert(m_SelectNextFn);
+
+	m_FactorCount = m_Info.leftCount + m_Info.rightCount;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -161,7 +163,7 @@ void SearchAny::InitFirstTask(Task& task, const std::vector<unsigned>& startFact
 		task.factors[i] = 1;
 
 	// При количестве перебираемых коэффициентов равном 2 или 3 заменим функцию поиска
-	if (int freeFactors = m_Info.leftCount + m_Info.rightCount - task.factorCount; freeFactors < 4)
+	if (int freeFactors = m_FactorCount - task.factorCount; freeFactors < 4)
 	{
 		// Функции поиска для 2 и 3 свободных коэффициентов полагают, что
 		// эти коэффициенты полностью формируют правую часть уравнения
@@ -303,8 +305,6 @@ void SearchAny::SelectNext(Task& task, const NumberT* powers) const
 	}
 }
 
-////--->
-
 //--------------------------------------------------------------------------------------------------------------------------------
 template<class NumberT>
 AML_NOINLINE void SearchAny::SearchFactors(Worker* worker, const NumberT* powers)
@@ -315,7 +315,7 @@ AML_NOINLINE void SearchAny::SearchFactors(Worker* worker, const NumberT* powers
 	// Копируем коэффициенты из задания
 	for (int i = 0; i < worker->task.factorCount; ++i)
 		factors[i] = worker->task.factors[i];
-
+//-->
 	// Коэффициенты, не заданные заданием, инициализируем в 1
 	const int factorCount = m_Info.leftCount + m_Info.rightCount;
 	for (int i = worker->task.factorCount; i < factorCount; ++i)
@@ -450,16 +450,82 @@ AML_NOINLINE void SearchAny::SearchFactors(Worker* worker, const NumberT* powers
 			}
 		}
 	}
+//<--
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 template<class NumberT>
-AML_NOINLINE void SearchAny::SearchLast(NumberT z, unsigned* k, const NumberT* powers)
+AML_NOINLINE bool SearchAny::SearchLast(Worker* worker, NumberT z, unsigned* k, const NumberT* powers)
 {
-	// TODO
-}
+	// На входе z содержит разность суммы коэффициентов левой части и старших коэффициентов правой
+	// части до k[0] включительно. k[0], k[1], k[2] и k[3] - это младшие коэффициенты правой части
+	const unsigned* factors = k + 4 - m_FactorCount;
 
-////<---
+	k[1] = 1;
+	// Пропустим низкие значения k[1]
+	for (unsigned step = k[0] >> 1; step; step >>= 1)
+	{
+		auto f = k[1] + step;
+		if (z > powers[f - 1] * 3)
+			k[1] = f;
+	}
+
+	// Перебор значений коэффициента k[1]
+	for (size_t it = 0; k[1] <= k[0]; ++k[1])
+	{
+		const auto pk1 = powers[k[1]];
+		if (pk1 + 2 > z)
+			break;
+
+		k[2] = 1;
+		const auto zd = z - pk1;
+		// Пропустим низкие значения k[2]
+		for (unsigned step = k[1] >> 1; step; step >>= 1)
+		{
+			auto f = k[2] + step;
+			if (zd > powers[f - 1] << 1)
+				k[2] = f;
+		}
+
+		// Перебор значений k[2]
+		for (; k[2] <= k[1]; ++k[2])
+		{
+			const auto pk2 = powers[k[2]];
+			if (pk2 >= zd)
+				break;
+
+			// Поиск последнего коэффициента правой части
+			if (const auto lastFP = zd - pk2; m_Hashes.Exists(lastFP))
+			{
+				for (unsigned lo = 1, hi = k[2]; lo <= hi;)
+				{
+					unsigned mid = (lo + hi) >> 1;
+					if (auto v = powers[mid]; v < lastFP)
+						lo = mid + 1;
+					else if (v > lastFP)
+						hi = mid - 1;
+					else
+					{
+						k[3] = mid;
+						if (OnSolutionFound(worker, factors))
+							return true;
+						break;
+					}
+				}
+			}
+
+			// Периодически выводим текущий прогресс. Если пользователь
+			// нажмёт Ctrl-C, то функция вернёт true, мы завершим работу
+			if (!(it++ & 0xfff) && !(++worker->progressCounter & 0x7f))
+			{
+				if (OnProgress(worker, factors))
+					return true;
+			}
+		}
+	}
+
+	return false;
+}
 
 //--------------------------------------------------------------------------------------------------------------------------------
 template<class NumberT>
@@ -483,20 +549,20 @@ AML_NOINLINE void SearchAny::SearchFactors2(Worker* worker, const NumberT* power
 	unsigned factors[ProgressManager::MAX_COEFS];
 
 	// Копируем коэффициенты из задания
-	for (int i = 0; i < worker->task.factorCount; ++i)
-		factors[i] = worker->task.factors[i];
+	factors[0] = worker->task.factors[0];
+	factors[1] = worker->task.factors[1];
 
 	// Значение левой части
 	auto z = powers[factors[0]];
-	for (int i = 1; i < m_Info.leftCount; ++i)
-		z += powers[factors[i]];
+	if (m_Info.leftCount >= 2)
+		z += powers[factors[1]];
 
-	// Массив k, начиная с индекса 1, содержит перебираемые коэффициенты правой части уравнения.
-	// В элементе k[0] хранится предшествующий им коэффициент левой или правой части уравнения
+	// Массив k, начиная с индекса 1, содержит коэффициенты правой части.
+	// В элементе k[0] хранится предшествующий им коэффициент левой части
 	unsigned* k = factors + worker->task.factorCount - 1;
 
 	k[1] = 1;
-	// Пропускаем низкие значения старшего коэф-та
+	// Пропускаем низкие значения старшего коэффициента
 	for (unsigned step = factors[0] >> 1; step; step >>= 1)
 	{
 		auto f = k[1] + step;
@@ -548,8 +614,8 @@ AML_NOINLINE void SearchAny::SearchFactors3(Worker* worker, const NumberT* power
 	for (int i = 1; i < m_Info.leftCount; ++i)
 		z += powers[factors[i]];
 
-	// Массив k, начиная с индекса 1, содержит перебираемые коэффициенты правой части уравнения.
-	// В элементе k[0] хранится предшествующий им коэффициент левой или правой части уравнения
+	// Массив k, начиная с индекса 1, содержит коэффициенты правой части.
+	// В элементе k[0] хранится предшествующий им коэффициент левой части
 	unsigned* k = factors + worker->task.factorCount - 1;
 
 	// Если в левой части 2 коэффициента (в правой всегда 3), то значение k[1]
@@ -557,7 +623,7 @@ AML_NOINLINE void SearchAny::SearchFactors3(Worker* worker, const NumberT* power
 	const unsigned high = (m_Info.leftCount != 2) ? factors[0] : UINT_MAX;
 
 	k[1] = 1;
-	// Пропускаем низкие значения старшего коэф-та
+	// Пропускаем низкие значения старшего коэффициента
 	for (unsigned step = factors[0] >> 1; step; step >>= 1)
 	{
 		auto f = k[1] + step;
