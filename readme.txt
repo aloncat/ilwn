@@ -25,8 +25,8 @@ Directory structure:
 
 Copyright (C) 2019-2022 Dmitry Maslov.
 
-This software is distributed under LGPL version 2.1 or
-later (see the ./LICENCE file for the full license).
+This software is distributed under LGPL version 2.1
+(see the ./LICENCE file for the full license).
 
 To get contact information, please visit:
   https://dmaslov.me/contacts.html

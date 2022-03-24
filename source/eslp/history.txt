@@ -1,5 +1,5 @@
 === Version 0.33 ===
-Released: 2022-03-xx
+Released: 2022-03-24
 
 == Changes ==
  * '--allowall' option to enable experimental algorithms.
@@ -10,8 +10,8 @@ Released: 2022-03-xx
  * Reduced memory consumption in some cases.
 
 == Features ==
- * New faster algorithm for 4.1.3 equation.
- * New faster algorithm for 4.1.4 equation.
+ * Faster algorithm for 4.1.3 equation.
+ * Faster algorithm for 4.1.4 equation.
  * New experimental algorithm for x.2.2 equation.
  * Optimized hash function (for all algorithms).
  * About 20% faster default algorithm.
@@ -24,7 +24,7 @@ Released: 2022-03-12
  * Removed unused items from hash table for 4.1.4.
 
 == Features ==
- * Specialized algorithm for 4.1.3 equation.
+ * New specialized algorithm for 4.1.3 equation.
  * Reworked specialized algorithm for 4.1.4 equation.
  * Larger hash table for sensitive algorithms.
 
@@ -44,7 +44,7 @@ Released: 2022-03-09
  * Fixed progress freezes under certain circumstances.
 
 == Features ==
- * Specialized algorithm for 4.1.4 equation.
+ * New specialized algorithm for 4.1.4 equation.
  * Minor optimizations for even powers.
 
 == Known issues ==
