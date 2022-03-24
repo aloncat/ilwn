@@ -26,14 +26,59 @@
 <h1>ESLP software version history</h1>
 
 <p class="column text">
-  ESLP is a program for finding solutions to Diophantine equations of the form p.m.n. Searches for the first (not more than 100K) primitive solutions, starting from the optionally specified values of the leading coefficients. Only 64-bit OS Windows is supported. More details at project <a href="/eslp/">homepage</a>.
+  ESLP is a program for finding solutions to Diophantine equations of the form p.m.n. Searches for the first primitive solutions, starting from the optionally specified values of the leading coefficients. Only 64-bit OS Windows is supported. More details at project <a href="/eslp/">homepage</a>.
 </p>
 
 <div class="column divider">&bull; &bull; &bull;</div>
 
-<!-- Version 0.31 -->
-<p id="v0.20" class="column text small">
-  <b>Version 0.32</b> (the latest),
+<!-- Version 0.33 -->
+<p id="v0.33" class="column text small">
+  <b>Version 0.33</b> (the latest),
+  released on March 24, 2022.<br>
+  <a href="http://download.dmaslov.me/app/eslp-0.33.zip">Download</a> this version (zip archive, 245 Kb).
+</p>
+
+<p class="column text nobottommargin">
+  <b>Changes:</b>
+</p>
+
+<div class="column">
+  <ul class="notopmargin">
+	<li><span style="color: #c63"><i>--allowall</i></span> option to enable experimental algorithms.</li>
+	<li><span style="color: #c63"><i>--nolimit</i></span> option to remove 100K limit on solutions.</li>
+  <ul>
+</div>
+
+<p class="column text nobottommargin">
+  <b>Bug fixes:</b>
+</p>
+
+<div class="column">
+  <ul class="notopmargin">
+	<li>Fixed progress freezes at large coefficients.</li>
+	<li>Reduced memory consumption in some cases.</li>
+  <ul>
+</div>
+
+<p class="column text nobottommargin">
+  <b>Features:</b>
+</p>
+
+<div class="column">
+  <ul class="notopmargin">
+	<li>Faster algorithm for 4.1.3 equation.</li>
+	<li>Faster algorithm for 4.1.4 equation.</li>
+	<li>New experimental algorithm for x.2.2 equation.</li>
+	<li>Optimized hash function (for all algorithms).</li>
+	<li>About 20% faster default algorithm.</li>
+  <ul>
+</div>
+
+<div class="column divider">&bull; &bull; &bull;</div>
+
+<!-- Version 0.32 -->
+<p id="v0.32" class="column text small">
+  <b>Version 0.32</b>,
   released on March 12, 2022.<br>
   <a href="http://download.dmaslov.me/app/eslp-0.32.zip">Download</a> this version (zip archive, 234 Kb).
 </p>
@@ -54,7 +99,7 @@
 
 <div class="column">
   <ul class="notopmargin">
-	<li>Specialized algorithm for 4.1.3 equation.</li>
+	<li>New specialized algorithm for 4.1.3 equation.</li>
 	<li>Reworked specialized algorithm for 4.1.4 equation.</li>
 	<li>Larger hash table for sensitive algorithms.</li>
   <ul>
@@ -73,7 +118,7 @@
 <div class="column divider">&bull; &bull; &bull;</div>
 
 <!-- Version 0.31 -->
-<p id="v0.20" class="column text small">
+<p id="v0.31" class="column text small">
   <b>Version 0.31</b>,
   released on March 9, 2022.<br>
   <a href="http://download.dmaslov.me/app/eslp-0.31.zip">Download</a> this version (zip archive, 232 Kb).
@@ -107,7 +152,7 @@
 
 <div class="column">
   <ul class="notopmargin">
-	<li>Specialized algorithm for 4.1.4 equation.</li>
+	<li>New specialized algorithm for 4.1.4 equation.</li>
 	<li>Minor optimizations for even powers.</li>
   <ul>
 </div>
@@ -125,7 +170,7 @@
 <div class="column divider">&bull; &bull; &bull;</div>
 
 <!-- Version 0.30 -->
-<p id="v0.20" class="column text small">
+<p id="v0.30" class="column text small">
   <b>Version 0.30</b>,
   released on March 3, 2022.<br>
   <a href="http://download.dmaslov.me/app/eslp-0.30.zip">Download</a> this version (zip archive, 230 Kb).
