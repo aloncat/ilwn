@@ -19,6 +19,10 @@ server {
 	proxy_intercept_errors on;
 	error_page 403 404 /40x.html;
 
+	if ($request_method !~ ^(GET|HEAD)$) {
+		return 400;
+	}
+
 	if ($scheme = http) {
 		return 301 https://dmaslov.me$request_uri;
 	}
@@ -42,7 +46,7 @@ server {
 
 	location ~ /(|.*\.html)$ {
 		proxy_pass http://storage.yandexcloud.net/www.dmaslov.me$bucket_uri;
-		add_header Content-Security-Policy "default-src 'none'; connect-src https://www.google-analytics.com; img-src 'self' www.googletagmanager.com www.google-analytics.com; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com https://gist.github.com 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com https://github.githubassets.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; frame-src https:";
+		add_header Content-Security-Policy "default-src 'none'; connect-src https://www.google-analytics.com; img-src 'self' www.googletagmanager.com www.google-analytics.com; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com https://gist.github.com 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com https://github.githubassets.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; frame-src https:";
 		add_header Referrer-Policy "no-referrer, strict-origin-when-cross-origin";
 		add_header Strict-Transport-Security "max-age=63072000";
 		add_header X-Content-Type-Options "nosniff";
@@ -53,6 +57,7 @@ server {
 
 	location / {
 		proxy_pass http://storage.yandexcloud.net/www.dmaslov.me$bucket_uri;
+		add_header Strict-Transport-Security "max-age=63072000";
 		expires 1h;
 	}
 
@@ -66,7 +71,6 @@ server {
 		deny all;
 	}
 
-	add_header Strict-Transport-Security "max-age=63072000";
 	ssl_certificate /etc/letsencrypt/live/dmaslov.me/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/dmaslov.me/privkey.pem;
 	include /etc/letsencrypt/options-ssl-nginx.conf;
@@ -86,6 +90,10 @@ server {
 
 	root /usr/share/nginx/download.dmaslov.me;
 
+	if ($request_method !~ ^(GET|HEAD)$) {
+		return 400;
+	}
+
 	location / {
 		proxy_pass http://storage.yandexcloud.net/download.dmaslov.me/;
 		expires -1;
@@ -95,7 +103,6 @@ server {
 		deny all;
 	}
 
-	add_header Strict-Transport-Security "max-age=63072000";
 	ssl_certificate /etc/letsencrypt/live/dmaslov.me/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/dmaslov.me/privkey.pem;
 	include /etc/letsencrypt/options-ssl-nginx.conf;
