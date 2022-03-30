@@ -1,0 +1,39 @@
+﻿Хостинг на Yandex.Cloud:
+------------------------
+  Имя: ilwn-server (зона ru-central1-a)
+  IP виртуальной машины: 51.250.64.23
+  OS: Ubuntu 18.04 + Nginx (LEMP)
+
+Настройка:
+----------
+Веб-сайт работает в Yandex.Cloud на связке виртуальной машины в облаке Compute Cloud и бакетов
+(www. и download.) в Object Storage. Виртуальная машина под управлением LEMP (Ubuntu + Nginx),
+создана на базе образа "LEMP от Yandex.Cloud" (Cloud Marketplace). В качестве платформы пока
+используется самая дешёвая конфигурация (Intel Cascade Lake, 5% 2x vCPU, 1Gb RAM, 10Gb HDD).
+
+Для веб-сайта Nginx выполняет роль обратного прокси-сервера. Файлы сайта расположены в двух
+бакетах (основном www. для dmaslov.me и дополнительном download. для субдомена загрузок).
+
+В /usr/share/nginx нужно создать 3 директории: dmaslov.me, download.dmaslov.me и dmaslov.name.
+А также изменить им группу и дать разрешение 775 (chmod g+rw). Затем скопировать на сервер
+локальные фалы настроек Nginx (/etc/nginx/), сделать символьные ссылки в ./sites-enabled/ на
+нужные файлы директории ./sites-available/, а также удалить ссылку ./sites-enabled/default.
+
+Для HTTPS используется certbot, установленный через apt (<user> - имя пользователя):
+  1) sudo apt install certbot
+  2) sudo apt install python-certbot-nginx
+  3) sudo certbot --nginx -d dmaslov.me -d www.dmaslov.me -d download.dmaslov.me
+  4) sudo certbot --nginx -d dmaslov.name -d www.dmaslov.name
+  5) mkdir ~/log
+  6) sudo crontab -e (добавляем строку "0 0 1 * * /usr/bin/certbot renew &>> /home/<user>/log/le-cert-renew.log")
+
+Некоторые команды Ubuntu/Nginx:
+  *) sudo nginx -t -- проверить конфигурацию
+  *) sudo nginx -s reload -- перезагрузить конфигурацию
+  *) df -m -- показать все тома (свободное место на накопителе)
+  *) top -- показать процессы и оперативную память (Q, чтобы выйти)
+  *) sudo apt update и sudo apt upgrade -- обновление системы
+  *) sudo apt-get autoclean и sudo apt-get clean -- очистка кэша обновлений
+  *) sudo apt autoremove -- удаление ненужных компонент
+
+Логи веб-сервера расположены в директории /var/log/nginx.

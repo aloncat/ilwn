@@ -1,0 +1,21 @@
+server {
+	listen 80;
+	#listen [::]:80;
+	listen 443 ssl;
+	#listen [::]:443 ssl;
+
+	server_name dmaslov.name www.dmaslov.name;
+
+	access_log /var/log/nginx/dmaslov-name.log;
+	error_log /var/log/nginx/dmaslov-name-error.log;
+
+	root /usr/share/nginx/dmaslov.name;
+
+	add_header Strict-Transport-Security "max-age=63072000";
+	ssl_certificate /etc/letsencrypt/live/dmaslov.name/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/dmaslov.name/privkey.pem;
+	include /etc/letsencrypt/options-ssl-nginx.conf;
+	ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+	return 301 https://dmaslov.me$request_uri;
+}

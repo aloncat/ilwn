@@ -1,6 +1,0 @@
-* text=auto
-
-*.bat text eol=crlf
-
-*.sln text eol=crlf
-*.vcxproj* text eol=crlf

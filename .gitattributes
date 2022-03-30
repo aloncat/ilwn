@@ -2,6 +2,12 @@
 
 *.bat text eol=crlf
 
+script/ilwn-server/*.conf text eol=lf
+script/ilwn-server/dmaslov.* text eol=lf
+
+source/**/*.sln text eol=crlf
+source/**/*.vcxproj* text eol=crlf
+
 www/**/*.css text eol=lf
 www/**/*.html text eol=lf
 www/**/*.js text eol=lf
