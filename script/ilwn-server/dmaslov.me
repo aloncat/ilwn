@@ -6,8 +6,8 @@ map $uri $bucket_uri {
 server {
 	listen 80 default_server;
 	#listen [::]:80 default_server;
-	listen 443 ssl default_server;
-	#listen [::]:443 ssl default_server;
+	listen 443 ssl http2 default_server;
+	#listen [::]:443 ssl http2 default_server;
 
 	server_name dmaslov.me www.dmaslov.me;
 
@@ -80,8 +80,8 @@ server {
 server {
 	listen 80;
 	#listen [::]:80;
-	listen 443 ssl;
-	#listen [::]:443 ssl;
+	listen 443 ssl http2;
+	#listen [::]:443 ssl http2;
 
 	server_name download.dmaslov.me;
 
@@ -96,6 +96,7 @@ server {
 
 	location / {
 		proxy_pass https://storage.yandexcloud.net/download.dmaslov.me/;
+		add_header Content-Disposition "attachment";
 		expires -1;
 	}
 
