@@ -52,7 +52,7 @@ server {
 		add_header X-Content-Type-Options "nosniff";
 		add_header X-XSS-Protection "1; mode=block";
 		add_header X-Frame-Options "DENY";
-		expires 1h;
+		expires 15m;
 	}
 
 	location / {
@@ -95,7 +95,7 @@ server {
 	}
 
 	location / {
-		proxy_pass https://storage.yandexcloud.net/download.dmaslov.me/;
+		proxy_pass https://storage.yandexcloud.net/download.dmaslov.me$bucket_uri;
 		add_header Content-Disposition "attachment";
 		expires -1;
 	}
