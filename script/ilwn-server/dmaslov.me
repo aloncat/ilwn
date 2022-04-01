@@ -17,7 +17,7 @@ server {
 	root /usr/share/nginx/dmaslov.me;
 
 	proxy_intercept_errors on;
-	error_page 403 404 /40x.html;
+	error_page 403 404 /404.html;
 
 	if ($request_method !~ ^(GET|HEAD)$) {
 		return 400;
@@ -31,7 +31,7 @@ server {
 		return 301 https://dmaslov.me$request_uri;
 	}
 
-	location = /40x.html {
+	location = /404.html {
 		internal;
 		proxy_pass https://storage.yandexcloud.net/www.dmaslov.me/404.html;
 	}
@@ -90,8 +90,21 @@ server {
 
 	root /usr/share/nginx/dl.dmaslov.me;
 
+	proxy_intercept_errors on;
+	error_page 404 @404;
+
 	if ($request_method !~ ^(GET|HEAD)$) {
 		return 400;
+	}
+
+	location @404 {
+		return 404;
+	}
+
+	location ~ ^(.*)/$ {
+		return 403;
+		#proxy_pass https://storage.yandexcloud.net/dl.dmaslov.me$1/.index.html;
+		#expires -1;
 	}
 
 	location / {
