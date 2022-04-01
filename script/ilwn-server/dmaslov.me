@@ -83,19 +83,19 @@ server {
 	listen 443 ssl http2;
 	#listen [::]:443 ssl http2;
 
-	server_name download.dmaslov.me;
+	server_name dl.dmaslov.me;
 
-	access_log /var/log/nginx/download-dmaslov-me.log combined buffer=32k flush=1m;
-	error_log /var/log/nginx/download-dmaslov-me-error.log;
+	access_log /var/log/nginx/dl-dmaslov-me.log combined buffer=32k flush=1m;
+	error_log /var/log/nginx/dl-dmaslov-me-error.log;
 
-	root /usr/share/nginx/download.dmaslov.me;
+	root /usr/share/nginx/dl.dmaslov.me;
 
 	if ($request_method !~ ^(GET|HEAD)$) {
 		return 400;
 	}
 
 	location / {
-		proxy_pass https://storage.yandexcloud.net/download.dmaslov.me$bucket_uri;
+		proxy_pass https://storage.yandexcloud.net/dl.dmaslov.me$bucket_uri;
 		add_header Content-Disposition "attachment";
 		expires -1;
 	}
