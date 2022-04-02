@@ -10,4 +10,3 @@ pause & exit /b
 :elevate
 cd /d "%~dp0"
 mshta "javascript: var shell = new ActiveXObject('shell.application'); shell.ShellExecute('%~nx0', '', '', 'runas', 1); close();"
-exit /b

@@ -11,7 +11,7 @@ server {
 
 	server_name dmaslov.me www.dmaslov.me;
 
-	access_log /var/log/nginx/dmaslov-me.log combined buffer=32k flush=1m;
+	access_log /var/log/nginx/dmaslov-me-access.log combined buffer=32k flush=1m;
 	error_log /var/log/nginx/dmaslov-me-error.log;
 
 	root /usr/share/nginx/dmaslov.me;
@@ -73,7 +73,6 @@ server {
 
 	ssl_certificate /etc/letsencrypt/live/dmaslov.me/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/dmaslov.me/privkey.pem;
-	include /etc/letsencrypt/options-ssl-nginx.conf;
 	ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 }
 
@@ -85,7 +84,7 @@ server {
 
 	server_name dl.dmaslov.me;
 
-	access_log /var/log/nginx/dl-dmaslov-me.log combined buffer=32k flush=1m;
+	access_log /var/log/nginx/dl-dmaslov-me-access.log combined buffer=32k flush=1m;
 	error_log /var/log/nginx/dl-dmaslov-me-error.log;
 
 	root /usr/share/nginx/dl.dmaslov.me;
@@ -119,6 +118,5 @@ server {
 
 	ssl_certificate /etc/letsencrypt/live/dmaslov.me/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/dmaslov.me/privkey.pem;
-	include /etc/letsencrypt/options-ssl-nginx.conf;
 	ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 }

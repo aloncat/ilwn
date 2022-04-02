@@ -6,15 +6,14 @@ server {
 
 	server_name dmaslov.name www.dmaslov.name;
 
-	access_log /var/log/nginx/dmaslov-name.log;
+	access_log /var/log/nginx/dmaslov-name-access.log;
 	error_log /var/log/nginx/dmaslov-name-error.log;
 
 	root /usr/share/nginx/dmaslov.name;
 
+	return 301 https://dmaslov.me$request_uri;
+
 	ssl_certificate /etc/letsencrypt/live/dmaslov.name/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/dmaslov.name/privkey.pem;
-	include /etc/letsencrypt/options-ssl-nginx.conf;
 	ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-
-	return 301 https://dmaslov.me$request_uri;
 }
