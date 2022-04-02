@@ -43,3 +43,8 @@
   *) sudo systemctl disable/enable mysql - управление автозапуском MySQL
 
 Логи веб-сервера расположены в директории /var/log/nginx.
+
+Полезные ссылки:
+  https://observatory.mozilla.org/ -- проверка безопасности сайта
+  https://ssl-config.mozilla.org/ -- помощь в настройке SSL на сервере (Nginx)
+  https://validator.w3.org/ -- проверка разметки HTML
