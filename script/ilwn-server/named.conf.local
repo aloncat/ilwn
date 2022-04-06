@@ -1,0 +1,6 @@
+zone "dmaslov.me" IN {
+	type master;
+	file "/etc/bind/db.dmaslov.me";
+	//allow-transfer { server-ip; };
+	//allow-notify { server-ip; };
+};

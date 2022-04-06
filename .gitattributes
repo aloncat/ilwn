@@ -3,7 +3,9 @@
 *.bat text eol=crlf
 
 script/ilwn-server/*.conf text eol=lf
+script/ilwn-server/db.* text eol=lf
 script/ilwn-server/dmaslov.* text eol=lf
+script/ilwn-server/named.* text eol=lf
 
 source/**/*.sln text eol=crlf
 source/**/*.vcxproj* text eol=crlf
