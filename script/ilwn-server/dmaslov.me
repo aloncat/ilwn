@@ -20,7 +20,7 @@ server {
 	error_page 403 404 /404.html;
 
 	if ($request_method !~ ^(GET|HEAD)$) {
-		return 400;
+		return 405;
 	}
 
 	if ($scheme = http) {
@@ -44,7 +44,7 @@ server {
 		return 301 https://dmaslov.me/ru/$1/;
 	}
 
-	location ~ /(|.*\.html)$ {
+	location ~ /(|[^/]+\.html)$ {
 		proxy_pass https://storage.yandexcloud.net/www.dmaslov.me$bucket_uri;
 		add_header Content-Security-Policy "default-src 'none'; connect-src https:; img-src 'self' https:; script-src 'self' https: 'unsafe-inline'; style-src 'self' https: 'unsafe-inline'; font-src 'self' https:; frame-src https:; frame-ancestors 'none'; form-action 'none'; base-uri 'none'";
 		add_header Referrer-Policy "no-referrer, strict-origin-when-cross-origin";

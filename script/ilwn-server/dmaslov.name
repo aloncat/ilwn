@@ -11,7 +11,25 @@ server {
 
 	root /usr/share/nginx/dmaslov.name;
 
-	return 301 https://dmaslov.me$request_uri;
+	if ($request_method !~ ^(GET|HEAD)$) {
+		return 405;
+	}
+
+	location ~ /(|[^/]+\.html)$ {
+		return 301 https://dmaslov.me$request_uri;
+	}
+
+	location / {
+		return 404;
+	}
+
+	location ~ \.php$ {
+		deny all;
+	}
+
+	location ~ /\. {
+		deny all;
+	}
 
 	ssl_certificate /etc/letsencrypt/live/dmaslov.name/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/dmaslov.name/privkey.pem;
