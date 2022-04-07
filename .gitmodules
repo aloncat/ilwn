@@ -1,3 +1,6 @@
 [submodule "source/aml"]
 	path = source/aml
 	url = https://github.com/aloncat/aml.git
+[submodule "source/extern"]
+	path = source/extern
+	url = https://github.com/aloncat/dependencies.git

@@ -20,7 +20,7 @@ Directory structure:
 --------------------
   script	Various auxiliary scripts
   source	Source code (all subprojects)
-  www		iLWN website sources
+  www		iLWN website sources & scripts
 
 
 Copyright (C) 2019-2022 Dmitry Maslov.
