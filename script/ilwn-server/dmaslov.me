@@ -93,7 +93,7 @@ server {
 	error_page 404 @404;
 
 	if ($request_method !~ ^(GET|HEAD)$) {
-		return 400;
+		return 405;
 	}
 
 	location @404 {
