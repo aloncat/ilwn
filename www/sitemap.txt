@@ -11,6 +11,7 @@ https://dmaslov.me/hardware.html
 https://dmaslov.me/map.html
 https://dmaslov.me/mdpn/
 https://dmaslov.me/mdpn/checkpal.html
+https://dmaslov.me/mdpn/diary.html
 https://dmaslov.me/mdpn/pal/
 https://dmaslov.me/mdpn/records.html
 https://dmaslov.me/news.html
