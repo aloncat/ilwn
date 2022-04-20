@@ -164,8 +164,13 @@ AML_NOINLINE bool Search415::SearchLast(Worker* worker, NumberT z, unsigned* k, 
 		if (pk3 >= z)
 			break;
 
-		unsigned k4 = 1;
 		const auto zd = z - pk3;
+		// Также разность (как и сумма степеней оставшихся коэффициентов правой части) не может
+		// быть сравнима с 7, 8, 11 по модулю 13, а также 4, 5, 6, 9, 13, 22, 28 по модулю 29
+		if ((0x980 & (1 << (zd % 13))) || (0x10402270 & (1 << (zd % 29))))
+			continue;
+
+		unsigned k4 = 1;
 		// Пропустим низкие значения k[4]
 		for (unsigned step = k3 >> 1; step; step >>= 1)
 		{
