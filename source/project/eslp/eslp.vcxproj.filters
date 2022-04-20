@@ -92,6 +92,9 @@
     <ClInclude Include="..\..\eslp\search-e1x.h">
       <Filter>search\algorithm\custom</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\eslp\search-415.h">
+      <Filter>search\algorithm\special</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\eslp\prefix.cpp">
@@ -155,6 +158,9 @@
     </ClCompile>
     <ClCompile Include="..\..\eslp\search-e1x.cpp">
       <Filter>search\algorithm\custom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\eslp\search-415.cpp">
+      <Filter>search\algorithm\special</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

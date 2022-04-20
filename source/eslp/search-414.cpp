@@ -96,7 +96,7 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 
 		left >>= 4;
 		unsigned k2 = 1;
-		// Пропустиим слишком низкие значения k[2]
+		// Пропустим слишком низкие значения k[2]
 		for (unsigned step = limit >> 1; step; step >>= 1)
 		{
 			auto f = k2 + step;
@@ -114,7 +114,7 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 
 			unsigned k3 = 1;
 			const auto zd = left - pk2;
-			// Пропустиим слишком низкие значения k[3]
+			// Пропустим слишком низкие значения k[3]
 			for (unsigned step = k2 >> 1; step; step >>= 1)
 			{
 				auto f = k3 + step;

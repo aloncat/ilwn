@@ -1,3 +1,10 @@
+=== Version 0.34 ===
+Released: 2022-0x-xx
+
+== Features ==
+ * New specialized algorithm for 4.1.5 equation.
+
+
 === Version 0.33 ===
 Released: 2022-03-24
 

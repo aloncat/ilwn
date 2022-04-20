@@ -187,6 +187,7 @@
     <ClInclude Include="..\..\eslp\factorsearch.h" />
     <ClInclude Include="..\..\eslp\forward.h" />
     <ClInclude Include="..\..\eslp\hashtable.h" />
+    <ClInclude Include="..\..\eslp\search-415.h" />
     <ClInclude Include="..\..\eslp\search-x22i.h" />
     <ClInclude Include="..\..\eslp\searchfactory.h" />
     <ClInclude Include="..\..\eslp\options.h" />
@@ -211,6 +212,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\eslp\factorsearch.cpp" />
     <ClCompile Include="..\..\eslp\main.cpp" />
+    <ClCompile Include="..\..\eslp\search-415.cpp" />
     <ClCompile Include="..\..\eslp\search-x22i.cpp" />
     <ClCompile Include="..\..\eslp\searchfactory.cpp" />
     <ClCompile Include="..\..\eslp\options.cpp" />

@@ -8,6 +8,7 @@
 #include "options.h"
 #include "search-413.h"
 #include "search-414.h"
+#include "search-415.h"
 #include "search-any.h"
 #include "search-e1x.h"
 #include "search-e23.h"
@@ -32,6 +33,7 @@ void SearchFactory::RegisterAll()
 	// Специализированные алгоритмы
 	Register<Search413>(INT_MAX);
 	Register<Search414>(INT_MAX);
+	Register<Search415>(INT_MAX);
 
 	// Другие кастомные алгоритмы
 	Register<SearchE1X>(1);

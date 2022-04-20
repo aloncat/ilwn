@@ -484,10 +484,6 @@ void FactorSearch::WorkerThreadFn(Worker* worker)
 	HANDLE threadHandle = ::GetCurrentThread();
 	::SetThreadPriority(threadHandle, THREAD_PRIORITY_IDLE);
 
-	Assert(ProgressManager::MAX_COEFS <= Task::MAX_COUNT);
-	for (int i = 0; i < ProgressManager::MAX_COEFS; ++i)
-		worker->task.factors[i] = 1;
-
 	while (!worker->shouldQuit)
 	{
 		if (worker->shouldPause)
