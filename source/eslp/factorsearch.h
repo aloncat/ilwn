@@ -12,6 +12,7 @@
 #include "solution.h"
 #include "threadtimer.h"
 #include "uint128.h"
+#include "workertask.h"
 
 #include <core/debug.h>
 #include <core/platform.h>
@@ -35,7 +36,6 @@ public:
 	virtual ~FactorSearch() override;
 
 protected:
-	struct Task;
 	struct Worker;
 
 	// Выполняет поиск решений (начиная с указанных значений коэффициентов)
@@ -59,10 +59,10 @@ protected:
 
 	// Инициализирует начальное задание task из набора коэфициентов startFactors
 	// и устанавливает количество коэффициентов, которые будут задаваться заданием
-	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors);
+	virtual void InitFirstTask(WorkerTask& task, const std::vector<unsigned>& startFactors);
 
 	// Выбирает следующее задание
-	virtual void SelectNextTask(Task& task);
+	virtual void SelectNextTask(WorkerTask& task);
 
 	// Функция рабочего потока, которая вызывается в цикле
 	// до тех пор,  пока не будет установлен флаг shouldQuit
@@ -103,7 +103,7 @@ protected:
 
 	// Прототип функции, проверяющей задание на отсутствие решений. Если для указанного
 	// задания task гарантируется отсутствие решений, то функция должна вернуть false
-	using CheckTaskFn = bool (*)(const Task& task);
+	using CheckTaskFn = bool (*)(const WorkerTask& task);
 
 	SearchFn m_SearchFn = nullptr;			// Функция выполнения задания
 	CheckTaskFn m_CheckTaskFn = nullptr;	// Функция проверки отсутствия решений
@@ -145,6 +145,7 @@ private:
 	void ShowProgress(const unsigned* factors);
 	void HideProgress();
 
+	void OnOldestTaskDone(Worker* worker);
 	void OnSolutionReady(const Solution& solution);
 	void ProcessPendingSolutions();
 
@@ -162,7 +163,8 @@ private:
 	volatile size_t m_SolutionsFound = 0;		// Количество найденных примитивных решений
 	std::vector<Solution> m_PendingSolutions;	// Найденные решения, ожидающие проверки
 
-	Task* m_NextTask = nullptr;					// Следующее задание для выполнения
+	TaskList m_TaskList;						// Контейнер для заданий
+	WorkerTask m_NextTask;						// Следующее задание для выполнения
 	unsigned m_LastHiFactor = 0;				// Последний старший коэффициент в блоке заданий
 	unsigned m_LastDoneHiFactor = 0;			// Последний завершённый старший коэффициент
 
@@ -230,33 +232,13 @@ FactorSearch::SearchFn FactorSearch::GetSearchFn()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-struct FactorSearch::Task final
-{
-	// Рабочие потоки обычно не перебирают коэффициенты левой части уравнения (они все обычно
-	// заданы заданием). Однако задание может задавать вместе со всеми коэффициентами левой части
-	// и первые коэффициенты правой. Суммарное количество заданных коэффициентов в любом случае
-	// не может превышать максимально возможного количества коэффициентов в левой части
-	static constexpr int MAX_COUNT = MAX_FACTOR_COUNT / 2;
-
-	int factorCount = 0;			// Количество заданных коэффициентов
-	unsigned factors[MAX_COUNT];	// Заданные значения первых коэффициентов
-	unsigned taskId = 0;			// Уникальный номер задания
-
-	Task& operator =(const Task& that) noexcept;
-
-	// Сравниваниет коэффициенты задания с коэффициентами указанного
-	// решения. Возвращает true, если задание "старше" указанного решения
-	bool operator >(const Solution& rhs) const { return rhs.IsLower(factors, factorCount); }
-};
-
-//--------------------------------------------------------------------------------------------------------------------------------
 struct FactorSearch::Worker final
 {
 	int workerId = 0;					// Уникальный ID (от 1)
 	std::thread threadObj;				// Объект потока
 	ThreadTimer* timer = nullptr;		// Таймер затраченного потоком времени CPU
 
-	Task task;							// Задание (первые коэффициенты)
+	WorkerTask* task = nullptr;			// Задание (первые коэффициенты)
 	unsigned progressCounter = 0;		// Вспомогательный счётчик вывода прогресса
 	unsigned userData = 0;				// Свободная переменная для любых целей
 

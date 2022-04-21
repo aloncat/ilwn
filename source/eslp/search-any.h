@@ -19,19 +19,19 @@
 class SearchAny : public FactorSearch
 {
 protected:
-	using SelectNextFn = void (SearchAny::*)(Task& task, const void* powers) const;
+	using SelectNextFn = void (SearchAny::*)(WorkerTask& task, const void* powers) const;
 
 	virtual void BeforeCompute(unsigned upperLimit) override;
 	CheckTaskFn GetCheckTaskFn() const;
 
-	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors) override;
-	virtual void SelectNextTask(Task& task) override;
+	virtual void InitFirstTask(WorkerTask& task, const std::vector<unsigned>& startFactors) override;
+	virtual void SelectNextTask(WorkerTask& task) override;
 
 	template<class NumberT>
 	SelectNextFn GetSelectNextFn();
 
 	template<class NumberT>
-	void SelectNext(Task& task, const NumberT* powers) const;
+	void SelectNext(WorkerTask& task, const NumberT* powers) const;
 
 	template<class NumberT>
 	void SearchFactors(Worker* worker, const NumberT* powers);

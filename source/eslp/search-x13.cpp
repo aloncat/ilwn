@@ -39,7 +39,7 @@ AML_NOINLINE void SearchX13::SearchFactors(Worker* worker, const NumberT* powers
 	unsigned k[ProgressManager::MAX_COEFS];
 
 	// Коэффициент левой части
-	k[0] = worker->task.factors[0];
+	k[0] = worker->task->factors[0];
 
 	// Левая часть уравнения
 	const auto z = powers[k[0]];

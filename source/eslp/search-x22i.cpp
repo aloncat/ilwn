@@ -85,7 +85,7 @@ unsigned SearchX22i::GetChunkSize(unsigned hiFactor)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void SearchX22i::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
+void SearchX22i::InitFirstTask(WorkerTask& task, const std::vector<unsigned>& startFactors)
 {
 	// Задание задаёт только старший коэффициент левой части.
 	// 2-й коэффициент левой части перебирается в SearchFactors
@@ -108,7 +108,7 @@ void SearchX22i::InitFirstTask(Task& task, const std::vector<unsigned>& startFac
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void SearchX22i::SelectNextTask(Task& task)
+void SearchX22i::SelectNextTask(WorkerTask& task)
 {
 	++task.factors[0];
 }
@@ -126,7 +126,7 @@ void SearchX22i::WorkerFunction(Worker* worker)
 		if (GetNextTask(worker))
 		{
 			// Обработаем полученное задание
-			const unsigned task = worker->task.factors[0];
+			const unsigned task = worker->task->factors[0];
 			(this->*m_SearchFn)(worker, m_Powers->GetData());
 			// И сразу же освободим критическую секцию
 			lock.Leave();
@@ -228,7 +228,7 @@ AML_NOINLINE void SearchX22i::SearchFactors(Worker* worker, const NumberT* power
 	unsigned k[ProgressManager::MAX_COEFS];
 
 	// Старший коэф-т левой части
-	k[0] = worker->task.factors[0];
+	k[0] = worker->task->factors[0];
 	const uint64_t pk0 = powers[k[0]] & ~0llu;
 
 	// Если значение k[0] чётно, то k[1] не может быть чётным при любой чётной степени, иначе решение будет

@@ -35,7 +35,7 @@ void SearchX22::BeforeCompute(unsigned upperLimit)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void SearchX22::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
+void SearchX22::InitFirstTask(WorkerTask& task, const std::vector<unsigned>& startFactors)
 {
 	// Для x.2.2 задание задаёт только старший коэффициент левой части. 2-й коэффициент
 	// в левой части, так же, как и коэффициенты в правой, перебираются в SearchFactors
@@ -46,7 +46,7 @@ void SearchX22::InitFirstTask(Task& task, const std::vector<unsigned>& startFact
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void SearchX22::SelectNextTask(Task& task)
+void SearchX22::SelectNextTask(WorkerTask& task)
 {
 	++task.factors[0];
 }
@@ -59,7 +59,7 @@ AML_NOINLINE void SearchX22::SearchFactors(Worker* worker, const NumberT* powers
 	unsigned k[ProgressManager::MAX_COEFS];
 
 	// Старший коэф-т левой части
-	k[0] = worker->task.factors[0];
+	k[0] = worker->task->factors[0];
 
 	// Если значение k[0] чётно, то k[1] не может быть чётным при любой чётной степени, иначе решение будет
 	// непримитивным. Поэтому при чётных k[0] и степени мы будем проверять только нечётные значения k[1]

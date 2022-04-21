@@ -131,11 +131,11 @@ bool Solution::operator <(const Solution& rhs) const
 //--------------------------------------------------------------------------------------------------------------------------------
 bool Solution::IsLower(const unsigned* factors, int count) const
 {
-	if (Verify(count < m_Factors.size()))
+	if (Verify(count <= m_Factors.size()))
 	{
 		for (int i = 0; i < count; ++i)
 		{
-			if (auto f = m_Factors[i]; factors[i] != f)
+			if (auto f = m_Factors[i]; f != factors[i])
 				return f < factors[i];
 		}
 	}

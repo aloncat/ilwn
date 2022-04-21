@@ -60,7 +60,7 @@ FactorSearch::CheckTaskFn SearchE1X::GetCheckTaskFn() const
 	// n < 16 (4.1.n) или n < 32 (8.1.n); Z не может быть кратным 5 для n < 5
 	if ((m_Info.power == 4 || m_Info.power == 8) && m_Info.rightCount < 5)
 	{
-		return [](const Task& task) {
+		return [](const WorkerTask& task) {
 			return (task.factors[0] & 1) && (task.factors[0] % 5);
 		};
 	}
@@ -71,12 +71,12 @@ FactorSearch::CheckTaskFn SearchE1X::GetCheckTaskFn() const
 	{
 		if (m_Info.rightCount < 7)
 		{
-			return [](const Task& task) {
+			return [](const WorkerTask& task) {
 				return (task.factors[0] & 1) && (task.factors[0] % 3) && (task.factors[0] % 7);
 			};
 		}
 
-		return [](const Task& task) {
+		return [](const WorkerTask& task) {
 			return (task.factors[0] & 1) && (task.factors[0] % 3);
 		};
 	}
@@ -85,7 +85,7 @@ FactorSearch::CheckTaskFn SearchE1X::GetCheckTaskFn() const
 	// для n < 8; Z не может быть кратным 11 для n < 11
 	if (m_Info.power == 10)
 	{
-		return [](const Task& task) {
+		return [](const WorkerTask& task) {
 			return (task.factors[0] & 1) && (task.factors[0] % 11);
 		};
 	}
@@ -94,19 +94,19 @@ FactorSearch::CheckTaskFn SearchE1X::GetCheckTaskFn() const
 	// для n < 16; Z не может быть кратным 13 для n < 13
 	if (m_Info.power == 12 && m_Info.rightCount < 13)
 	{
-		return [](const Task& task) {
+		return [](const WorkerTask& task) {
 			return (task.factors[0] & 1) && (task.factors[0] % 13);
 		};
 	}
 
 	// Другие случаи: Z не может быть чётным
-	return [](const Task& task) -> bool {
-		return task.factors[0] & 1;
+	return [](const WorkerTask& task) {
+		return (task.factors[0] & 1) != 0;
 	};
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void SearchE1X::SelectNextTask(Task& task)
+void SearchE1X::SelectNextTask(WorkerTask& task)
 {
 	++task.factors[0];
 }
@@ -118,13 +118,14 @@ AML_NOINLINE void SearchE1X::SearchFactors(Worker* worker, const NumberT* powers
 	// Коэффициенты уравнения
 	unsigned factors[MAX_FACTOR_COUNT];
 
+	const WorkerTask& task = *worker->task;
 	// Копируем коэффициенты из задания
-	for (int i = 0; i < worker->task.factorCount; ++i)
-		factors[i] = worker->task.factors[i];
+	for (int i = 0; i < task.factorCount; ++i)
+		factors[i] = task.factors[i];
 
 	// Остальные коэффициенты инициализируем в 1
 	const int factorCount = 1 + m_Info.rightCount;
-	for (int i = worker->task.factorCount; i < factorCount; ++i)
+	for (int i = task.factorCount; i < factorCount; ++i)
 		factors[i] = 1;
 
 	// Значение левой части
@@ -136,10 +137,10 @@ AML_NOINLINE void SearchE1X::SearchFactors(Worker* worker, const NumberT* powers
 		sum += powers[factors[i]];
 
 	// Количество "перебираемых" коэффициентов
-	const int count = factorCount - worker->task.factorCount;
+	const int count = factorCount - task.factorCount;
 	// Массив k, начиная с индекса 1, содержит перебираемые коэффициенты правой части уравнения.
 	// В элементе k[0] хранится предшествующий им коэффициент левой или правой части уравнения
-	unsigned* k = factors + worker->task.factorCount - 1;
+	unsigned* k = factors + task.factorCount - 1;
 
 	sum -= count - 1;
 	// Пропустим часть значений 1-го перебираемого коэффициента
@@ -156,7 +157,7 @@ AML_NOINLINE void SearchE1X::SearchFactors(Worker* worker, const NumberT* powers
 	{
 		if (factors[i] & 1)
 		{
-			oddIndex = i - worker->task.factorCount + 1;
+			oddIndex = i - task.factorCount + 1;
 			break;
 		}
 	}

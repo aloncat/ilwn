@@ -45,7 +45,7 @@ FactorSearch::CheckTaskFn SearchAny::GetCheckTaskFn() const
 			// для n < 4; Z не может быть кратным 3 для n < 3
 			if (m_Info.power == 2 && m_Info.rightCount < 3)
 			{
-				return [](const Task& task) {
+				return [](const WorkerTask& task) {
 					return (task.factors[0] & 1) && (task.factors[0] % 3);
 				};
 			}
@@ -56,12 +56,12 @@ FactorSearch::CheckTaskFn SearchAny::GetCheckTaskFn() const
 			{
 				if (m_Info.rightCount < 3)
 				{
-					return [](const Task& task) {
+					return [](const WorkerTask& task) {
 						return (task.factors[0] & 1) && (task.factors[0] % 3) && (task.factors[0] % 5);
 					};
 				}
 
-				return [](const Task& task) {
+				return [](const WorkerTask& task) {
 					return (task.factors[0] & 1) && (task.factors[0] % 5);
 				};
 			}
@@ -72,19 +72,19 @@ FactorSearch::CheckTaskFn SearchAny::GetCheckTaskFn() const
 			{
 				if (m_Info.rightCount < 7)
 				{
-					return [](const Task& task) {
+					return [](const WorkerTask& task) {
 						return (task.factors[0] & 1) && (task.factors[0] % 3) && (task.factors[0] % 7);
 					};
 				}
 				if (pow2Cond)
 				{
-					return [](const Task& task) {
+					return [](const WorkerTask& task) {
 						return (task.factors[0] & 1) && (task.factors[0] % 3);
 					};
 				}
 
-				return [](const Task& task) -> bool {
-					return task.factors[0] % 3;
+				return [](const WorkerTask& task) {
+					return (task.factors[0] % 3) != 0;
 				};
 			}
 
@@ -94,13 +94,13 @@ FactorSearch::CheckTaskFn SearchAny::GetCheckTaskFn() const
 			{
 				if (pow2Cond)
 				{
-					return [](const Task& task) {
+					return [](const WorkerTask& task) {
 						return (task.factors[0] & 1) && (task.factors[0] % 11);
 					};
 				}
 
-				return [](const Task& task) -> bool {
-					return task.factors[0] % 11;
+				return [](const WorkerTask& task) {
+					return (task.factors[0] % 11) != 0;
 				};
 			}
 
@@ -108,7 +108,7 @@ FactorSearch::CheckTaskFn SearchAny::GetCheckTaskFn() const
 			// для n < 16; Z не может быть кратным 13 для n < 13
 			if (m_Info.power == 12 && m_Info.rightCount < 13)
 			{
-				return [](const Task& task) {
+				return [](const WorkerTask& task) {
 					return (task.factors[0] & 1) && (task.factors[0] % 13);
 				};
 			}
@@ -116,26 +116,26 @@ FactorSearch::CheckTaskFn SearchAny::GetCheckTaskFn() const
 			if (pow2Cond)
 			{
 				// Чётные степени: Z не может быть чётным
-				return [](const Task& task) -> bool {
-					return task.factors[0] & 1;
+				return [](const WorkerTask& task) {
+					return (task.factors[0] & 1) != 0;
 				};
 			}
 		}
 		// Для p.2.n при чётных p коэффициенты левой части не могут быть чётными одновременно
 		else if (m_Info.leftCount == 2 && pow2Cond)
 		{
-			return [](const Task& task) {
+			return [](const WorkerTask& task) {
 				return (task.factors[0] & 1) || (task.factors[1] & 1);
 			};
 		}
 	}
 
 	// Для других случаев оптимизаций нет
-	return [](const Task&) { return true; };
+	return [](const WorkerTask&) { return true; };
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void SearchAny::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
+void SearchAny::InitFirstTask(WorkerTask& task, const std::vector<unsigned>& startFactors)
 {
 	// Для универсального алгоритма все коэффициенты
 	// левой части уравнения всегда заданы заданием
@@ -182,7 +182,7 @@ void SearchAny::InitFirstTask(Task& task, const std::vector<unsigned>& startFact
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void SearchAny::SelectNextTask(Task& task)
+void SearchAny::SelectNextTask(WorkerTask& task)
 {
 	// Перебираем только коэф-ты левой части
 	if (task.factorCount <= m_Info.leftCount)
@@ -211,14 +211,14 @@ void SearchAny::SelectNextTask(Task& task)
 template<class NumberT>
 SearchAny::SelectNextFn SearchAny::GetSelectNextFn()
 {
-	using Fn = void (SearchAny::*)(Task&, const NumberT*) const;
+	using Fn = void (SearchAny::*)(WorkerTask&, const NumberT*) const;
 	auto fn = static_cast<Fn>(&SearchAny::template SelectNext);
 	return reinterpret_cast<SelectNextFn>(fn);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 template<class NumberT>
-void SearchAny::SelectNext(Task& task, const NumberT* powers) const
+void SearchAny::SelectNext(WorkerTask& task, const NumberT* powers) const
 {
 	unsigned* k = task.factors;
 	const int m = m_Info.leftCount;
@@ -315,14 +315,15 @@ AML_NOINLINE void SearchAny::SearchFactors(Worker* worker, const NumberT* powers
 	// Коэффициенты уравнения
 	unsigned factors[MAX_FACTOR_COUNT];
 
+	const WorkerTask& task = *worker->task;
 	// Копируем коэффициенты из задания
-	for (int i = 0; i < worker->task.factorCount; ++i)
-		factors[i] = worker->task.factors[i];
+	for (int i = 0; i < task.factorCount; ++i)
+		factors[i] = task.factors[i];
 
 	// Количество "перебираемых" коэффициентов
-	const int count = m_FactorCount - worker->task.factorCount;
+	const int count = m_FactorCount - task.factorCount;
 	// Массив k, начиная с k[1], содержит перебираемые коэффициенты
-	unsigned* k = factors + worker->task.factorCount - 1;
+	unsigned* k = factors + task.factorCount - 1;
 
 	// Значение левой части
 	auto z = powers[factors[0]];
@@ -330,7 +331,7 @@ AML_NOINLINE void SearchAny::SearchFactors(Worker* worker, const NumberT* powers
 		z += powers[factors[i]];
 
 	// Отнимаем значение степеней всех заданных коэф-в правой части
-	for (int i = m_Info.leftCount; i < worker->task.factorCount; ++i)
+	for (int i = m_Info.leftCount; i < task.factorCount; ++i)
 		z -= powers[factors[i]];
 
 	k[1] = 1;
@@ -343,7 +344,7 @@ AML_NOINLINE void SearchAny::SearchFactors(Worker* worker, const NumberT* powers
 	}
 
 	// Предельное значение для k[1] (старшего из перебираемых коэффициентов)
-	const unsigned high = (worker->task.factorCount > m_Info.leftCount) ? k[0] + 1 :
+	const unsigned high = (task.factorCount > m_Info.leftCount) ? k[0] + 1 :
 		(m_Info.leftCount == 1 || m_Info.leftCount == m_Info.rightCount) ? factors[0] : UINT_MAX;
 
 	// Перебор старшего коэффициента
@@ -525,8 +526,8 @@ AML_NOINLINE void SearchAny::SearchFactors2(Worker* worker, const NumberT* power
 	unsigned factors[ProgressManager::MAX_COEFS];
 
 	// Копируем коэффициенты из задания
-	factors[0] = worker->task.factors[0];
-	factors[1] = worker->task.factors[1];
+	factors[0] = worker->task->factors[0];
+	factors[1] = worker->task->factors[1];
 
 	// Значение левой части
 	auto z = powers[factors[0]];
@@ -535,7 +536,7 @@ AML_NOINLINE void SearchAny::SearchFactors2(Worker* worker, const NumberT* power
 
 	// Массив k, начиная с индекса 1, содержит коэффициенты правой части.
 	// В элементе k[0] хранится предшествующий им коэффициент левой части
-	unsigned* k = factors + worker->task.factorCount - 1;
+	unsigned* k = factors + worker->task->factorCount - 1;
 
 	k[1] = 1;
 	// Пропускаем низкие значения старшего коэффициента
@@ -581,9 +582,10 @@ AML_NOINLINE void SearchAny::SearchFactors3(Worker* worker, const NumberT* power
 	static_assert(ProgressManager::MAX_COEFS >= 6);
 	unsigned factors[ProgressManager::MAX_COEFS];
 
+	const WorkerTask& task = *worker->task;
 	// Копируем коэффициенты из задания
-	for (int i = 0; i < worker->task.factorCount; ++i)
-		factors[i] = worker->task.factors[i];
+	for (int i = 0; i < task.factorCount; ++i)
+		factors[i] = task.factors[i];
 
 	// Значение левой части
 	auto z = powers[factors[0]];
@@ -592,7 +594,7 @@ AML_NOINLINE void SearchAny::SearchFactors3(Worker* worker, const NumberT* power
 
 	// Массив k, начиная с индекса 1, содержит коэффициенты правой части.
 	// В элементе k[0] хранится предшествующий им коэффициент левой части
-	unsigned* k = factors + worker->task.factorCount - 1;
+	unsigned* k = factors + task.factorCount - 1;
 
 	// Если в левой части 2 коэффициента (в правой всегда 3), то значение k[1]
 	// (старшего коэффициента правой части) ограничено только значением суммы

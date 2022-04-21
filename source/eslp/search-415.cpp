@@ -32,7 +32,7 @@ void Search415::BeforeCompute(unsigned upperLimit)
 	// хеш-таблицы. Это уменьшит количество коллизий и немного увеличит скорость работы
 	InitHashTable(m_Hashes, upperLimit >> 1);
 
-	m_CheckTaskFn = [](const Task& task) {
+	m_CheckTaskFn = [](const WorkerTask& task) {
 		// Z не может быть чётным
 		return (task.factors[0] & 1) != 0;
 	};
@@ -46,7 +46,7 @@ unsigned Search415::GetChunkSize(unsigned hiFactor)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void Search415::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
+void Search415::InitFirstTask(WorkerTask& task, const std::vector<unsigned>& startFactors)
 {
 	Assert(!startFactors.empty());
 
@@ -58,7 +58,7 @@ void Search415::InitFirstTask(Task& task, const std::vector<unsigned>& startFact
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void Search415::SelectNextTask(Task& task)
+void Search415::SelectNextTask(WorkerTask& task)
 {
 	++task.factors[0];
 }
@@ -71,7 +71,7 @@ AML_NOINLINE void Search415::SearchFactors(Worker* worker, const NumberT* powers
 	unsigned k[ProgressManager::MAX_COEFS];
 
 	// Коэффициент левой части
-	k[0] = worker->task.factors[0];
+	k[0] = worker->task->factors[0];
 
 	// Левая часть уравнения
 	const auto z = powers[k[0]];

@@ -205,6 +205,7 @@
     <ClInclude Include="..\..\eslp\search-any.h" />
     <ClInclude Include="..\..\eslp\searchbase.h" />
     <ClInclude Include="..\..\eslp\solution.h" />
+    <ClInclude Include="..\..\eslp\workertask.h" />
     <ClInclude Include="..\..\eslp\threadtimer.h" />
     <ClInclude Include="..\..\eslp\uint128.h" />
     <ClInclude Include="..\..\eslp\util.h" />
@@ -234,6 +235,7 @@
     <ClCompile Include="..\..\eslp\search-any.cpp" />
     <ClCompile Include="..\..\eslp\searchbase.cpp" />
     <ClCompile Include="..\..\eslp\solution.cpp" />
+    <ClCompile Include="..\..\eslp\workertask.cpp" />
     <ClCompile Include="..\..\eslp\threadtimer.cpp" />
     <ClCompile Include="..\..\eslp\uint128.cpp" />
     <ClCompile Include="..\..\eslp\util.cpp" />

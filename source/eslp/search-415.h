@@ -26,8 +26,8 @@ protected:
 	virtual void BeforeCompute(unsigned upperLimit) override;
 	virtual unsigned GetChunkSize(unsigned hiFactor) override;
 
-	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors) override;
-	virtual void SelectNextTask(Task& task) override;
+	virtual void InitFirstTask(WorkerTask& task, const std::vector<unsigned>& startFactors) override;
+	virtual void SelectNextTask(WorkerTask& task) override;
 
 	template<class NumberT>
 	void SearchFactors(Worker* worker, const NumberT* powers);

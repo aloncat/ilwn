@@ -30,7 +30,7 @@ void SearchE23::BeforeCompute(unsigned upperLimit)
 	FactorSearch::BeforeCompute(upperLimit);
 	SetSearchFn(this);
 
-	m_CheckTaskFn = [](const Task& task) {
+	m_CheckTaskFn = [](const WorkerTask& task) {
 		// Коэффициенты левой части не могут быть чётными одновременно. Оптимизация одновременной
 		// кратности 3 и 5 для 4-й степени не имеет смысла, т.к. даёт слабый эффект и только для
 		// случая rightCount == 3. Оптимизации для 6-й степени не имеют смысла
@@ -46,8 +46,8 @@ AML_NOINLINE void SearchE23::SearchFactors(Worker* worker, const NumberT* powers
 	unsigned k[ProgressManager::MAX_COEFS];
 
 	// Коэффициенты левой части
-	k[0] = worker->task.factors[0];
-	k[1] = worker->task.factors[1];
+	k[0] = worker->task->factors[0];
+	k[1] = worker->task->factors[1];
 
 	// Чётность коэф-тов (1 если разная)
 	const unsigned odd = (k[0] ^ k[1]) & 1;

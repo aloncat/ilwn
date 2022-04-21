@@ -34,8 +34,8 @@ protected:
 
 	virtual unsigned GetChunkSize(unsigned hiFactor) override;
 
-	virtual void InitFirstTask(Task& task, const std::vector<unsigned>& startFactors) override;
-	virtual void SelectNextTask(Task& task) override;
+	virtual void InitFirstTask(WorkerTask& task, const std::vector<unsigned>& startFactors) override;
+	virtual void SelectNextTask(WorkerTask& task) override;
 
 	virtual void WorkerFunction(Worker* worker) override;
 

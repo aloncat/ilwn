@@ -24,7 +24,7 @@ protected:
 	virtual void BeforeCompute(unsigned upperLimit) override;
 	CheckTaskFn GetCheckTaskFn() const;
 
-	virtual void SelectNextTask(Task& task) override;
+	virtual void SelectNextTask(WorkerTask& task) override;
 
 	template<class NumberT>
 	void SearchFactors(Worker* worker, const NumberT* powers);

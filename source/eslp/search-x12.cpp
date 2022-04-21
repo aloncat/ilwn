@@ -37,12 +37,12 @@ FactorSearch::CheckTaskFn SearchX12::GetCheckTaskFn() const
 	// Оптимизаций для нечётных степеней и степеней выше 20-й нет.
 	// Часть перечисленных оптимизаций используется также для x.1.3
 	if ((m_Info.power & 1) || m_Info.power > 20)
-		return [](const Task&) { return true; };
+		return [](const WorkerTask&) { return true; };
 
 	// Уравнение 2.1.2: Z не может быть чётным и кратным 3
 	if (m_Info.power == 2 && m_Info.rightCount == 2)
 	{
-		return [](const Task& task) {
+		return [](const WorkerTask& task) {
 			return (task.factors[0] & 1) && (task.factors[0] % 3);
 		};
 	}
@@ -53,12 +53,12 @@ FactorSearch::CheckTaskFn SearchX12::GetCheckTaskFn() const
 	{
 		if (m_Info.rightCount < 3)
 		{
-			return [](const Task& task) {
+			return [](const WorkerTask& task) {
 				return (task.factors[0] & 1) && (task.factors[0] % 3) && (task.factors[0] % 5);
 			};
 		}
 
-		return [](const Task& task) {
+		return [](const WorkerTask& task) {
 			return (task.factors[0] & 1) && (task.factors[0] % 5);
 		};
 	}
@@ -67,19 +67,19 @@ FactorSearch::CheckTaskFn SearchX12::GetCheckTaskFn() const
 	// быть кратным 3 для n < 9; Z не может быть кратным 7 для n < 7
 	if (m_Info.power == 6)
 	{
-		return [](const Task& task) {
+		return [](const WorkerTask& task) {
 			return (task.factors[0] & 1) && (task.factors[0] % 3) && (task.factors[0] % 7);
 		};
 	}
 
 	// Другие случаи: Z не может быть чётным
-	return [](const Task& task) -> bool {
-		return task.factors[0] & 1;
+	return [](const WorkerTask& task) {
+		return (task.factors[0] & 1) != 0;
 	};
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void SearchX12::SelectNextTask(Task& task)
+void SearchX12::SelectNextTask(WorkerTask& task)
 {
 	++task.factors[0];
 }
@@ -92,7 +92,7 @@ AML_NOINLINE void SearchX12::SearchFactors(Worker* worker, const NumberT* powers
 	unsigned k[ProgressManager::MAX_COEFS];
 
 	// Коэффициент левой части
-	k[0] = worker->task.factors[0];
+	k[0] = worker->task->factors[0];
 
 	// Левая часть уравнения
 	const auto z = powers[k[0]];

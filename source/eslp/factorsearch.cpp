@@ -30,7 +30,6 @@ FactorSearch::FactorSearch()
 FactorSearch::~FactorSearch()
 {
 	KillWorkers();
-	AML_SAFE_DELETE(m_NextTask);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -77,7 +76,6 @@ void FactorSearch::Search(const Options& options, const std::vector<unsigned>& s
 	m_PrintAllSolutions = options.HasOption("printall");
 	m_StopOnLimit = !options.HasOption("nolimit");
 
-	m_NextTask = new Task;
 	CreateWorkers(maxWorkerCount);
 
 	for (auto factors = startFactors; factors[0] && !m_IsCancelled;)
@@ -89,9 +87,7 @@ void FactorSearch::Search(const Options& options, const std::vector<unsigned>& s
 	}
 
 	UpdateConsoleTitle();
-
 	KillWorkers();
-	AML_SAFE_DELETE(m_NextTask);
 
 	util::SystemConsole::Instance().ShowCursor(true);
 	aux::Printf(m_IsAborted ? "\rTask #12ABORTED#7: too many solutions\n" :
@@ -162,7 +158,7 @@ unsigned FactorSearch::GetChunkSize(unsigned hiFactor)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void FactorSearch::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
+void FactorSearch::InitFirstTask(WorkerTask& task, const std::vector<unsigned>& startFactors)
 {
 	Assert(!startFactors.empty());
 
@@ -177,7 +173,7 @@ void FactorSearch::InitFirstTask(Task& task, const std::vector<unsigned>& startF
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void FactorSearch::SelectNextTask(Task& task)
+void FactorSearch::SelectNextTask(WorkerTask& task)
 {
 	unsigned* k = task.factors;
 	for (int i = task.factorCount - 1; i; --i)
@@ -216,24 +212,25 @@ bool FactorSearch::GetNextTask(Worker* worker)
 	{
 		thread::Lock lock(m_TaskCS);
 
-		while (m_NextTask->factors[0] <= m_LastHiFactor)
+		while (m_NextTask.factors[0] <= m_LastHiFactor)
 		{
-			if (m_CheckTaskFn(*m_NextTask))
+			if (m_CheckTaskFn(m_NextTask))
 			{
-				worker->task = *m_NextTask;
+				worker->task = m_TaskList.Allocate();
+				*worker->task = m_NextTask;
 
 				m_PendingTasks.push_back(worker->workerId);
 				m_LoPendingTask = m_PendingTasks.front();
 
-				SelectNextTask(*m_NextTask);
-				++m_NextTask->taskId;
+				SelectNextTask(m_NextTask);
+				++m_NextTask.id;
 
 				return true;
 			}
 
 			// Выбираем следующее задание, но не меняем его номер,
 			// так как задание не будет отправлено на обработку
-			SelectNextTask(*m_NextTask);
+			SelectNextTask(m_NextTask);
 		}
 	}
 
@@ -250,35 +247,13 @@ void FactorSearch::OnTaskDone(Worker* worker)
 	{
 		if (m_PendingTasks[i] == worker->workerId)
 		{
-			m_ProgressMan.SetDone(worker->task.taskId, !i);
+			m_ProgressMan.SetDone(worker->task->id, !i);
 			m_PendingTasks.erase(m_PendingTasks.begin() + i);
 
-			if (!i)
+			if (i == 0)
 			{
 				m_LoPendingTask = (count > 1) ? m_PendingTasks.front() : 0;
-
-				if (!m_ForceQuit)
-				{
-					if (!m_PendingTasks.empty())
-					{
-						// Список ожидаемых заданий не пуст, значит последнее полностью завершённое
-						// задание было расположено непосредственно перед самым первым ожидаемым
-						Worker* nextWorker = m_Workers[m_PendingTasks.front() - 1];
-						m_LastDoneHiFactor = nextWorker->task.factors[0] - 1;
-					}
-					// Если же список пуст, то последнее полностью завершённое задание
-					// было расположено непосредственно перед следующим (неназначенным)
-					else if (unsigned nextHiFactor = m_NextTask->factors[0]; nextHiFactor > m_LastDoneHiFactor)
-						m_LastDoneHiFactor = nextHiFactor - 1;
-				}
-
-				if (!m_PendingSolutions.empty())
-				{
-					ProcessPendingSolutions();
-
-					// Удалим решения завершённых заданий для экономии памяти
-					m_Solutions.Prune(worker->task.factors, worker->task.factorCount);
-				}
+				OnOldestTaskDone(worker);
 			}
 
 			break;
@@ -289,7 +264,7 @@ void FactorSearch::OnTaskDone(Worker* worker)
 //--------------------------------------------------------------------------------------------------------------------------------
 AML_NOINLINE bool FactorSearch::OnProgress(const Worker* worker, const unsigned* factors)
 {
-	m_ProgressMan.SetProgress(factors, worker->task.taskId);
+	m_ProgressMan.SetProgress(factors, worker->task->id);
 	return m_ForceQuit;
 }
 
@@ -318,9 +293,9 @@ AML_NOINLINE bool FactorSearch::OnSolutionFound(const Worker* worker, const unsi
 		if (auto count = m_PendingSolutions.size(); count < 5000 || worker->workerId == m_LoPendingTask)
 		{
 			// Для некоторых уравнений 1-й степени (m+n > 6), количество решений на одно
-			// задание превышает 1M. Тем не менее, если количество превысит 3M прервём
+			// задание превышает 1M. Тем не менее, если количество превысит 4M прервём
 			// работу программы, чтобы избежать падения из-за нехватки памяти
-			if (count >= 3000000)
+			if (count >= 4000000)
 			{
 				m_IsCancelled = true;
 				m_IsAborted = true;
@@ -582,11 +557,12 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 	m_Powers = &powers;
 
 	m_SearchFn = nullptr;
-	m_CheckTaskFn = [](const Task&) { return true; };
+	m_CheckTaskFn = [](const WorkerTask&) { return true; };
 	BeforeCompute(upperLimit.second);
 	Assert(m_SearchFn);
 
-	InitFirstTask(*m_NextTask, startFactors);
+	Assert(m_TaskList.IsEmpty());
+	InitFirstTask(m_NextTask, startFactors);
 	m_LastDoneHiFactor = hiFactor - 1;
 	m_LastHiFactor = upperLimit.first;
 
@@ -656,7 +632,7 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 	m_Powers = nullptr;
 
 	Assert(!GetActiveThreads(true) && "Some threads are still active");
-	Assert(m_IsCancelled || m_NextTask->factors[0] >= upperLimit.first + 1);
+	Assert(m_IsCancelled || m_NextTask.factors[0] >= upperLimit.first + 1);
 
 	HideProgress();
 	if (m_IsCancelled)
@@ -712,6 +688,42 @@ void FactorSearch::HideProgress()
 		// Очистим строку на экране, в которой выводился прогресс
 		aux::Print("\r" + std::string(m_LastProgressLength, ' ') + "\r");
 		m_LastProgressLength = 0;
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void FactorSearch::OnOldestTaskDone(Worker* worker)
+{
+	Worker* nextWorker = m_PendingTasks.empty() ? nullptr :
+		m_Workers[m_PendingTasks.front() - 1];
+
+	if (!m_ForceQuit)
+	{
+		if (nextWorker)
+		{
+			// Список ожидаемых заданий не пуст, значит последнее полностью завершённое
+			// задание было расположено непосредственно перед самым первым ожидаемым
+			m_LastDoneHiFactor = nextWorker->task->factors[0] - 1;
+		}
+		// Если же список пуст, то последнее полностью завершённое задание
+		// было расположено непосредственно перед следующим (неназначенным)
+		else if (unsigned nextHiFactor = m_NextTask.factors[0]; nextHiFactor > m_LastDoneHiFactor)
+			m_LastDoneHiFactor = nextHiFactor - 1;
+	}
+
+	if (!m_PendingSolutions.empty())
+	{
+		ProcessPendingSolutions();
+		// Удалим решения завершённых заданий для экономии памяти
+		m_Solutions.Prune(worker->task->factors, worker->task->factorCount);
+	}
+
+	// Удалим из буфера все завершённые и обработанные задания
+	const uint64_t lowestTaskId = nextWorker ? nextWorker->task->id : UINT64_MAX;
+	for (auto task = m_TaskList.GetFront(); task && task->id < lowestTaskId;)
+	{
+		m_TaskList.PopFront();
+		task = m_TaskList.GetFront();
 	}
 }
 
@@ -780,7 +792,7 @@ void FactorSearch::ProcessPendingSolutions()
 		if (m_LoPendingTask)
 		{
 			ready = 0;
-			const Task& lowestTask = m_Workers[m_LoPendingTask - 1]->task;
+			const WorkerTask& lowestTask = *m_Workers[m_LoPendingTask - 1]->task;
 			// Если имеются ожидаемые задания (результаты которых ещё не полностью готовы), то мы можем
 			// обработать только часть решений, соответствующих полностью завершённым заданиям. Поэтому
 			// для эффективности (решений может быть довольно много) предварительно переместим все
@@ -864,31 +876,4 @@ void FactorSearch::UpdateActiveThreadCount()
 		SetActiveThreads(m_ActiveWorkers);
 		m_NeedUpdateTitle = true;
 	}
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//   FactorSearch::Task
-//
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//--------------------------------------------------------------------------------------------------------------------------------
-FactorSearch::Task& FactorSearch::Task::operator =(const Task& that) noexcept
-{
-	if (this != &that)
-	{
-		factorCount = that.factorCount;
-		taskId = that.taskId;
-
-		if (factorCount < 8)
-		{
-			for (int i = 0; i < factorCount; ++i)
-				factors[i] = that.factors[i];
-		} else
-		{
-			memcpy(factors, that.factors, 4 * factorCount);
-		}
-	}
-
-	return *this;
 }

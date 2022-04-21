@@ -21,23 +21,60 @@ ProgressManager::ProgressManager()
 void ProgressManager::Reset()
 {
 	m_Count = 0;
+	m_StallId = 0;
 	m_IsReady = false;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-bool ProgressManager::GetProgress(unsigned* factors) const
+bool ProgressManager::GetProgress(unsigned* factors)
 {
 	thread::Lock lock(m_CS);
 
-	const unsigned* progress;
-	// Если у самого старого незавершённого задания (голова списка) есть данные,
-	// то вернём именно их. Иначе вернём данные последнего завершённого задания
+	const unsigned* progress = nullptr;
+	// Если у самого старого незавершённого задания (в
+	// голове списка) есть данные, то вернём именно их
 	if (m_Count && m_Items[m_Head].isReady)
+	{
+		m_StallId = 0;
 		progress = m_Items[m_Head].progress;
-	else if (m_IsReady)
-		progress = m_Progress;
-	else
-		return false;
+	} else
+	{
+		if (m_Count)
+		{
+			// Если такого задания нет, то проверим, нет ли "зависшего" задания, то есть такого, для которого событие
+			// завершения не было обработано из-за того, что соответствующего элемента не было в буфере, но потом при
+			// обновлении прогресса другого задания такой элемент был вставлен в список (и теперь он "повис")
+			if (m_StallId && m_StallId == m_Items[m_Head].taskId)
+			{
+				while (m_Count && !m_Items[m_Head].isReady)
+				{
+					auto next = m_Head + 1;
+					m_Head = (next < MAX_TASKS) ? next : 0;
+					--m_Count;
+				}
+
+				if (m_Count && m_Items[m_Head].isReady)
+				{
+					m_StallId = 0;
+					progress = m_Items[m_Head].progress;
+				}
+			} else
+			{
+				// Запомним ID "зависшего" задания
+				m_StallId = m_Items[m_Head].taskId;
+			}
+		}
+
+		// Вернём данные последнего завершённого задания,
+		// если ничего другого для вывода сейчас нет
+		if (!progress)
+		{
+			if (m_IsReady)
+				progress = m_Progress;
+			else
+				return false;
+		}
+	}
 
 	for (size_t i = 0; i < MAX_COEFS; ++i)
 		factors[i] = progress[i];
@@ -46,7 +83,7 @@ bool ProgressManager::GetProgress(unsigned* factors) const
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void ProgressManager::SetProgress(const unsigned* factors, unsigned taskId)
+void ProgressManager::SetProgress(const unsigned* factors, uint64_t taskId)
 {
 	thread::Lock lock(m_CS);
 
@@ -61,7 +98,7 @@ void ProgressManager::SetProgress(const unsigned* factors, unsigned taskId)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void ProgressManager::SetDone(unsigned taskId, bool oldest)
+void ProgressManager::SetDone(uint64_t taskId, bool oldest)
 {
 	thread::Lock lock(m_CS);
 
@@ -69,9 +106,9 @@ void ProgressManager::SetDone(unsigned taskId, bool oldest)
 	{
 		// Пометим указанное задание как завершённое
 		const auto firstId = m_Items[m_Head].taskId;
-		if (taskId >= firstId && taskId < static_cast<uint64_t>(firstId) + m_Count)
+		if (taskId >= firstId && taskId < firstId + m_Count)
 		{
-			unsigned idx = m_Head + taskId - firstId;
+			auto idx = m_Head + taskId - firstId;
 			if (idx >= MAX_TASKS)
 				idx -= MAX_TASKS;
 
@@ -111,26 +148,24 @@ void ProgressManager::SetDone(unsigned taskId, bool oldest)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-ProgressManager::Item* ProgressManager::GetItem(unsigned taskId)
+ProgressManager::Item* ProgressManager::GetItem(uint64_t taskId)
 {
-	// Если буфер пуст или значение taskId меньше наименьшего значения в буфере
-	// (произошло переполнение счётчика), то очистим буфер (сбросим состояние)
-	const auto firstId = m_Items[m_Head].taskId;
-	if (!m_Count || taskId < firstId)
+	if (!m_Count)
 	{
-		// Иногда возникает ситуация, когда при пустом буфере один из рабочих потоков вызывает функцию
-		// SetProgress, а затем это делает другой поток для задания с более низким taskId. Это может привести
-		// к кратковременному нарушению порядка вывода прогресса. Поэтому, если эта ситуация произошла не в
-		// результате переполнения счётчика, мы будем игнорировать задания с более низким taskId
-		if (m_Count && (firstId < 0xffff0000 || taskId > 0x10000))
-			return nullptr;
-
 		m_Count = 1;
 		m_Items[m_Head].Reset(taskId);
 		return m_Items + m_Head;
 	}
 
-	if (taskId >= static_cast<uint64_t>(firstId) + m_Count)
+	const auto firstId = m_Items[m_Head].taskId;
+	// Иногда возникает ситуация, когда при пустом буфере один из рабочих потоков вызывает
+	// функцию SetProgress, а затем это делает другой поток для задания с меньшим taskId.
+	// Это может привести к кратковременному нарушению порядка вывода прогресса. Поэтому
+	// в такой ситуации мы будем игнорировать задания с меньшими taskId
+	if (taskId < firstId)
+		return nullptr;
+
+	if (taskId >= firstId + m_Count)
 	{
 		// Если самое первое задание в буфере завершено, не имеет прогресса и находится
 		// непосредственно перед текущим, то удалим его. Эта ситуация возникает только
@@ -145,7 +180,7 @@ ProgressManager::Item* ProgressManager::GetItem(unsigned taskId)
 
 		// Если расстояние между id больше размера буфера, то проигнорируем прогресс
 		// этого задания: сейчас это задание достаточно далеко от текущего прогресса
-		const unsigned newCount = taskId - firstId + 1;
+		const unsigned newCount = static_cast<unsigned>(taskId - firstId + 1);
 		if (newCount > MAX_TASKS)
 			return nullptr;
 
@@ -172,7 +207,7 @@ ProgressManager::Item* ProgressManager::GetItem(unsigned taskId)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void ProgressManager::Item::Reset(unsigned id)
+void ProgressManager::Item::Reset(uint64_t id)
 {
 	taskId = id;
 	isReady = false;

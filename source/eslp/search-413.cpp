@@ -41,7 +41,7 @@ unsigned Search413::GetChunkSize(unsigned hiFactor)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void Search413::InitFirstTask(Task& task, const std::vector<unsigned>& startFactors)
+void Search413::InitFirstTask(WorkerTask& task, const std::vector<unsigned>& startFactors)
 {
 	Assert(!startFactors.empty());
 
@@ -57,7 +57,7 @@ void Search413::InitFirstTask(Task& task, const std::vector<unsigned>& startFact
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void Search413::SelectNextTask(Task& task)
+void Search413::SelectNextTask(WorkerTask& task)
 {
 	task.factors[0] += 8;
 	if (!(task.factors[0] % 5))
@@ -72,7 +72,7 @@ AML_NOINLINE void Search413::SearchFactors(Worker* worker, const NumberT* powers
 	unsigned k[ProgressManager::MAX_COEFS];
 
 	// Коэффициент левой части
-	k[0] = worker->task.factors[0];
+	k[0] = worker->task->factors[0];
 
 	// Левая часть уравнения
 	const auto z = powers[k[0]];
