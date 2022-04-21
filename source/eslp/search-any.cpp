@@ -458,6 +458,7 @@ AML_NOINLINE bool SearchAny::SearchLast(Worker* worker, NumberT z, unsigned* k, 
 				k[2] = f;
 		}
 
+		uint64_t proof = 0;
 		// Перебор значений k[2]
 		for (; k[2] <= k[1]; ++k[2])
 		{
@@ -465,6 +466,7 @@ AML_NOINLINE bool SearchAny::SearchLast(Worker* worker, NumberT z, unsigned* k, 
 			if (pk2 >= zd)
 				break;
 
+			++proof;
 			// Вычисляем значение степени последнего коэффициента правой части, при котором может существовать
 			// решение уравнения, и проверяем значение в хеш-таблице. Если значение не будет найдено, то значит
 			// не существует такого целого числа, степень которого равна lastFP и можно пропустить этот набор
@@ -499,6 +501,8 @@ AML_NOINLINE bool SearchAny::SearchLast(Worker* worker, NumberT z, unsigned* k, 
 					return true;
 			}
 		}
+
+		worker->task->proof += proof;
 	}
 
 	return false;
@@ -547,6 +551,7 @@ AML_NOINLINE void SearchAny::SearchFactors2(Worker* worker, const NumberT* power
 			k[1] = f;
 	}
 
+	const auto proof = factors[0] - k[1];
 	for (; k[1] < factors[0]; ++k[1])
 	{
 		if (const auto lastFP = z - powers[k[1]]; m_Hashes.Exists(lastFP))
@@ -568,6 +573,8 @@ AML_NOINLINE void SearchAny::SearchFactors2(Worker* worker, const NumberT* power
 			}
 		}
 	}
+
+	worker->task->proof += proof;
 
 	// Вывод прогресса
 	if (!(++worker->progressCounter & 0xff))
@@ -626,6 +633,7 @@ AML_NOINLINE void SearchAny::SearchFactors3(Worker* worker, const NumberT* power
 				k[2] = f;
 		}
 
+		uint64_t proof = 0;
 		// Перебор 2-го коэф-та
 		for (; k[2] <= k[1]; ++k[2])
 		{
@@ -633,6 +641,7 @@ AML_NOINLINE void SearchAny::SearchFactors3(Worker* worker, const NumberT* power
 			if (pk2 >= zd)
 				break;
 
+			++proof;
 			// Поиск 3-го коэффициента
 			if (const auto lastFP = zd - pk2; m_Hashes.Exists(lastFP))
 			{
@@ -653,6 +662,8 @@ AML_NOINLINE void SearchAny::SearchFactors3(Worker* worker, const NumberT* power
 				}
 			}
 		}
+
+		worker->task->proof += proof;
 
 		// Вывод прогресса
 		if (!(it++ & 0xff) && !(++worker->progressCounter & 0x7f))

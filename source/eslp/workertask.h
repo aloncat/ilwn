@@ -20,6 +20,7 @@ struct WorkerTask final
 	static constexpr int MAX_FACTOR_COUNT = SearchBase::MAX_FACTOR_COUNT / 2;
 
 	uint64_t id = 0;					// Уникальный номер задания
+	uint64_t proof = 0;					// Переменная контроля корректности
 	int factorCount = 0;				// Количество заданных коэффициентов
 	unsigned factors[MAX_FACTOR_COUNT];	// Заданные значения первых коэффициентов
 

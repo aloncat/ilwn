@@ -89,6 +89,7 @@ AML_NOINLINE void SearchE23::SearchFactors(Worker* worker, const NumberT* powers
 			delta = 2;
 		}
 
+		uint64_t proof = 0;
 		// Перебор 2-го коэффициента
 		for (; k[3] <= k[2]; k[3] += delta)
 		{
@@ -96,6 +97,7 @@ AML_NOINLINE void SearchE23::SearchFactors(Worker* worker, const NumberT* powers
 			if (pk3 >= zd)
 				break;
 
+			++proof;
 			if (const auto lastFP = zd - pk3; m_Hashes.Exists(lastFP))
 			{
 				for (unsigned lo = 1, hi = k[3]; lo <= hi;)
@@ -115,6 +117,8 @@ AML_NOINLINE void SearchE23::SearchFactors(Worker* worker, const NumberT* powers
 				}
 			}
 		}
+
+		worker->task->proof += proof;
 
 		pk2 = powers[++k[2]];
 		if (pk2 + 2 > z)

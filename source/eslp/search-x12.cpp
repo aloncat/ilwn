@@ -106,6 +106,7 @@ AML_NOINLINE void SearchX12::SearchFactors(Worker* worker, const NumberT* powers
 			k[1] = f;
 	}
 
+	const auto proof = k[0] - k[1];
 	for (; k[1] < k[0]; ++k[1])
 	{
 		if (const auto lastFP = z - powers[k[1]]; m_Hashes.Exists(lastFP))
@@ -127,6 +128,8 @@ AML_NOINLINE void SearchX12::SearchFactors(Worker* worker, const NumberT* powers
 			}
 		}
 	}
+
+	worker->task->proof += proof;
 
 	// Вывод прогресса
 	if (!(++worker->progressCounter & 0xff))

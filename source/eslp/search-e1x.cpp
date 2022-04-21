@@ -162,9 +162,12 @@ AML_NOINLINE void SearchE1X::SearchFactors(Worker* worker, const NumberT* powers
 		}
 	}
 
+	uint64_t proof = 0;
 	// Перебираем коэффициенты правой части
 	for (size_t it = 0;;)
 	{
+		++proof;
+
 		// Вычисляем значение степени последнего коэффициента правой части, при котором может существовать
 		// решение уравнения, и проверяем значение в хеш-таблице. Если значение не будет найдено, то значит
 		// не существует такого целого числа, степень которого равна lastFP и можно пропустить этот набор
@@ -207,6 +210,8 @@ AML_NOINLINE void SearchE1X::SearchFactors(Worker* worker, const NumberT* powers
 			if (sum += powers[f + delta] - powers[f]; sum < z)
 				continue;
 		}
+
+		worker->task->proof = proof;
 
 		int idx = 0;
 		// Значение предпоследнего коэффициента или сумма оказались слишком большими. Переходим

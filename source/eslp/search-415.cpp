@@ -179,6 +179,7 @@ AML_NOINLINE bool Search415::SearchLast(Worker* worker, NumberT z, unsigned* k, 
 				k4 = f;
 		}
 
+		uint64_t proof = 0;
 		// Перебор значений k[4]
 		for (; k4 <= k3; ++k4)
 		{
@@ -187,6 +188,7 @@ AML_NOINLINE bool Search415::SearchLast(Worker* worker, NumberT z, unsigned* k, 
 			if (pk4 >= zd)
 				break;
 
+			++proof;
 			if (const NumberT lastFP = zd - pk4; m_Hashes.Exists(lastFP))
 			{
 				for (unsigned lo = 1, hi = k4; lo <= hi;)
@@ -206,6 +208,8 @@ AML_NOINLINE bool Search415::SearchLast(Worker* worker, NumberT z, unsigned* k, 
 				}
 			}
 		}
+
+		worker->task->proof += proof;
 	}
 
 	return false;

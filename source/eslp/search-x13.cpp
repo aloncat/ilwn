@@ -68,6 +68,7 @@ AML_NOINLINE void SearchX13::SearchFactors(Worker* worker, const NumberT* powers
 				k[2] = f;
 		}
 
+		uint64_t proof = 0;
 		// Перебор 2-го коэф-та
 		for (; k[2] <= k[1]; ++k[2])
 		{
@@ -75,6 +76,7 @@ AML_NOINLINE void SearchX13::SearchFactors(Worker* worker, const NumberT* powers
 			if (pk2 >= zd)
 				break;
 
+			++proof;
 			// Поиск 3-го коэффициента
 			if (const auto lastFP = zd - pk2; m_Hashes.Exists(lastFP))
 			{
@@ -95,6 +97,8 @@ AML_NOINLINE void SearchX13::SearchFactors(Worker* worker, const NumberT* powers
 				}
 			}
 		}
+
+		worker->task->proof += proof;
 
 		// Вывод прогресса
 		if (!(it++ & 0xff) && !(++worker->progressCounter & 0x7f))

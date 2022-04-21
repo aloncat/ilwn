@@ -127,6 +127,7 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 					k3 = f;
 			}
 
+			uint64_t proof = 0;
 			const unsigned k3dt = (k2dt != 1 || k2 % 5) ? 5 : 1;
 			for (k3 += (k3dt == 1) ? 0 : 4 - (k3 + 4) % 5; k3 <= k2; k3 += k3dt)
 			{
@@ -135,6 +136,7 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 				if (pk3 >= zd)
 					break;
 
+				++proof;
 				if (const NumberT lastFP = zd - pk3; m_Hashes.Exists(lastFP))
 				{
 					for (unsigned lo = 1, hi = k3; lo <= hi;)
@@ -154,6 +156,8 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 					}
 				}
 			}
+
+			worker->task->proof += proof;
 		}
 
 		// Вывод прогресса

@@ -19,6 +19,8 @@ WorkerTask& WorkerTask::operator =(const WorkerTask& that) noexcept
 	if (this != &that)
 	{
 		id = that.id;
+		proof = 0;
+
 		factorCount = that.factorCount;
 
 		if (factorCount < 8)
