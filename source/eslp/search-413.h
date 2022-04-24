@@ -5,7 +5,6 @@
 #pragma once
 
 #include "factorsearch.h"
-#include "hashtable.h"
 
 #include <string>
 #include <vector>
@@ -33,6 +32,5 @@ protected:
 	void SearchFactors(Worker* worker, const NumberT* powers);
 
 protected:
-	HashTable<23> m_Hashes;
 	unsigned m_ProgressMask = 0;
 };

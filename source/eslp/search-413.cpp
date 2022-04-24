@@ -26,18 +26,12 @@ std::wstring Search413::GetAdditionalInfo() const
 void Search413::BeforeCompute(unsigned upperLimit)
 {
 	SetSearchFn(this);
-
-	// Так как последний коэффициент правой части всегда кратен 8 и мы ищем уменьшенное в 8
-	// раз значение этого коэффициента, то имеет смысл проинициализировать лишь 1/8 значений
-	// хеш-таблицы. Это значительно уменьшит количество коллизий и увеличит скорость работы
-	InitHashTable(m_Hashes, upperLimit >> 3);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 unsigned Search413::GetChunkSize(unsigned hiFactor)
 {
-	return (hiFactor > 8000000) ? 400000 :
-		400000 + (8000000 - hiFactor) / 12;
+	return (hiFactor > 12000000) ? 3000000 : 6000000;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -79,11 +73,11 @@ AML_NOINLINE void Search413::SearchFactors(Worker* worker, const NumberT* powers
 
 	// Макс. значение последних 2 коэффициентов правой части не должно превышать значения коэффициента
 	// в левой части. Но так как они оба кратны 8, то мы будем перебирать значения, уменьшенные в 8 раз
-	const unsigned limit = k[0] >> 3;
+	unsigned limit = k[0] >> 3;
 
 	// Так как сумма или разность k[0] и k[1] должна быть кратна 1024, то нет смысла проверять каждое
-	// нечётное значение k[1] в цикле. Из каждых 1024 натуральных чисел нам будут нужны только 2: то,
-	// которое будет в сумме с k[0] кратно 1024, и второе, которое будет кратно в разности с ним
+	// нечётное значение k[1] в цикле. Из каждых 1024 последовательных чисел нам будут нужны только 2:
+	// то, которое в сумме с k[0] будет кратно 1024, и то, для которого кратно 1024 будет k[0] - k[1]
 	auto f1 = k[0] & 1023;
 	f1 = (f1 < 512) ? f1 : 1024 - f1;
 	const unsigned delta[] = { 1024 - 2 * f1, 2 * f1 };
@@ -106,7 +100,7 @@ AML_NOINLINE void Search413::SearchFactors(Worker* worker, const NumberT* powers
 			if (!(k1 % 3))
 				continue;
 		}
-		// Если коэффициент в левой части и первый коэффициент правой не кратны 3, то другие
+		// Если коэффициент в левой части и нечётный коэффициент правой не кратны 3, то другие
 		// 2 коэф-та правой части будут кратны 3, а значит и разность должна быть кратна 3^4
 		else if (k1 % 3 && zd % 81)
 			continue;
@@ -122,36 +116,36 @@ AML_NOINLINE void Search413::SearchFactors(Worker* worker, const NumberT* powers
 			continue;
 
 		zd >>= 12;
-		uint64_t proof = 0;
-		for (unsigned k2 = 5; k2 <= limit; k2 += 5)
-		{
-			k[2] = k2 << 3;
-			const auto pk2 = powers[k2];
-			if (pk2 >= zd)
-				break;
+		unsigned k2 = limit, k3 = 1;
+		while (zd <= powers[k2]) --k2;
+		limit = k2;
 
-			++proof;
-			if (const NumberT lastFP = zd - pk2; m_Hashes.Exists(lastFP))
+		auto pk2 = powers[k2];
+		for (unsigned step = k2 >> 1; step; step >>= 1)
+		{
+			auto f = k3 + step;
+			if (zd > pk2 + powers[f - 1])
+				k3 = f;
+		}
+
+		for (; k2 >= k3; ++k3)
+		{
+			if (auto sum = pk2 + powers[k3]; sum >= zd)
 			{
-				for (unsigned lo = 1, hi = limit; lo <= hi;)
+				if (sum == zd)
 				{
-					unsigned mid = (lo + hi) >> 1;
-					if (auto v = powers[mid]; v < lastFP)
-						lo = mid + 1;
-					else if (v > lastFP)
-						hi = mid - 1;
-					else
-					{
-						k[3] = mid << 3;
-						if (OnSolutionFound(worker, k))
-							return;
-						break;
-					}
+					k[2] = k2 << 3;
+					k[3] = k3 << 3;
+					if (OnSolutionFound(worker, k))
+						return;
+				} else
+				{
+					pk2 = powers[--k2];
 				}
 			}
 		}
 
-		worker->task->proof += proof;
+		worker->task->proof += k3;
 	}
 
 	// Вывод прогресса
