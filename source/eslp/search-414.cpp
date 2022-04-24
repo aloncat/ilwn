@@ -41,8 +41,8 @@ void Search414::BeforeCompute(unsigned upperLimit)
 //--------------------------------------------------------------------------------------------------------------------------------
 unsigned Search414::GetChunkSize(unsigned hiFactor)
 {
-	return (hiFactor > 24000) ? 2800 :
-		2800 + (24000 - hiFactor) / 4;
+	return (hiFactor > 40000) ? 5000 :
+		5000 + (40000 - hiFactor) / 4;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -54,7 +54,8 @@ void Search414::InitFirstTask(WorkerTask& task, const std::vector<unsigned>& sta
 	task.factors[0] = startFactors[0];
 
 	const auto f = task.factors[0];
-	m_ProgressMask = (f < 8000) ? 511 : (f < 16000) ? 63 : 15;
+	m_ProgressMask = (f < 8000) ? 1023 : (f < 20000) ? 127 :
+		(f < 50000) ? 31 : 7;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -113,7 +114,11 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 				break;
 
 			const auto zd = left - pk2;
-			// Также разность (как и сумма степеней оставшихся коэффициентов правой части) не может
+			// Если k[1] кратен 5, то проверим кратность и для k[2]
+			if ((k2dt == 1) && k[2] % 5 && zd % 625)
+				continue;
+
+			// Разность (как и сумма степеней двух оставшихся коэффициентов правой части) не может
 			// быть сравнима с 7, 8, 11 по модулю 13, а также 4, 5, 6, 9, 13, 22, 28 по модулю 29
 			if ((0x980 & (1 << (zd % 13))) || (0x10402270 & (1 << (zd % 29))))
 				continue;
@@ -128,6 +133,7 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 			}
 
 			uint64_t proof = 0;
+			unsigned highest = k2;
 			const unsigned k3dt = (k2dt != 1 || k2 % 5) ? 5 : 1;
 			for (k3 += (k3dt == 1) ? 0 : 4 - (k3 + 4) % 5; k3 <= k2; k3 += k3dt)
 			{
@@ -139,13 +145,13 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 				++proof;
 				if (const NumberT lastFP = zd - pk3; m_Hashes.Exists(lastFP))
 				{
-					for (unsigned lo = 1, hi = k3; lo <= hi;)
+					for (unsigned lo = 1, hi = highest; lo <= hi;)
 					{
 						unsigned mid = (lo + hi) >> 1;
 						if (auto v = powers[mid]; v < lastFP)
 							lo = mid + 1;
 						else if (v > lastFP)
-							hi = mid - 1;
+							highest = hi = mid - 1;
 						else
 						{
 							k[4] = mid << 1;

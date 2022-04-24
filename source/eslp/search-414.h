@@ -33,6 +33,6 @@ protected:
 	void SearchFactors(Worker* worker, const NumberT* powers);
 
 protected:
-	HashTable<20> m_Hashes;
+	HashTable<22> m_Hashes;
 	unsigned m_ProgressMask = 0;
 };
