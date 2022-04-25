@@ -70,6 +70,8 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 {
 	// Массив коэффициентов
 	unsigned k[ProgressManager::MAX_COEFS];
+	static_assert(ProgressManager::MAX_COEFS >= 5,
+		"Array k is too short for 4.1.4 equation");
 
 	// Коэффициент левой части
 	k[0] = worker->task->factors[0];
@@ -81,6 +83,7 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 	// в левой части. Но так как все они чётны, то мы будем перебирать значения, вдвое меньшие реальных
 	const unsigned limit = k[0] >> 1;
 
+	// Перебор нечётного коэффициента
 	for (k[1] = 1; k[1] < k[0]; k[1] += 2)
 	{
 		auto left = z - powers[k[1]];
@@ -105,6 +108,7 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 				k2 = f;
 		}
 
+		// Перебор значений коэффициента k[2]
 		const unsigned k2dt = (k[1] % 5) ? 5 : 1;
 		for (k2 += (k2dt == 1) ? 0 : 4 - (k2 + 4) % 5; k2 <= limit; k2 += k2dt)
 		{
@@ -115,7 +119,7 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 
 			const auto zd = left - pk2;
 			// Если k[1] кратен 5, то проверим кратность и для k[2]
-			if ((k2dt == 1) && k[2] % 5 && zd % 625)
+			if (k2dt == 1 && k2 % 5 && zd % 625)
 				continue;
 
 			// Разность (как и сумма степеней двух оставшихся коэффициентов правой части) не может
@@ -132,12 +136,10 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 					k3 = f;
 			}
 
-			uint64_t proof = 0;
-			unsigned highest = k2;
+			unsigned highest = k2, proof = 0;
 			const unsigned k3dt = (k2dt != 1 || k2 % 5) ? 5 : 1;
 			for (k3 += (k3dt == 1) ? 0 : 4 - (k3 + 4) % 5; k3 <= k2; k3 += k3dt)
 			{
-				k[3] = k3 << 1;
 				const auto pk3 = powers[k3];
 				if (pk3 >= zd)
 					break;
@@ -154,6 +156,7 @@ AML_NOINLINE void Search414::SearchFactors(Worker* worker, const NumberT* powers
 							highest = hi = mid - 1;
 						else
 						{
+							k[3] = k3 << 1;
 							k[4] = mid << 1;
 							if (OnSolutionFound(worker, k))
 								return;

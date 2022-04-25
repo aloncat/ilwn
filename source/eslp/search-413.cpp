@@ -64,6 +64,8 @@ AML_NOINLINE void Search413::SearchFactors(Worker* worker, const NumberT* powers
 {
 	// Массив коэффициентов
 	unsigned k[ProgressManager::MAX_COEFS];
+	static_assert(ProgressManager::MAX_COEFS >= 4,
+		"Array k is too short for 4.1.3 equation");
 
 	// Коэффициент левой части
 	k[0] = worker->task->factors[0];
