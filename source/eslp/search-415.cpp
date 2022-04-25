@@ -41,8 +41,8 @@ void Search415::BeforeCompute(unsigned upperLimit)
 //--------------------------------------------------------------------------------------------------------------------------------
 unsigned Search415::GetChunkSize(unsigned hiFactor)
 {
-	return (hiFactor > 6000) ? 1200 :
-		1200 + (6000 - hiFactor) / 4;
+	return (hiFactor > 8000) ? 1500 :
+		1500 + (8000 - hiFactor) / 4;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ void Search415::InitFirstTask(WorkerTask& task, const std::vector<unsigned>& sta
 	task.factors[0] = startFactors[0];
 
 	const auto f = task.factors[0];
-	m_ProgressMask = (f < 2000) ? 1023 : (f < 8000) ? 255 : 63;
+	m_ProgressMask = (f < 3200) ? 2047 : (f < 9000) ? 255 : 63;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -69,6 +69,8 @@ AML_NOINLINE void Search415::SearchFactors(Worker* worker, const NumberT* powers
 {
 	// Массив коэффициентов
 	unsigned k[ProgressManager::MAX_COEFS];
+	static_assert(ProgressManager::MAX_COEFS >= 6,
+		"Array k is too short for 4.1.5 equation");
 
 	// Коэффициент левой части
 	k[0] = worker->task->factors[0];
@@ -119,12 +121,16 @@ AML_NOINLINE void Search415::SearchFactors(Worker* worker, const NumberT* powers
 			if (zm5 && !(k2 % 5))
 				continue;
 
-			k[2] = k2 << 1;
 			const auto pk2 = powers[k2];
 			if (pk2 + 3 > left)
 				break;
 
-			if (SearchLast(worker, left - pk2, k, powers))
+			const auto zd = left - pk2;
+			if (!zm5 && k2 % 5 && zd % 625)
+				continue;
+
+			k[2] = k2 << 1;
+			if (SearchLast(worker, zd, k, powers, zm5))
 				return;
 
 			// Вывод прогресса
@@ -141,7 +147,7 @@ AML_NOINLINE void Search415::SearchFactors(Worker* worker, const NumberT* powers
 
 //--------------------------------------------------------------------------------------------------------------------------------
 template<class NumberT>
-AML_NOINLINE bool Search415::SearchLast(Worker* worker, NumberT z, unsigned* k, const NumberT* powers)
+AML_NOINLINE bool Search415::SearchLast(Worker* worker, NumberT z, unsigned* k, const NumberT* powers, bool zm5)
 {
 	// На входе z содержит значение степени коэффициента левой части, из которого вычтено значение
 	// степени нечётного коэффициента правой части k[1], а также значение степени старшего чётного
@@ -159,17 +165,23 @@ AML_NOINLINE bool Search415::SearchLast(Worker* worker, NumberT z, unsigned* k, 
 	// Перебор значений коэффициента k[3]
 	for (unsigned k2 = k[2] >> 1; k3 <= k2; ++k3)
 	{
-		k[3] = k3 << 1;
+		if (zm5 && !(k3 % 5))
+			continue;
+
 		const auto pk3 = powers[k3];
 		if (pk3 >= z)
 			break;
 
 		const auto zd = z - pk3;
-		// Также разность (как и сумма степеней оставшихся коэффициентов правой части) не может
+		if (!zm5 && k3 % 5 && zd % 625)
+			continue;
+
+		// Разность (как и сумма степеней двух оставшихся коэффициентов правой части) не может
 		// быть сравнима с 7, 8, 11 по модулю 13, а также 4, 5, 6, 9, 13, 22, 28 по модулю 29
 		if ((0x980 & (1 << (zd % 13))) || (0x10402270 & (1 << (zd % 29))))
 			continue;
 
+		k[3] = k3 << 1;
 		unsigned k4 = 1;
 		// Пропустим низкие значения k[4]
 		for (unsigned step = k3 >> 1; step; step >>= 1)
@@ -179,16 +191,15 @@ AML_NOINLINE bool Search415::SearchLast(Worker* worker, NumberT z, unsigned* k, 
 				k4 = f;
 		}
 
-		uint64_t proof = 0;
+		worker->task->proof -= k4;
+
 		// Перебор значений k[4]
 		for (; k4 <= k3; ++k4)
 		{
-			k[4] = k4 << 1;
 			const auto pk4 = powers[k4];
 			if (pk4 >= zd)
 				break;
 
-			++proof;
 			if (const NumberT lastFP = zd - pk4; m_Hashes.Exists(lastFP))
 			{
 				for (unsigned lo = 1, hi = k4; lo <= hi;)
@@ -200,6 +211,7 @@ AML_NOINLINE bool Search415::SearchLast(Worker* worker, NumberT z, unsigned* k, 
 						hi = mid - 1;
 					else
 					{
+						k[4] = k4 << 1;
 						k[5] = mid << 1;
 						if (OnSolutionFound(worker, k))
 							return true;
@@ -209,7 +221,7 @@ AML_NOINLINE bool Search415::SearchLast(Worker* worker, NumberT z, unsigned* k, 
 			}
 		}
 
-		worker->task->proof += proof;
+		worker->task->proof += k4;
 	}
 
 	return false;
