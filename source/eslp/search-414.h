@@ -32,6 +32,12 @@ protected:
 	template<class NumberT>
 	void SearchFactors(Worker* worker, const NumberT* powers);
 
+	template<class NumberT>
+	bool SearchLast1(Worker* worker, unsigned* k, unsigned limit, NumberT z, const NumberT* powers);
+
+	template<class NumberT>
+	bool SearchLast2(Worker* worker, unsigned* k, unsigned limit, NumberT z, const NumberT* powers);
+
 protected:
 	HashTable<22> m_Hashes;
 	unsigned m_ProgressMask = 0;
