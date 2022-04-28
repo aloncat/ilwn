@@ -151,6 +151,11 @@ AML_NOINLINE bool Search414::SearchLast1(Worker* worker, unsigned* k, unsigned l
 			break;
 
 		const auto zd = z - pk2;
+		// Так как оставшиеся 2 коэффициента чётные, то значение разности (как и суммы
+		// степеней этих коэффициентов), должно быть сравнимо с 0, 1 или 2 по модулю 16
+		if ((zd & 15) > 2)
+			continue;
+
 		// Разность (как и сумма степеней 2 оставшихся чётных коэффициентов правой части) не может
 		// быть сравнима с 7, 8, 11 по модулю 13, а также 4, 5, 6, 9, 13, 22, 28 по модулю 29
 		if ((0x980 & (1 << (zd % 13))) || (0x10402270 & (1 << (zd % 29))))
@@ -176,7 +181,7 @@ AML_NOINLINE bool Search414::SearchLast1(Worker* worker, unsigned* k, unsigned l
 				break;
 
 			// Поиск подходящего значения k[4]
-			if (const NumberT lastFP = zd - pk3; m_Hashes.Exists(lastFP))
+			if (const NumberT lastFP = zd - pk3; !(lastFP & 14) && m_Hashes.Exists(lastFP))
 			{
 				for (unsigned lo = 1, hi = k3; lo <= hi;)
 				{
@@ -256,7 +261,7 @@ AML_NOINLINE bool Search414::SearchLast2(Worker* worker, unsigned* k, unsigned l
 				break;
 
 			// Поиск подходящего значения k[4]
-			if (const NumberT lastFP = zd - pk3; m_Hashes.Exists(lastFP))
+			if (const NumberT lastFP = zd - pk3; !(lastFP & 14) && m_Hashes.Exists(lastFP))
 			{
 				for (unsigned lo = 1, hi = k3; lo <= hi;)
 				{
