@@ -32,7 +32,16 @@ protected:
 	void SearchFactors(Worker* worker, const NumberT* powers);
 
 	template<class NumberT>
-	bool SearchLast(Worker* worker, NumberT z, unsigned* k, const NumberT* powers, bool zm5);
+	void Search5(Worker* worker, unsigned* k, const NumberT* powers);
+
+	template<class NumberT>
+	void SearchOdd(Worker* worker, unsigned* k, const NumberT* powers);
+
+	template<class NumberT>
+	bool SearchLast2(Worker* worker, unsigned* k, NumberT z, const NumberT* powers);
+
+	template<class NumberT>
+	bool SearchLast10(Worker* worker, unsigned* k, NumberT z, unsigned limit, const NumberT* powers);
 
 protected:
 	unsigned m_ProgressMask = 0;
