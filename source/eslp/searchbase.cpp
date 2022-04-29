@@ -203,7 +203,7 @@ std::wstring SearchBase::GetAdditionalInfo() const
 //--------------------------------------------------------------------------------------------------------------------------------
 bool SearchBase::OpenLogFile()
 {
-	if (m_Log.Open(util::Format(L"log-%i.%i.%i.txt", m_Info.power, m_Info.leftCount, m_Info.rightCount),
+	if (m_Log.Open(util::Format(L"%i.%i.%i.txt", m_Info.power, m_Info.leftCount, m_Info.rightCount),
 		util::FILE_OPEN_ALWAYS | util::FILE_OPEN_READWRITE))
 	{
 		if (auto fileSize = m_Log.GetSize(); fileSize > 0)

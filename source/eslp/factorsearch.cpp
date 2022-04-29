@@ -45,7 +45,6 @@ void FactorSearch::Search(const Options& options, const std::vector<unsigned>& s
 	m_PendingSolutions.clear();
 	m_PendingSolutions.reserve(100);
 	m_PendingTasks.reserve(64);
-	m_LastDoneHiFactor = 0;
 
 	m_NoTasks = false;
 	m_IsCancelled = false;
@@ -93,15 +92,6 @@ void FactorSearch::Search(const Options& options, const std::vector<unsigned>& s
 	aux::Printf(m_IsAborted ? "\rTask #12ABORTED#7: too many solutions\n" :
 		"\rTask %s#7, solutions found: #6#%u\n", m_IsCancelled ?
 		"#12cancelled" : "finished", m_SolutionsFound);
-
-	// Если было найдено максимально допустимое количество решений, то не все
-	// решения попали в вывод, и m_LastDoneHiFactor не соответствует последнему
-	// выведенному решению. Поэтому в этом случае значение выводить не стоит
-	if (m_SolutionsFound < MAX_SOLUTIONS && m_LastDoneHiFactor < UINT_MAX)
-	{
-		auto s = util::Format("nextHiFactor: %u\n", m_LastDoneHiFactor + 1);
-		m_Log.Write(s.c_str(), s.size());
-	}
 
 	const float timeElapsed = GetRunningTime();
 	aux::Printf((timeElapsed < 90) ? "Running time: %.2f#8s\n" : "Running time: %.0f#8s\n", timeElapsed);
@@ -563,7 +553,6 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 
 	Assert(m_TaskList.IsEmpty());
 	InitFirstTask(m_NextTask, startFactors);
-	m_LastDoneHiFactor = hiFactor - 1;
 	m_LastHiFactor = upperLimit.first;
 
 	Assert(m_PendingTasks.empty());
@@ -696,20 +685,6 @@ void FactorSearch::OnOldestTaskDone(Worker* worker)
 {
 	Worker* nextWorker = m_PendingTasks.empty() ? nullptr :
 		m_Workers[m_PendingTasks.front() - 1];
-
-	if (!m_ForceQuit)
-	{
-		if (nextWorker)
-		{
-			// Список ожидаемых заданий не пуст, значит последнее полностью завершённое
-			// задание было расположено непосредственно перед самым первым ожидаемым
-			m_LastDoneHiFactor = nextWorker->task->factors[0] - 1;
-		}
-		// Если же список пуст, то последнее полностью завершённое задание
-		// было расположено непосредственно перед следующим (неназначенным)
-		else if (unsigned nextHiFactor = m_NextTask.factors[0]; nextHiFactor > m_LastDoneHiFactor)
-			m_LastDoneHiFactor = nextHiFactor - 1;
-	}
 
 	if (!m_PendingSolutions.empty())
 	{

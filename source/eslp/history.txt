@@ -1,5 +1,9 @@
 === Version 0.34 ===
-Released: 2022-0x-xx
+Released: 2022-04-30
+
+== Changes ==
+ * Renamed output file (now without 'log-' prefix)
+ * Removed "nextHiFactor" line at the end of output
 
 == Features ==
  * Much faster algorithm for 4.1.3 equation.

@@ -166,8 +166,6 @@ private:
 	TaskList m_TaskList;						// Контейнер для заданий
 	WorkerTask m_NextTask;						// Следующее задание для выполнения
 	unsigned m_LastHiFactor = 0;				// Последний старший коэффициент в блоке заданий
-	unsigned m_LastDoneHiFactor = 0;			// Последний завершённый старший коэффициент
-
 	std::vector<int> m_PendingTasks;			// Выполняемые и ожидающие проверки задания (ID потоков)
 	volatile int m_LoPendingTask = 0;			// Самое младшее (старое) ожидаемое задание (ID потока)
 
