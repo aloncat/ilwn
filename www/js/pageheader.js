@@ -82,6 +82,11 @@ function insertNavigationBar(navBarId, offsetId) {
 				  '</a>' +
 				'</div>' +
 				'<div class="flexitem">' +
+				  '<a class="nodecor" href="/' + /*urlPrefix +*/ 'eslp/">' +
+					'<div class="navitem' + (section === "eslp" ? ' active' : '') + '">ESLP</div>' +
+				  '</a>' +
+				'</div>' +
+				'<div class="flexitem">' +
 				  '<a class="nodecor" href="/' + /*urlPrefix +*/ 'mdpn/">' +
 					'<div class="navitem' + (section === "mdpn" ? ' active' : '') + '">MDPN</div>' +
 				  '</a>' +
