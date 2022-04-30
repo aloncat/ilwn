@@ -356,6 +356,7 @@ table.basic td.txtright {
 }
 
 .prjtag-hw,
+.prjtag-eslp,
 .prjtag-mdpn,
 .prjtag-p196 {
 	margin: 0 2px;
@@ -366,6 +367,11 @@ table.basic td.txtright {
 
 .prjtag-hw {
 	background: #ffa8ff;
+	color: black;
+}
+
+.prjtag-eslp {
+	background: #b8f690;
 	color: black;
 }
 
