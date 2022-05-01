@@ -9,6 +9,8 @@
 
 #include <auxlib/print.h>
 #include <core/console.h>
+#include <core/crc32.h>
+#include <core/fasthash.h>
 #include <core/strformat.h>
 #include <core/sysinfo.h>
 #include <core/util.h>
@@ -30,6 +32,7 @@ FactorSearch::FactorSearch()
 FactorSearch::~FactorSearch()
 {
 	KillWorkers();
+	AML_SAFE_DELETE(m_Tracker);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -75,6 +78,7 @@ void FactorSearch::Search(const Options& options, const std::vector<unsigned>& s
 	m_PrintAllSolutions = options.HasOption("printall");
 	m_StopOnLimit = !options.HasOption("nolimit");
 
+	m_Tracker = new Tracker;
 	CreateWorkers(maxWorkerCount);
 
 	for (auto factors = startFactors; factors[0] && !m_IsCancelled;)
@@ -86,7 +90,9 @@ void FactorSearch::Search(const Options& options, const std::vector<unsigned>& s
 	}
 
 	UpdateConsoleTitle();
+
 	KillWorkers();
+	AML_SAFE_DELETE(m_Tracker);
 
 	util::SystemConsole::Instance().ShowCursor(true);
 	aux::Printf(m_IsAborted ? "\rTask #12ABORTED#7: too many solutions\n" :
@@ -202,8 +208,16 @@ bool FactorSearch::GetNextTask(Worker* worker)
 	{
 		thread::Lock lock(m_TaskCS);
 
+		if (m_StopFactorIndex >= 0 && !m_StopFactorValue)
+		{
+			m_StopFactorValue = m_NextTask.factors[m_StopFactorIndex];
+		}
+
 		while (m_NextTask.factors[0] <= m_LastHiFactor)
 		{
+			if (auto i = m_StopFactorIndex; i >= 0 && m_NextTask.factors[i] != m_StopFactorValue)
+				break;
+
 			if (m_CheckTaskFn(m_NextTask))
 			{
 				worker->task = m_TaskList.Allocate();
@@ -554,6 +568,18 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 	Assert(m_TaskList.IsEmpty());
 	InitFirstTask(m_NextTask, startFactors);
 	m_LastHiFactor = upperLimit.first;
+	m_StopFactorIndex = -1;
+
+	if (!m_Tracker->firstTask.factorCount)
+	{
+		m_Tracker->startTick = ::GetTickCount();
+		m_Tracker->firstTask.factorCount = m_NextTask.factorCount;
+		auto fCount = std::min(m_NextTask.factorCount, static_cast<int>(startFactors.size()));
+		for (int i = 0; i < fCount; ++i)
+			m_Tracker->firstTask.factors[i] = startFactors[i];
+		for (int i = fCount; i < m_Tracker->firstTask.factorCount; ++i)
+			m_Tracker->firstTask.factors[i] = 1;
+	}
 
 	Assert(m_PendingTasks.empty());
 	m_LoPendingTask = 0;
@@ -579,43 +605,59 @@ unsigned FactorSearch::Compute(const std::vector<unsigned>& startFactors, unsign
 		// Активируем рабочие потоки
 		SetActiveThreads(m_ActiveWorkers);
 
-		uint32_t lastProgressTick = 0;
-		while (!m_NoTasks || GetActiveThreads(true))
+		while (!m_NoTasks)
 		{
-			if (m_ForceShowProgress || ::GetTickCount() - lastProgressTick >= 500)
+			uint32_t lastProgressTick = 0;
+			while (!m_NoTasks || GetActiveThreads(true))
 			{
-				unsigned factors[8];
-				if (m_ProgressMan.GetProgress(factors))
+				if (m_ForceShowProgress || ::GetTickCount() - lastProgressTick >= 500)
 				{
-					ShowProgress(factors);
-					m_ForceShowProgress = false;
-					lastProgressTick = ::GetTickCount();
+					unsigned factors[8];
+					if (m_ProgressMan.GetProgress(factors))
+					{
+						ShowProgress(factors);
+						m_ForceShowProgress = false;
+						lastProgressTick = ::GetTickCount();
+					}
+
+					UpdateRunningTime();
+					TrackTasks(true);
 				}
 
-				UpdateRunningTime();
-			}
-
-			if (m_NeedUpdateTitle || m_IsCancelled)
-			{
-				m_NeedUpdateTitle = false;
-				UpdateConsoleTitle();
-			}
-
-			if (util::SystemConsole::Instance().IsCtrlCPressed(true))
-			{
-				if (m_IsCancelled)
-					m_ForceQuit = true;
-				else
+				if (m_NeedUpdateTitle || m_IsCancelled)
 				{
-					m_IsCancelled = true;
-					m_ForceShowProgress = true;
+					m_NeedUpdateTitle = false;
+					UpdateConsoleTitle();
 				}
+
+				if (util::SystemConsole::Instance().IsCtrlCPressed(true))
+				{
+					if (m_IsCancelled)
+						m_ForceQuit = true;
+					else
+					{
+						m_IsCancelled = true;
+						m_ForceShowProgress = true;
+					}
+				}
+
+				UpdateActiveThreadCount();
+				::Sleep(m_ForceShowProgress || m_NoTasks ? 1 : 20);
 			}
 
-			UpdateActiveThreadCount();
-			::Sleep(m_ForceShowProgress || m_NoTasks ? 1 : 20);
+			if (m_NoTasks && m_StopFactorIndex >= 0 && !m_IsCancelled)
+			{
+				TrackTasks(false);
+
+				m_NoTasks = false;
+				m_StopFactorIndex = -1;
+				SetActiveThreads(m_ActiveWorkers);
+			}
 		}
 	}
+
+	if (m_IsCancelled)
+		TrackTasks(false);
 
 	AfterCompute();
 	m_Powers = nullptr;
@@ -695,8 +737,14 @@ void FactorSearch::OnOldestTaskDone(Worker* worker)
 
 	// Удалим из буфера все завершённые и обработанные задания
 	const uint64_t lowestTaskId = nextWorker ? nextWorker->task->id : UINT64_MAX;
-	for (auto task = m_TaskList.GetFront(); task && task->id < lowestTaskId;)
+	for (WorkerTask* task = m_TaskList.GetFront(); task && task->id < lowestTaskId;)
 	{
+		if (!m_ForceQuit)
+		{
+			m_Tracker->lastTask = *task;
+			m_Tracker->proof += task->proof;
+		}
+
 		m_TaskList.PopFront();
 		task = m_TaskList.GetFront();
 	}
@@ -731,6 +779,8 @@ void FactorSearch::OnSolutionReady(const Solution& solution)
 	fmt << '=';
 
 	fn(solution.GetRFactors(), solution.GetRCount());
+	m_Tracker->OnSolutionAdded(fmt);
+
 	fmt << '\n';
 
 	// Выводим решение в файл
@@ -851,4 +901,123 @@ void FactorSearch::UpdateActiveThreadCount()
 		SetActiveThreads(m_ActiveWorkers);
 		m_NeedUpdateTitle = true;
 	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void FactorSearch::TrackTasks(bool update)
+{
+	if (update)
+	{
+		const uint32_t tick = ::GetTickCount();
+		if (m_StopFactorIndex < 0 && tick - m_Tracker->startTick >= 10000 &&
+			m_Tracker->firstTask.factorCount && m_Tracker->lastTask.factorCount)
+		{
+			m_Tracker->startTick = tick;
+			m_Tracker->accumTime += GetThreadTimes();
+
+			if (m_Tracker->accumTime >= 8000000)
+			{
+				auto dist = m_Tracker->lastTask.factors[0] - m_Tracker->firstTask.factors[0];
+				if (dist < 8 && m_NextTask.factorCount > 1 && m_Info.leftCount > 1)
+					m_StopFactorIndex = 1;
+				else
+					m_StopFactorIndex = 0;
+				m_StopFactorValue = 0;
+			}
+		}
+		else if (m_SolutionsFound > 100000 && !m_StopOnLimit && GetRunningTime() < 30 && m_StopFactorIndex < 0 &&
+			m_Tracker->firstTask.factorCount && m_Tracker->lastTask.factorCount)
+		{
+			m_StopFactorIndex = 0;
+			m_StopFactorValue = 0;
+		}
+	}
+	else if (m_Tracker->lastTask.factorCount)
+	{
+		Assert(!GetActiveThreads(true) && "Some threads are still active");
+
+		util::Formatter<char> fmt;
+
+		const uint64_t elapsed = m_Tracker->accumTime + GetThreadTimes();
+		m_Tracker->accumTime = 0;
+
+		int count = m_Tracker->firstTask.factorCount;
+		while (count > 1 && m_Tracker->firstTask.factors[count - 1] == 1)
+			--count;
+		m_Tracker->firstTask.factorCount = count;
+
+		fmt << m_Tracker->firstTask.factors[0];
+		for (int i = 1; i < count; ++i)
+			fmt << "." << m_Tracker->firstTask.factors[i];
+
+		count = m_Tracker->lastTask.factorCount;
+		for (int i = 1; i < count; ++i)
+		{
+			if (m_Tracker->lastTask.factors[i - 1] < m_NextTask.factors[i - 1])
+			{
+				count = i;
+				break;
+			}
+		}
+		m_Tracker->lastTask.factorCount = count;
+
+		if (count > 1 && count == m_Tracker->lastTask.factorCount)
+		{
+			bool equal = true;
+			for (int i = 0; i < count - 1; ++i)
+			{
+				if (m_Tracker->lastTask.factors[i] != m_NextTask.factors[i])
+				{
+					equal = false;
+					break;
+				}
+			}
+
+			if (equal && m_Tracker->lastTask.factors[count - 1] + 1 < m_NextTask.factors[count - 1])
+				m_Tracker->lastTask.factors[count - 1] = m_NextTask.factors[count - 1] - 1;
+		}
+
+		fmt << "->" << m_Tracker->lastTask.factors[0];
+		for (int i = 1; i < count; ++i)
+			fmt << "." << m_Tracker->lastTask.factors[i];
+
+		unsigned proofHash = hash::GetFastHash(&m_Tracker->proof, sizeof(m_Tracker->proof));
+		m_Tracker->proof = 0;
+
+		fmt << " T=" << elapsed << " P=" << util::Format("%08X", proofHash);
+
+		if (m_Tracker->solutionCount)
+		{
+			fmt << " S=" << m_Tracker->solutionCount << ';' << util::Format("%08X", m_Tracker->soltionCrc);
+		}
+
+		fmt << " ID=\n";
+
+		m_ServerLog.Log(fmt);
+
+		m_Tracker->solutionCount = 0;
+		m_Tracker->soltionCrc = 0;
+
+		m_Tracker->firstTask = m_NextTask;
+		if (auto cnt = m_Tracker->lastTask.factorCount; m_Tracker->firstTask.factorCount >= cnt &&
+			m_Tracker->firstTask.factors[cnt - 1] > m_Tracker->lastTask.factors[cnt - 1])
+		{
+			m_Tracker->firstTask = m_Tracker->lastTask;
+			FactorSearch::SelectNextTask(m_Tracker->firstTask);
+		}
+		m_Tracker->lastTask.factorCount = 0;
+
+		if (m_SolutionsFound > 100000 && !m_ForceQuit && !m_StopOnLimit && GetRunningTime() < 30)
+		{
+			m_IsCancelled = true;
+			m_ForceQuit = true;
+		}
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void FactorSearch::Tracker::OnSolutionAdded(std::string_view text)
+{
+	++solutionCount;
+	soltionCrc = hash::GetCRC32(text.data(), text.size(), soltionCrc);
 }

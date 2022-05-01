@@ -37,6 +37,7 @@ public:
 
 protected:
 	struct Worker;
+	struct Tracker;
 
 	// Выполняет поиск решений (начиная с указанных значений коэффициентов)
 	virtual void Search(const Options& options, const std::vector<unsigned>& startFactors) override;
@@ -150,6 +151,7 @@ private:
 	void ProcessPendingSolutions();
 
 	void UpdateActiveThreadCount();
+	void TrackTasks(bool update);
 
 private:
 	thread::CriticalSection m_TaskCS;			// Критическая секция (задания)
@@ -165,6 +167,8 @@ private:
 
 	TaskList m_TaskList;						// Контейнер для заданий
 	WorkerTask m_NextTask;						// Следующее задание для выполнения
+	Tracker* m_Tracker = nullptr;				//
+
 	unsigned m_LastHiFactor = 0;				// Последний старший коэффициент в блоке заданий
 	std::vector<int> m_PendingTasks;			// Выполняемые и ожидающие проверки задания (ID потоков)
 	volatile int m_LoPendingTask = 0;			// Самое младшее (старое) ожидаемое задание (ID потока)
@@ -182,6 +186,9 @@ private:
 	volatile bool m_PrintSolutions = false;		// true, если вывод решений на экран разрешён
 	bool m_PrintAllSolutions = false;			// true, если указана опция "--printall"
 	bool m_StopOnLimit = true;					// false, если указана опция --nolimit
+
+	int m_StopFactorIndex = -1;					//
+	unsigned m_StopFactorValue;					//
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -244,4 +251,19 @@ struct FactorSearch::Worker final
 	volatile bool isFinished = false;	// true, если поток завершился (вышел из своей функции)
 	volatile bool shouldPause = false;	// true, если поток должен приостановиться (не брать задание)
 	volatile bool shouldQuit = false;	// true, если поток должен завершиться (после задания)
+};
+
+//--------------------------------------------------------------------------------------------------------------------------------
+struct FactorSearch::Tracker final
+{
+	uint64_t startTick = 0;				// Время (тик) начала обработки блока заданий
+	uint64_t accumTime = 0;				// Накопленное процессорное время выполнения блока
+	size_t solutionCount = 0;			// Количество найденных (выведенных) решений в этом блоке
+	uint32_t soltionCrc = 0;			// Контрольная сумма CRC32 строк с выведенными решениями
+	uint64_t proof = 0;					// Кумулятивное значение количества выполненных итераций
+
+	WorkerTask firstTask;				// Первое задание блока
+	WorkerTask lastTask;				// Последнее задание блока
+
+	void OnSolutionAdded(std::string_view text);
 };

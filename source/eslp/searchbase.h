@@ -11,7 +11,36 @@
 #include <core/util.h>
 
 #include <string>
+#include <string_view>
 #include <vector>
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   Журнал (эмуляция лога сервера)
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//--------------------------------------------------------------------------------------------------------------------------------
+class ServerLog
+{
+	AML_NONCOPYABLE(ServerLog)
+
+public:
+	ServerLog() = default;
+	~ServerLog() { Close(); }
+
+	bool Open(int power, int leftCount, int rightCount);
+	void Close();
+
+	void Log(std::string_view text);
+
+protected:
+	util::BinaryFile m_Log;
+
+	int m_Power = 0;
+	int m_LeftCount = 0;
+	int m_RightCount = 0;
+};
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -79,6 +108,7 @@ private:
 protected:
 	EquationInfo m_Info;		// Параметры уравнения
 	util::BinaryFile m_Log;		// Файл журнала (для вывода результатов)
+	ServerLog m_ServerLog;		//
 
 private:
 	uint32_t m_StartTick = 0;	// Тик начала работы программы (обновляется)

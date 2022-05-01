@@ -11,10 +11,55 @@
 #include "util.h"
 
 #include <auxlib/print.h>
+#include <core/datetime.h>
 #include <core/strformat.h>
 #include <core/strutil.h>
 #include <core/sysinfo.h>
 #include <core/winapi.h>
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool ServerLog::Open(int power, int leftCount, int rightCount)
+{
+	m_Power = power;
+	m_LeftCount = leftCount;
+	m_RightCount = rightCount;
+
+	if (m_Log.Open(util::Format(L"%i.%i.%i.log", power, leftCount, rightCount),
+		util::FILE_OPEN_ALWAYS | util::FILE_OPEN_READWRITE))
+	{
+		if (auto fileSize = m_Log.GetSize(); fileSize > 0)
+		{
+			if (m_Log.SetPosition(fileSize) && m_Log.Write("---\n", 4))
+				return true;
+		}
+		else if (!fileSize)
+			return true;
+
+		m_Log.Close();
+	}
+
+	return false;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void ServerLog::Close()
+{
+	m_Log.Close();
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void ServerLog::Log(std::string_view text)
+{
+	util::DateTime dt;
+	dt.Update(true);
+
+	util::Formatter<char> fmt;
+	fmt << util::Format("%04u-%02u-%02u %02u:%02u:%02u ", dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second);
+	fmt << "(" << m_Power << '.' << m_LeftCount << '.' << m_RightCount << ") ";
+	fmt << text;
+
+	m_Log.Write(fmt.GetData(), fmt.GetSize());
+}
 
 //--------------------------------------------------------------------------------------------------------------------------------
 SearchBase::~SearchBase()
@@ -85,6 +130,7 @@ bool SearchBase::Run(int power, int leftCount, int rightCount, const Options& op
 		aux::Printf(L"#10Using#7 %s\n", info.c_str());
 
 	Search(options, startFactors);
+	m_ServerLog.Close();
 	m_Log.Close();
 
 	return true;
@@ -203,18 +249,23 @@ std::wstring SearchBase::GetAdditionalInfo() const
 //--------------------------------------------------------------------------------------------------------------------------------
 bool SearchBase::OpenLogFile()
 {
-	if (m_Log.Open(util::Format(L"%i.%i.%i.txt", m_Info.power, m_Info.leftCount, m_Info.rightCount),
-		util::FILE_OPEN_ALWAYS | util::FILE_OPEN_READWRITE))
+	if (m_ServerLog.Open(m_Info.power, m_Info.leftCount, m_Info.rightCount))
 	{
-		if (auto fileSize = m_Log.GetSize(); fileSize > 0)
+		if (m_Log.Open(util::Format(L"%i.%i.%i.txt", m_Info.power, m_Info.leftCount, m_Info.rightCount),
+			util::FILE_OPEN_ALWAYS | util::FILE_OPEN_READWRITE))
 		{
-			if (m_Log.SetPosition(fileSize) && m_Log.Write("---\n", 4))
+			if (auto fileSize = m_Log.GetSize(); fileSize > 0)
+			{
+				if (m_Log.SetPosition(fileSize) && m_Log.Write("---\n", 4))
+					return true;
+			}
+			else if (!fileSize)
 				return true;
-		}
-		else if (!fileSize)
-			return true;
 
-		m_Log.Close();
+			m_Log.Close();
+		}
+
+		m_ServerLog.Close();
 	}
 
 	return false;
