@@ -4,14 +4,20 @@
 
 #include "pch.h"
 
-#include "diophantine.h"
-
 #include <core/util.h>
+
+namespace lab {
+
+// Главные функции экспериментов
+int DiophantineMain(int, const wchar_t* []);
+
+}
 
 //--------------------------------------------------------------------------------------------------------------------------------
 int wmain(int argCount, const wchar_t* args[], const wchar_t* envVars[])
 {
 	util::CheckMinimalRequirements();
 
-	return lab::DiophantineMain(argCount, args);
+	using namespace lab;
+	return DiophantineMain(argCount, args);
 }

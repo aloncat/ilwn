@@ -17,6 +17,7 @@
 #include <atomic>
 #include <exception>
 #include <functional>
+#include <set>
 #include <string>
 #include <string_view>
 #include <type_traits>

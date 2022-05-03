@@ -11,13 +11,15 @@
 #include <core/strformat.h>
 #include <core/winapi.h>
 
-#include <set>
+#include <math.h>
 
 namespace lab {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//   Поиск коэффициентов Диофантова уравнения вида p.1.n
+//   Поиск примитивных решений (значений коэффициентов) Диофантова уравнения вида k.1.n. Параметр k задаёт степень уравнения,
+//   единица означает, что в левой части всегда только один коэффициент, параметр n задаёт количество коэффициентов в правой
+//   части уравнения. Параметры командной строки описаны в функции DiophantineMain
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -73,6 +75,7 @@ static void UpdateConsoleTitle(int power, int count, size_t solutionsFound = 0)
 //--------------------------------------------------------------------------------------------------------------------------------
 static bool UpdateProgress(int count, const unsigned* factors)
 {
+	// При нажатии Ctrl-C прервём работу, вернув true
 	if (util::SystemConsole::Instance().IsCtrlCPressed())
 		return true;
 
@@ -154,9 +157,7 @@ public:
 
 	void SortFactors()
 	{
-		std::sort(factors.begin(), factors.end(), [](unsigned left, unsigned right) {
-			return left > right;
-		});
+		std::sort(factors.begin(), factors.end(), std::greater());
 	}
 
 	bool operator ==(const Solution& rhs) const
@@ -180,7 +181,9 @@ public:
 			for (size_t i = 0; i < count; ++i)
 			{
 				if (factors[i] != rhs.factors[i])
+				{
 					return factors[i] < rhs.factors[i];
+				}
 			}
 		}
 		return false;
@@ -214,7 +217,7 @@ protected:
 		if (s.factors.empty())
 			return false;
 
-		unsigned lowest = ~0u;
+		unsigned lowest = UINT_MAX;
 		for (auto f : s.factors)
 		{
 			if (f < lowest)

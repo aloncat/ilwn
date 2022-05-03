@@ -4,11 +4,24 @@
     <Filter Include="platform">
       <UniqueIdentifier>{2e2a011b-755b-4393-bc7f-9e0d55b9b84a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="experiments">
+      <UniqueIdentifier>{fe7a0fb2-4479-4873-9f68-e4d0496dc217}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="experiments\diophantine">
+      <UniqueIdentifier>{7e9c10bc-a15c-4b8e-aebf-709da4542559}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="experiments\palindromic-dates">
+      <UniqueIdentifier>{cf735e2a-266f-4451-b4f0-d9ad92343575}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\lab\pch.h" />
-    <ClInclude Include="..\..\lab\diophantine.h" />
-    <ClInclude Include="..\..\lab\palindromicdates.h" />
+    <ClInclude Include="..\..\lab\diophantine.h">
+      <Filter>experiments\diophantine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\lab\palindromicdates.h">
+      <Filter>experiments\palindromic-dates</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\lab\prefix.cpp">
@@ -16,7 +29,11 @@
     </ClCompile>
     <ClCompile Include="..\..\lab\main.cpp">
     </ClCompile>
-    <ClCompile Include="..\..\lab\diophantine.cpp" />
-    <ClCompile Include="..\..\lab\palindromicdates.cpp" />
+    <ClCompile Include="..\..\lab\diophantine.cpp">
+      <Filter>experiments\diophantine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\lab\palindromicdates.cpp">
+      <Filter>experiments\palindromic-dates</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
