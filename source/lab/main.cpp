@@ -10,6 +10,7 @@ namespace lab {
 
 // Главные функции экспериментов
 int DiophantineMain(int, const wchar_t* []);
+int PalindromicDatesMain(int, const wchar_t* []);
 
 }
 
@@ -19,5 +20,6 @@ int wmain(int argCount, const wchar_t* args[], const wchar_t* envVars[])
 	util::CheckMinimalRequirements();
 
 	using namespace lab;
-	return DiophantineMain(argCount, args);
+	//return DiophantineMain(argCount, args);
+	return PalindromicDatesMain(argCount, args);
 }

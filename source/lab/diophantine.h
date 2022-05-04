@@ -6,6 +6,7 @@
 
 namespace lab {
 
+// Главная функция эксперимента
 int DiophantineMain(int argCount, const wchar_t* args[]);
 
 } // namespace lab

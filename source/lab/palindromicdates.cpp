@@ -41,14 +41,16 @@ void FindAllMondays()
 
 	for (; year > 0; --year)
 	{
-		const int days = Date::IsLeapYear(year) ? 366 : 365;
-		if (dayOfTheWeek -= days % 7; dayOfTheWeek < 0)
-			dayOfTheWeek += 7;
-
 		if (dayOfTheWeek == 1)
 		{
-			aux::Printf("January 1, %i is Monday\n", year);
+			const bool isLeapYear = Date::IsLeapYear(year);
+			aux::Printf("January 1, %i is Monday%s\n", year,
+				isLeapYear ? "#6 (leap)" : "");
 		}
+
+		const int days = Date::IsLeapYear(year - 1) ? 366 : 365;
+		if (dayOfTheWeek -= days % 7; dayOfTheWeek < 0)
+			dayOfTheWeek += 7;
 	}
 }
 
@@ -71,19 +73,17 @@ void CountFirstDaysOfTheWeek()
 
 	for (; year > 0; --year)
 	{
-		const bool isLeapYear = Date::IsLeapYear(year);
-
 		// Так как високосные годы влияют на количество дней недели, и каждые 400 лет весь
 		// цикл повторяется, то мы будем считать только годы, начиная от 1-го и до 2000-го
 		if (year <= 2000)
 		{
-			if (isLeapYear)
+			if (Date::IsLeapYear(year))
 				++leapYears[dayOfTheWeek];
 			else
 				++nonLeapYears[dayOfTheWeek];
 		}
 
-		const int days = isLeapYear ? 366 : 365;
+		const int days = Date::IsLeapYear(year - 1) ? 366 : 365;
 		if (dayOfTheWeek -= days % 7; dayOfTheWeek < 0)
 			dayOfTheWeek += 7;
 	}
@@ -91,7 +91,7 @@ void CountFirstDaysOfTheWeek()
 	for (int i = 0; i < 7; ++i)
 	{
 		const int total = leapYears[i] + nonLeapYears[i];
-		aux::Printf("%s: %i leap years + %i non-leap years, %i total\n",
+		aux::Printf("#11%s#7: %i leap years + %i non-leap years, %i total\n",
 			dayOfTheWeekNames[i], leapYears[i], nonLeapYears[i], total);
 	}
 }
@@ -102,7 +102,7 @@ void CountFirstDaysOfTheWeek()
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const int months[16] = { -1, -1, 30, 58, 89, 119, 150, 180, 211, 242, 272, 303, 333 };
+const int Date::s_Months[16] = { -1, -1, 30, 58, 89, 119, 150, 180, 211, 242, 272, 303, 333 };
 
 //--------------------------------------------------------------------------------------------------------------------------------
 void Date::Clear()
@@ -159,7 +159,7 @@ void Date::Decode(int days)
 	else
 		month = (days < 304) ? 10 : (days < 334) ? 11 : 12;
 
-	day = days - months[month];
+	day = days - s_Months[month];
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -168,7 +168,7 @@ int Date::Encode() const
 	int y = year - 1;
 	int leapYears = y >> 2;
 	leapYears = leapYears - leapYears / 25 + ((leapYears / 25) >> 2);
-	int days = y * 365 + leapYears + months[month & 15] + day;
+	int days = y * 365 + leapYears + s_Months[month & 15] + day;
 
 	if (month > 2 && IsLeapYear(year))
 		++days;
@@ -352,8 +352,8 @@ static void TestDates()
 //--------------------------------------------------------------------------------------------------------------------------------
 int PalindromicDatesMain(int argCount, const wchar_t* args[])
 {
-	//FindAllMondays();
-	//CountFirstDaysOfTheWeek();
+	FindAllMondays();
+	CountFirstDaysOfTheWeek();
 	TestDates();
 
 	return 0;

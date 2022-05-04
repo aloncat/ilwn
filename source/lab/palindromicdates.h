@@ -37,6 +37,9 @@ public:
 
 	// Возвращает true, если year - високосный год
 	static bool IsLeapYear(int year);
+
+protected:
+	static const int s_Months[16];
 };
 
 } // namespace lab
