@@ -1,0 +1,73 @@
+/* Palindromic dates (blog article) */
+
+table.paldates {
+	margin: 12px auto;
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 1px;
+	background: #b8b8b8;
+}
+
+table.paldates tr {
+	background: #fff;
+}
+
+table.paldates tr:nth-child(2n+2) {
+	background: #f8f8f8;
+}
+
+table.paldates tr:nth-child(1) {
+	background: #fc9;
+}
+
+table.paldates tr:nth-child(2) {
+	background: #e8e8e8;
+}
+
+table.paldates tr:nth-child(1) td,
+table.paldates tr:nth-child(2) td {
+	text-align: center;
+}
+
+table.paldates td {
+	padding: 1px 5px 2px;
+	text-align: center;
+}
+
+table.paldates td:nth-child(1) {
+	width: 20%;
+	text-align: left;
+}
+
+table.paldates td:nth-child(2) {
+	width: 8%;
+}
+
+table.paldates td:nth-child(3),
+table.paldates td:nth-child(4) {
+	width: 20%;
+}
+
+table.paldates td.t2 {
+	background: #a8ccff;
+}
+
+table.paldates td.t3 {
+	background: #aea;
+}
+
+table.paldates td.t4 {
+	background: #f9c;
+}
+
+table td span.year {
+	color: #b30;
+}
+
+table td span.month {
+	color: #080;
+}
+
+table td span.day {
+	color: #33e;
+}
