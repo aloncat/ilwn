@@ -6,7 +6,10 @@
 #include "palindromicdates.h"
 
 #include <auxlib/print.h>
+#include <core/debug.h>
+#include <core/file.h>
 #include <core/strformat.h>
+#include <core/strutil.h>
 
 namespace lab {
 
@@ -197,6 +200,9 @@ bool Date::IsLeapYear(int year)
 // цифр (только для годов, начиная с 100-го) или быть полной (1-4 цифры года). Если год равен от 1 до 9 и день/месяц
 // дополняются нолями, то год также должен дополняться нолём. Для всемирного палиндромного дня год не сокращается
 
+const wchar_t* monthNames[16] = { L"", L"Январь", L"Февраль", L"Март", L"Апрель", L"Май",
+	L"Июнь", L"Июль", L"Август", L"Сентябрь", L"Октябрь", L"Ноябрь", L"Декабрь" };
+
 //--------------------------------------------------------------------------------------------------------------------------------
 enum class DateType
 {
@@ -208,27 +214,45 @@ enum class DateType
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------
-struct DateInfo
+struct DateString
 {
-	DateType type = DateType::NoPalindome;	// Тип палиндромной даты
-	std::string dateString;					// Строка с записанной датой
-	std::string format;						// Формат записанной даты
+	std::string terms[3];
+
+	DateString() = default;
+	DateString(const char* format, int a, int b, int c)
+	{
+		terms[0] = util::Format((format[0] == '2') ? "%02i" : "%i", a);
+		terms[1] = util::Format((format[1] == '2') ? "%02i" : "%i", b);
+		terms[2] = util::Format((format[2] == '2') ? "%02i" : "%i", c);
+	}
+
+	bool IsPalindrome() const
+	{
+		if (const auto s = ToString(); !s.empty())
+		{
+			for (size_t left = 0, right = s.size() - 1; left < right; ++left, --right)
+			{
+				if (s[left] != s[right])
+					return false;
+			}
+			return true;
+		}
+		return false;
+	}
+
+	std::string ToString() const
+	{
+		return terms[0] + terms[1] + terms[2];
+	}
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------
-static bool IsPalindrome(std::string_view s)
+struct DateInfo
 {
-	if (s.empty())
-		return false;
-
-	for (size_t left = 0, right = s.size() - 1; left < right; ++left, --right)
-	{
-		if (s[left] != s[right])
-			return false;
-	}
-
-	return true;
-}
+	DateType type = DateType::NoPalindome;	// Тип палиндромной даты
+	DateString dateString;					// Строка с записанной датой
+	std::string format;						// Формат записанной даты
+};
 
 //--------------------------------------------------------------------------------------------------------------------------------
 static DateInfo GetDateInfo(const Date& date)
@@ -236,32 +260,32 @@ static DateInfo GetDateInfo(const Date& date)
 	DateInfo result;
 
 	// Формат YMD
-	auto ymdNormal = util::Format("%i%i%i", date.year, date.month, date.day);
-	auto ymdExtended = util::Format("%02i%02i%02i", date.year, date.month, date.day);
-	bool ymdPalindrome = IsPalindrome(ymdNormal) || IsPalindrome(ymdExtended);
+	DateString ymdNormal("---", date.year, date.month, date.day);
+	DateString ymdExtended("222", date.year, date.month, date.day);
+	bool ymdPalindrome = ymdNormal.IsPalindrome() || ymdExtended.IsPalindrome();
 
 	// Формат DMY
-	auto dmyNormal = util::Format("%i%i%i", date.day, date.month, date.year);
-	auto dmyExtended = util::Format("%02i%02i%02i", date.day, date.month, date.year);
-	bool dmyPalindrome = IsPalindrome(dmyNormal) || IsPalindrome(dmyExtended);
+	DateString dmyNormal("---", date.day, date.month, date.year);
+	DateString dmyExtended("222", date.day, date.month, date.year);
+	bool dmyPalindrome = dmyNormal.IsPalindrome() || dmyExtended.IsPalindrome();
 
 	// Формат MDY
-	auto mdyNormal = util::Format("%i%i%i", date.month, date.day, date.year);
-	auto mdyExtended = util::Format("%02i%02i%02i", date.month, date.day, date.year);
-	bool mdyPalindrome = IsPalindrome(mdyNormal) || IsPalindrome(mdyExtended);
+	DateString mdyNormal("---", date.month, date.day, date.year);
+	DateString mdyExtended("222", date.month, date.day, date.year);
+	bool mdyPalindrome = mdyNormal.IsPalindrome() || mdyExtended.IsPalindrome();
 
 	// Всемирный палиндромный день (вывод в YMD, высший приоритет)
 	if (ymdPalindrome && dmyPalindrome && mdyPalindrome)
 	{
 		result.type = DateType::WorldWide;
-		bool useExtended = IsPalindrome(ymdExtended);
+		bool useExtended = ymdExtended.IsPalindrome();
 		result.dateString = useExtended ? ymdExtended : ymdNormal;
 		result.format = useExtended ? "yyyy-mm-dd" : "yyyy-m-d";
 	}
 	// Extended/Normal YMD
 	else if (ymdPalindrome)
 	{
-		bool useExtended = IsPalindrome(ymdExtended);
+		bool useExtended = ymdExtended.IsPalindrome();
 		result.type = useExtended ? DateType::Extended : DateType::Normal;
 		result.dateString = useExtended ? ymdExtended : ymdNormal;
 		result.format = useExtended ? "yyyy-mm-dd" : "yyyy-m-d";
@@ -269,7 +293,7 @@ static DateInfo GetDateInfo(const Date& date)
 	// Extended/Normal DMY
 	else if (dmyPalindrome)
 	{
-		bool useExtended = IsPalindrome(dmyExtended);
+		bool useExtended = dmyExtended.IsPalindrome();
 		result.type = useExtended ? DateType::Extended : DateType::Normal;
 		result.dateString = useExtended ? dmyExtended : dmyNormal;
 		result.format = useExtended ? "dd-mm-yyyy" : "d-m-yyyy";
@@ -277,7 +301,7 @@ static DateInfo GetDateInfo(const Date& date)
 	// Extended/Normal MDY
 	else if (mdyPalindrome)
 	{
-		bool useExtended = IsPalindrome(mdyExtended);
+		bool useExtended = mdyExtended.IsPalindrome();
 		result.type = useExtended ? DateType::Extended : DateType::Normal;
 		result.dateString = useExtended ? mdyExtended : mdyNormal;
 		result.format = useExtended ? "mm-dd-yyyy" : "m-d-yyyy";
@@ -286,30 +310,33 @@ static DateInfo GetDateInfo(const Date& date)
 	else if (date.year >= 100)
 	{
 		const int year = date.year % 100;
-		auto ymdRedY1 = util::Format("%02i%i%i", year, date.month, date.day);
-		auto ymdRedY2 = util::Format("%02i%02i%02i", year, date.month, date.day);
-		auto dmyRedY1 = util::Format("%i%i%02i", date.day, date.month, year);
-		auto dmyRedY2 = util::Format("%02i%02i%02i", date.day, date.month, year);
-		auto mdyRedY1 = util::Format("%i%i%02i", date.month, date.day, year);
-		auto mdyRedY2 = util::Format("%02i%02i%02i", date.month, date.day, year);
+		DateString ymdRedY1("2--", year, date.month, date.day);
+		DateString ymdRedY2("222", year, date.month, date.day);
+		DateString dmyRedY1("--2", date.day, date.month, year);
+		DateString dmyRedY2("222", date.day, date.month, year);
+		DateString mdyRedY1("--2", date.month, date.day, year);
+		DateString mdyRedY2("222", date.month, date.day, year);
 
-		if (IsPalindrome(ymdRedY1) || IsPalindrome(ymdRedY2))
+		if (ymdRedY1.IsPalindrome() || ymdRedY2.IsPalindrome())
 		{
 			result.type = DateType::ReducedYear;
-			result.dateString = IsPalindrome(ymdRedY2) ? ymdRedY2 : ymdRedY1;
-			result.format = IsPalindrome(ymdRedY2) ? "yy-mm-dd" : "yy-m-d";
+			bool useExtended = ymdRedY2.IsPalindrome();
+			result.dateString = useExtended ? ymdRedY2 : ymdRedY1;
+			result.format = useExtended ? "yy-mm-dd" : "yy-m-d";
 		}
-		else if (IsPalindrome(dmyRedY1) || IsPalindrome(dmyRedY2))
+		else if (dmyRedY1.IsPalindrome() || dmyRedY2.IsPalindrome())
 		{
 			result.type = DateType::ReducedYear;
-			result.dateString = IsPalindrome(dmyRedY2) ? dmyRedY2 : dmyRedY1;
-			result.format = IsPalindrome(dmyRedY2) ? "dd-mm-yy" : "d-m-yy";
+			bool useExtended = dmyRedY2.IsPalindrome();
+			result.dateString = useExtended ? dmyRedY2 : dmyRedY1;
+			result.format = useExtended ? "dd-mm-yy" : "d-m-yy";
 		}
-		else if (IsPalindrome(mdyRedY1) || IsPalindrome(mdyRedY2))
+		else if (mdyRedY1.IsPalindrome() || mdyRedY2.IsPalindrome())
 		{
 			result.type = DateType::ReducedYear;
-			result.dateString = IsPalindrome(mdyRedY2) ? mdyRedY2 : mdyRedY1;
-			result.format = IsPalindrome(mdyRedY2) ? "mm-dd-yy" : "m-d-yy";
+			bool useExtended = mdyRedY2.IsPalindrome();
+			result.dateString = useExtended ? mdyRedY2 : mdyRedY1;
+			result.format = useExtended ? "mm-dd-yy" : "m-d-yy";
 		}
 	}
 
@@ -317,13 +344,104 @@ static DateInfo GetDateInfo(const Date& date)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-static void TestDates()
+static void WriteTable(util::File& file, int year, bool isHeader)
 {
-	Date date;
+	std::wstring text;
 
-	date.day = 1;
-	date.month = 1;
-	date.year = 2020;
+	if (isHeader)
+	{
+		text += util::Format(L""
+			"<div id=\"%i\" class=\"column\">\n"
+			"  <table class=\"paldates small\">\n",
+			year);
+
+		text += util::Format(L""
+			"\t<tr>\n"
+			"\t  <td colspan=6><b>%i год</b>%s</td>\n"
+			"\t</tr>\n",
+			year,
+			Date::IsLeapYear(year) ? L" (високосный)" : L"");
+
+		text += L""
+			"\t<tr>\n"
+			"\t  <td>Дата</td>\n"
+			"\t  <td>Тип</td>\n"
+			"\t  <td>Формат</td>\n"
+			"\t  <td>Палиндром</td>\n"
+			"\t  <td>День от НГ</td>\n"
+			"\t  <td>Дней до НГ</td>\n"
+			"\t</tr>\n";
+	} else
+	{
+		text += L""
+			"  </table>\n"
+			"</div>\n\n";
+	}
+
+	auto utf8 = util::ToUtf8(text);
+	file.Write(utf8.data(), utf8.size());
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+static void WriteRow(util::File& file, const DateInfo& info, const Date& date, int dayOfTheYear, int daysBeforeNewYear)
+{
+	std::string format, dateString;
+	const auto terms = util::Split(info.format, "-");
+
+	Assert(terms.size() == 3);
+	for (int i = 0; i < 3; ++i)
+	{
+		std::string span = "<span class=\"";
+		if (terms[i][0] == 'y')
+			span += "year";
+		else if (terms[i][0] == 'm')
+			span += "month";
+		else
+			span += "day";
+		span += "\">";
+
+		format += (i ? "-" : "") + span + terms[i] + "</span>";
+		dateString += span + info.dateString.terms[i];
+	}
+
+	std::wstring tdClass = (info.type >= DateType::Normal) ?
+		util::Format(L" class=\"t%i\"", info.type) : L"";
+
+	auto text = util::Format(L""
+		"\t<tr>\n"
+		"\t  <td%s>%s, %i</td>\n"
+		"\t  <td%s>T%i</td>\n"
+		"\t  <td>%s</td>\n"
+		"\t  <td>%s</td>\n"
+		"\t  <td>%i</td>\n"
+		"\t  <td>%i</td>\n"
+		"\t</tr>\n",
+		tdClass.c_str(), monthNames[date.month], date.day,
+		tdClass.c_str(), info.type,
+		util::FromAnsi(format).c_str(),
+		util::FromAnsi(dateString).c_str(),
+		dayOfTheYear,
+		daysBeforeNewYear);
+
+	auto utf8 = util::ToUtf8(text);
+	file.Write(utf8.data(), utf8.size());
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+static void TestDates(bool writeToFile = false)
+{
+	util::BinaryFile f;
+	if (writeToFile)
+	{
+		writeToFile = f.Open(L"table.html", util::FILE_CREATE_ALWAYS | util::FILE_OPEN_WRITE);
+	}
+
+	Date date, newYear;
+	int lastYear = 0;
+
+	newYear.day = date.day = 1;
+	newYear.month = date.month = 1;
+	date.year = 2001;
 
 	auto day = date.Encode();
 	while (date.year <= 2030)
@@ -334,13 +452,42 @@ static void TestDates()
 			const int colors[8] = { 8, 8, 9, 15, 10 };
 			const int color = colors[static_cast<int>(info.type) & 7];
 
-			aux::Printf("#%iYMD %04i-%02i-%02i T%i '%s' %s\n",
-				color, date.year, date.month, date.day, info.type,
-				info.dateString.c_str(), info.format.c_str());
+			if (date.year != lastYear)
+			{
+				if (writeToFile)
+				{
+					if (lastYear)
+					{
+						WriteTable(f, 0, false);
+					}
+					WriteTable(f, date.year, true);
+				}
+				lastYear = date.year;
+			}
+
+			newYear.year = date.year;
+			int dayOfTheYear = 1 + day - newYear.Encode();
+
+			++newYear.year;
+			int daysBeforeNewYear = newYear.Encode() - day;
+
+			aux::Printf("#%iYMD %04i-%02i-%02i T%i '%s' %s (##%i, %i until NY)\n", color,
+				date.year, date.month, date.day, info.type, info.dateString.ToString().c_str(),
+				info.format.c_str(), dayOfTheYear, daysBeforeNewYear);
+
+			if (writeToFile)
+			{
+				WriteRow(f, info, date, dayOfTheYear, daysBeforeNewYear);
+			}
 		}
 
 		date.Decode(++day);
 	}
+
+	if (lastYear && writeToFile)
+		WriteTable(f, 0, false);
+
+	f.Close();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
