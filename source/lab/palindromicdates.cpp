@@ -438,10 +438,21 @@ static void WriteRow(util::File& file, const DateInfo& info, const Date& date)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
+static void PrintDay(const Date& date, const DateInfo& info)
+{
+	static const int colors[8] = { 8, 8, 9, 15, 10 };
+	const int color = colors[static_cast<int>(info.type) & 7];
+
+	aux::Printf("#%iYMD %04i-%02i-%02i T%i '%s' %s (##%i, %i until NY)\n", color,
+		date.year, date.month, date.day, info.type, info.dateString.ToString().c_str(),
+		info.format.c_str(), info.dayOfTheYear, info.daysBeforeNewYear);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
 static void TestDates(bool writeToFile = false)
 {
 	std::set<DateInfo, std::less<void>> allDays;
-	Date date, newYear;
+	Date date, newYear, weekEnd;
 
 	newYear.day = date.day = 1;
 	newYear.month = date.month = 1;
@@ -454,9 +465,6 @@ static void TestDates(bool writeToFile = false)
 		auto info = GetDateInfo(date);
 		if (info.type > DateType::NoPalindome)
 		{
-			const int colors[8] = { 8, 8, 9, 15, 10 };
-			const int color = colors[static_cast<int>(info.type) & 7];
-
 			++daysInARow;
 			info.dateDay = day;
 
@@ -466,10 +474,7 @@ static void TestDates(bool writeToFile = false)
 			++newYear.year;
 			info.daysBeforeNewYear = newYear.Encode() - day;
 
-			aux::Printf("#%iYMD %04i-%02i-%02i T%i '%s' %s (##%i, %i until NY)\n", color,
-				date.year, date.month, date.day, info.type, info.dateString.ToString().c_str(),
-				info.format.c_str(), info.dayOfTheYear, info.daysBeforeNewYear);
-
+			PrintDay(date, info);
 			allDays.insert(std::move(info));
 		} else
 		{
@@ -482,6 +487,12 @@ static void TestDates(bool writeToFile = false)
 						const_cast<DateInfo&>(*it).isInPalindromicWeek = true;
 					}
 				}
+
+				date.Decode(day - daysInARow);
+				weekEnd.Decode(day - 1);
+
+				aux::Printf("#6Week: %i days in a row, YMD %04i-%02i-%02i -> %04i-%02i-%02i\n", daysInARow,
+					date.year, date.month, date.day, weekEnd.year, weekEnd.month, weekEnd.day);
 			}
 
 			daysInARow = 0;
