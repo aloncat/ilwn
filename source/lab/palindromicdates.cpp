@@ -252,6 +252,15 @@ struct DateInfo
 	DateType type = DateType::NoPalindome;	// Тип палиндромной даты
 	DateString dateString;					// Строка с записанной датой
 	std::string format;						// Формат записанной даты
+
+	int dateDay = 0;						// День (от 1 января 1 года)
+	int dayOfTheYear = 0;					// Номер дня года (от 1)
+	int daysBeforeNewYear = 0;				// Дней до Нового года
+	bool isInPalindromicWeek = false;		// true, если входит в палиндромную неделю
+
+	bool operator <(int rhs) const { return dateDay < rhs; }
+	bool operator <(const DateInfo& rhs) const { return dateDay < rhs.dateDay; }
+	friend bool operator <(int lhs, const DateInfo& rhs) { return lhs < rhs.dateDay; }
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -383,7 +392,7 @@ static void WriteTable(util::File& file, int year, bool isHeader)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-static void WriteRow(util::File& file, const DateInfo& info, const Date& date, int dayOfTheYear, int daysBeforeNewYear)
+static void WriteRow(util::File& file, const DateInfo& info, const Date& date)
 {
 	std::string format, dateString;
 	const auto terms = util::Split(info.format, "-");
@@ -401,7 +410,7 @@ static void WriteRow(util::File& file, const DateInfo& info, const Date& date, i
 		span += "\">";
 
 		format += (i ? "-" : "") + span + terms[i] + "</span>";
-		dateString += span + info.dateString.terms[i];
+		dateString += span + info.dateString.terms[i] + "</span>";
 	}
 
 	std::wstring tdClass = (info.type >= DateType::Normal) ?
@@ -409,7 +418,7 @@ static void WriteRow(util::File& file, const DateInfo& info, const Date& date, i
 
 	auto text = util::Format(L""
 		"\t<tr>\n"
-		"\t  <td%s>%s, %i</td>\n"
+		"\t  <td%s>%s, %i%s</td>\n"
 		"\t  <td%s>T%i</td>\n"
 		"\t  <td>%s</td>\n"
 		"\t  <td>%s</td>\n"
@@ -417,11 +426,12 @@ static void WriteRow(util::File& file, const DateInfo& info, const Date& date, i
 		"\t  <td>%i</td>\n"
 		"\t</tr>\n",
 		tdClass.c_str(), monthNames[date.month], date.day,
+		info.isInPalindromicWeek ? L" <div class=\"week\">нед.</div>" : L"",
 		tdClass.c_str(), info.type,
 		util::FromAnsi(format).c_str(),
 		util::FromAnsi(dateString).c_str(),
-		dayOfTheYear,
-		daysBeforeNewYear);
+		info.dayOfTheYear,
+		info.daysBeforeNewYear);
 
 	auto utf8 = util::ToUtf8(text);
 	file.Write(utf8.data(), utf8.size());
@@ -430,19 +440,14 @@ static void WriteRow(util::File& file, const DateInfo& info, const Date& date, i
 //--------------------------------------------------------------------------------------------------------------------------------
 static void TestDates(bool writeToFile = false)
 {
-	util::BinaryFile f;
-	if (writeToFile)
-	{
-		writeToFile = f.Open(L"table.html", util::FILE_CREATE_ALWAYS | util::FILE_OPEN_WRITE);
-	}
-
+	std::set<DateInfo, std::less<void>> allDays;
 	Date date, newYear;
-	int lastYear = 0;
 
 	newYear.day = date.day = 1;
 	newYear.month = date.month = 1;
 	date.year = 2001;
 
+	int daysInARow = 0;
 	auto day = date.Encode();
 	while (date.year <= 2030)
 	{
@@ -452,42 +457,70 @@ static void TestDates(bool writeToFile = false)
 			const int colors[8] = { 8, 8, 9, 15, 10 };
 			const int color = colors[static_cast<int>(info.type) & 7];
 
-			if (date.year != lastYear)
-			{
-				if (writeToFile)
-				{
-					if (lastYear)
-					{
-						WriteTable(f, 0, false);
-					}
-					WriteTable(f, date.year, true);
-				}
-				lastYear = date.year;
-			}
+			++daysInARow;
+			info.dateDay = day;
 
 			newYear.year = date.year;
-			int dayOfTheYear = 1 + day - newYear.Encode();
+			info.dayOfTheYear = 1 + day - newYear.Encode();
 
 			++newYear.year;
-			int daysBeforeNewYear = newYear.Encode() - day;
+			info.daysBeforeNewYear = newYear.Encode() - day;
 
 			aux::Printf("#%iYMD %04i-%02i-%02i T%i '%s' %s (##%i, %i until NY)\n", color,
 				date.year, date.month, date.day, info.type, info.dateString.ToString().c_str(),
-				info.format.c_str(), dayOfTheYear, daysBeforeNewYear);
+				info.format.c_str(), info.dayOfTheYear, info.daysBeforeNewYear);
 
-			if (writeToFile)
+			allDays.insert(std::move(info));
+		} else
+		{
+			if (daysInARow > 2)
 			{
-				WriteRow(f, info, date, dayOfTheYear, daysBeforeNewYear);
+				for (int i = day - daysInARow; i < day; ++i)
+				{
+					if (auto it = allDays.find(i); it != allDays.end())
+					{
+						const_cast<DateInfo&>(*it).isInPalindromicWeek = true;
+					}
+				}
 			}
+
+			daysInARow = 0;
 		}
 
 		date.Decode(++day);
 	}
 
-	if (lastYear && writeToFile)
-		WriteTable(f, 0, false);
+	if (writeToFile)
+	{
+		util::BinaryFile f;
+		if (f.Open(L"table.html", util::FILE_CREATE_ALWAYS | util::FILE_OPEN_WRITE))
+		{
+			int lastYear = 0;
+			for (const auto& info : allDays)
+			{
+				date.Decode(info.dateDay);
+				if (date.year != lastYear)
+				{
+					if (lastYear)
+					{
+						WriteTable(f, 0, false);
+					}
 
-	f.Close();
+					WriteTable(f, date.year, true);
+					lastYear = date.year;
+				}
+
+				WriteRow(f, info, date);
+			}
+
+			if (lastYear)
+			{
+				WriteTable(f, 0, false);
+			}
+
+			f.Close();
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
