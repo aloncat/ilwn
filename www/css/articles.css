@@ -1,7 +1,7 @@
 /* Palindromic dates (blog article) */
 
 table.paldates {
-	margin: 12px auto;
+	margin: 20px auto;
 	width: 100%;
 	border-collapse: separate;
 	border-spacing: 1px;
@@ -35,7 +35,7 @@ table.paldates td {
 }
 
 table.paldates td:nth-child(1) {
-	width: 20%;
+	width: 22%;
 	text-align: left;
 }
 
@@ -70,4 +70,25 @@ table td span.month {
 
 table td span.day {
 	color: #33e;
+}
+
+table.paldates div.week {
+	margin-left: 10px;
+	float: right;
+	color: #666;
+}
+
+/* Adaptive design */
+
+@media screen and (max-width: 665px) {
+	table.paldates div.week {
+		display: none;
+	}
+}
+
+@media screen and (max-width: 400px) {
+	table.paldates td:nth-child(5),
+	table.paldates td:nth-child(6) {
+		display: none;
+	}
 }
