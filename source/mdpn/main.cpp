@@ -1413,6 +1413,80 @@ uint64_t GetKinCount(const std::string& n, BigNumber& maxNum)
 	return count;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   Проблема 49 (эксперимент)
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void Problem49Main()
+{
+	Number num;
+	std::string s;
+
+	int bestIt = 0;
+	size_t neCount = 0;
+
+	std::set<Number> neSet;
+
+	for (unsigned i = 1; i <= 9999999; ++i)
+	{
+		num = i;
+
+		bool isVeryEven = false;
+		if (neSet.find(num) == neSet.end())
+		{
+			for (int it = 0; it < 300; ++it)
+			{
+				num += num;
+
+				s = num.AsString();
+				isVeryEven = true;
+				for (char c : s)
+				{
+					if ((c - '0') & 1)
+					{
+						isVeryEven = false;
+						break;
+					}
+				}
+
+				if (isVeryEven)
+				{
+					if (it >= bestIt)
+					{
+						bestIt = it + 1;
+						aux::Printf("\r%u -> %i iterations\n", i, it + 1);
+					}
+					break;
+				}
+			}
+
+			if (!(i & 0x1ff))
+			{
+				aux::Printf("\rTesting %u...", i);
+				if (util::SystemConsole::Instance().IsCtrlCPressed())
+				{
+					aux::Print("\tCancelled...\n");
+					return;
+				}
+			}
+		}
+
+		if (!isVeryEven)
+		{
+			num = i + i;
+			neSet.insert(num);
+
+			++neCount;
+			//aux::Printf("NOT_EVEN: %u\n", i);
+		}
+	}
+
+	aux::Printf("NOT_EVEN count: %u\n", neCount);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //   Главная функция
