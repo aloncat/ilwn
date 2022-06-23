@@ -60,15 +60,18 @@ table.paldates td.t4 {
 	background: #f9c;
 }
 
-table td span.year {
+table td span.year,
+p span.paldate-year {
 	color: #b30;
 }
 
-table td span.month {
+table td span.month,
+p span.paldate-month {
 	color: #080;
 }
 
-table td span.day {
+table td span.day,
+p span.paldate-day {
 	color: #33e;
 }
 
