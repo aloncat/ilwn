@@ -66,7 +66,7 @@ void FindAllMondays()
 const char* const dayOfTheWeekNames[7] = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void CountFirstDaysOfTheWeek()
+void CountDaysOfTheWeek()
 {
 	int year = 2022;		// Год (наша эра, от 1)
 	int dayOfTheWeek = 6;	// День недели: от 0 (воскресенье) до 6 (суббота)
@@ -544,7 +544,7 @@ static void TestDates(bool writeToFile = false)
 int PalindromicDatesMain(int argCount, const wchar_t* args[])
 {
 	FindAllMondays();
-	CountFirstDaysOfTheWeek();
+	CountDaysOfTheWeek();
 	TestDates();
 
 	return 0;
