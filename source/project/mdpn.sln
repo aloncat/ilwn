@@ -7,9 +7,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "palindrome", "mdpn\palindro
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "aml", "aml", "{AFB6E2D9-ED1A-4F0E-A25E-38B09F36CE18}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core", "..\..\..\aml\project\core\core.vcxproj", "{23E364B3-83F5-43C4-BA0A-C0347276BDCD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core", "..\mdpn\aml\project\core\core.vcxproj", "{23E364B3-83F5-43C4-BA0A-C0347276BDCD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core-old", "..\..\..\aml\svn-aml\project\core\core-old.vcxproj", "{1D9FC286-E1F4-4523-B762-2910233E6C23}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core-old", "..\mdpn\aml\svn-aml\project\core\core-old.vcxproj", "{1D9FC286-E1F4-4523-B762-2910233E6C23}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "extern", "extern", "{E2B9D9E2-4A7C-4F46-B7E0-57E8E33FF40F}"
 EndProject

@@ -1,1 +1,0 @@
-To open and build the MDPN project in Visual Studio, first run 'link-aml.bat' script. It will make junction point for 'aml' directory. It contains old AML sources, which are still in use by not-yet-refactored MDPN code.
