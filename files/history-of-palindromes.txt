@@ -1,5 +1,122 @@
 ﻿*RSN (Reliably Smallest Number)
 
+Steps[200]:
+  [RSN] not later than April 16, 2003; Jason Doucette; 130,000,074,931,591; PAL[92] 16616723795884852455
+
+  * The exact date when Jason found the smallest number (that resolves in 200 steps) is unkown. On April 16, 2003, he was iterating 17-digit numbers. By this time, he had already resolved all 15- and 16-digit numbers (according to his personal web page).
+
+***
+
+Steps[201]:
+  [RSN] August 4, 2000; Jason Doucette; 100,120,849,299,260; PAL[92] 16616723795884852455
+
+***
+
+Steps[202]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 195,030,047,999,791,993; PAL[105] 88995667489658743585
+
+  * The exact date when Jason found the smallest number (that resolves in 202 steps) is unkown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[203]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 100,000,078,999,111,766; PAL[105] 88995667489658743585
+
+  * The exact date when Jason found the smallest number (that resolves in 203 steps) is unkown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[204]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 100,710,000,333,399,973; PAL[90] 79588487572056993774
+
+  * The exact date when Jason found the smallest number (that resolves in 204 steps) is unkown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[205]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 100,000,002,973,751,552; PAL[90] 79588487572056993774
+
+  * The exact date when Jason found the smallest number (that resolves in 205 steps) is unkown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[206]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 20,005,000,862,599,819; PAL[90] 79588487572056993774
+
+  * The exact date when Jason found the smallest number (that resolves in 206 steps) is unkown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[207]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 11,450,360,479,969,994; PAL[90] 79588487572056993774
+
+  * The exact date when Jason found the smallest number (that resolves in 207 steps) is unkown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[208]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 10,009,000,275,899,569; PAL[90] 79588487572056993774
+
+  * The exact date when Jason found the smallest number (that resolves in 208 steps) is unkown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[209]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 10,059,430,139,999,234; PAL[90] 79588487572056993774
+
+  * The exact date when Jason found the smallest number (that resolves in 209 steps) is unkown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[210]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 12,179,702,595,999,991; PAL[90] 79588487572056993774
+
+  * The exact date when Jason found the smallest number (that resolves in 210 steps) is unkown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[211]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 100,000,277,999,334,202; PAL[107] 16625459966833465379
+
+  * The exact date when Jason found the smallest number (that resolves in 211 steps) is unkown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[212]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 110,300,361,999,869,090; PAL[107] 16625459966833465379
+
+  * The exact date when Jason found the smallest number (that resolves in 212 steps) is unkown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[213]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 300,000,000,128,545,799; PAL[101] 14884695685311269599
+
+  * The exact date when Jason found the smallest number (that resolves in 213 steps) is unkown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[214]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 104,300,000,514,769,945; PAL[101] 14884695685311269599
+
+  * The exact date when Jason found the smallest number (that resolves in 214 steps) is unkown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[215]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 100,700,000,509,609,622; PAL[101] 14884695685311269599
+
+  * The exact date when Jason found the smallest number (that resolves in 215 steps) is unkown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[216]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 120,906,490,499,909,290; PAL[101] 14884695685311269599
+
+  * The exact date when Jason found the smallest number (that resolves in 216 steps) is unkown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
 Steps[217]:
   [RSN] October, 2005; Jason Doucette; 1,000,000,038,990,407,538; PAL[107] 49627604840136499793
 
@@ -8,7 +125,38 @@ Steps[217]:
 
 ***
 
-218-222 (18-digit numbers)
+Steps[218]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 900,040,000,881,499,569; PAL[103] 15965699344587301794
+
+  * The exact date when Jason found the smallest number (that resolves in 218 steps) is unkown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[219]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 100,072,100,489,999,238; PAL[103] 15965699344587301794
+
+  * The exact date when Jason found the smallest number (that resolves in 219 steps) is unkown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[220]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 121,506,542,999,979,993; PAL[103] 15965699344587301794
+
+  * The exact date when Jason found the smallest number (that resolves in 220 steps) is unkown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[221]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 106,096,507,979,997,951; PAL[103] 15965699344587301794
+
+  * The exact date when Jason found the smallest number (that resolves in 221 steps) is unkown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[222]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 100,980,800,839,699,830; PAL[103] 15965699344587301794
+
+  * The exact date when Jason found the smallest number (that resolves in 222 steps) is unkown. On September 25, 2005, he finally resolved all 18-digit numbers.
 
 ***
 
@@ -36,7 +184,72 @@ Steps[226]:
 
 ***
 
-227-236 (17- and 18-digit numbers)
+Steps[227]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 600,000,000,606,339,049; PAL[112] 45772672672651139732
+
+  * The exact date when Jason found the smallest number (that resolves in 227 steps) is unkown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[228]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 170,500,000,303,619,996; PAL[112] 45772672672651139732
+
+  * The exact date when Jason found the smallest number (that resolves in 228 steps) is unkown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[229]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 79,000,000,445,783,599; PAL[112] 45772672672651139732
+
+  * The exact date when Jason found the smallest number (that resolves in 229 steps) is unkown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[230]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 10,000,000,767,846,797; PAL[112] 45772672672651139732
+
+  * The exact date when Jason found the smallest number (that resolves in 230 steps) is unkown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[231]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 10,000,000,673,402,336; PAL[111] 57992244767868888525
+
+  * The exact date when Jason found the smallest number (that resolves in 231 steps) is unkown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[232]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 10,000,000,525,586,206; PAL[111] 57992244767868888525
+
+  * The exact date when Jason found the smallest number (that resolves in 232 steps) is unkown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[233]:
+  June 2, 2003, 14:47; Jason Doucette; 10,078,083,499,399,210; PAL[112] 45772672672651139732
+  [RSN] not later than December 15, 2004; Jason Doucette; 10,005,000,760,994,249; PAL[111] 57992244767868888525
+
+  * The exact date when Jason found the smallest number (that resolves in 233 steps) is unkown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[234]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 10,030,503,899,969,524; PAL[111] 57992244767868888525
+
+  * The exact date when Jason found the smallest number (that resolves in 234 steps) is unkown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[235]
+  [RSN] not later than December 15, 2004; Jason Doucette; 12,000,009,694,736,291; PAL[111] 57992244767868888525
+
+  * The exact date when Jason found the smallest number (that resolves in 235 steps) is unkown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[236]:
+  [RSN] July 10, 2003, 0:49; Jason Doucette; 10,442,000,392,399,960; PAL[111] 57992244767868888525
 
 ***
 
