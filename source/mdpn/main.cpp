@@ -1250,7 +1250,7 @@ void Problem49Main()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //----------------------------------------------------------------------------------------------------------------------
-/*static*/ int Main(int argC, const wchar_t* argA[])
+/*static*/ int Main(int argCount, const wchar_t* args[])
 {
 	const std::string buildVer = GetAppVersion();
 	aux::Printf("Most Delayed Palindromic Number project. Built on %s\n", buildVer.c_str());
@@ -1264,7 +1264,7 @@ void Problem49Main()
 
 	LargeMemPages::Init();
 
-	auto mode = Mode::Create(argC, argA);
+	auto mode = Mode::Create(argCount, args);
 
 	if (mode->IsCommand("new", true))
 		mode = mode->Expand<SearchMode>();
@@ -1283,11 +1283,11 @@ void Problem49Main()
 extern int ListAllPalindromesMain();
 
 //----------------------------------------------------------------------------------------------------------------------
-int wmain(int argC, const wchar_t* argA[])
+int wmain(int argCount, const wchar_t* args[])
 {
 	//return GuardedCall(P196ProblemMain, 1);
 	//return GuardedCall(AllLychrelsMain, 1);
 	//return GuardedCall(ListAllPalindromesMain, 1);
 
-	return GuardedCall(std::bind(Main, argC, argA), 1);
+	return GuardedCall(std::bind(Main, argCount, args), 1);
 }
