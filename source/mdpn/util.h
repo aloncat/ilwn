@@ -29,6 +29,8 @@ bool IsNumber(const char* pStr);
 // Если строка пуста или содержит менее count символов, функция вернёт false
 bool IsNumber(const char* pStr, size_t count);
 
+bool ConvertToNumber(std::wstring_view s, Number& number);
+
 // Возвращает процентное (0..100) отношение значения count к полному
 // количеству чисел, подлежащих проверке в указанном диапазоне range
 float GetRangeProgress(size_t range, uint64_t count);

@@ -181,5 +181,8 @@
     <ClCompile Include="..\..\mdpn\largemempages.cpp">
       <Filter>util</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\mdpn\list.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

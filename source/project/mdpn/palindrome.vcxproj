@@ -227,6 +227,7 @@
     <ClCompile Include="..\..\mdpn\dbstruct.cpp" />
     <ClCompile Include="..\..\mdpn\eventmgr.cpp" />
     <ClCompile Include="..\..\mdpn\largemempages.cpp" />
+    <ClCompile Include="..\..\mdpn\list.cpp" />
     <ClCompile Include="..\..\mdpn\log.cpp" />
     <ClCompile Include="..\..\mdpn\main.cpp" />
     <ClCompile Include="..\..\mdpn\mode.cpp" />

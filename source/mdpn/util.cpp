@@ -189,6 +189,38 @@ bool IsNumber(const char* pStr, size_t count)
 	return true;
 }
 
+//--------------------------------------------------------------------------------------------------------------------------------
+bool ConvertToNumber(std::wstring_view s, Number& number)
+{
+	number.SetZero();
+
+	constexpr size_t maxLength = 280;
+	char buffer[maxLength + 1];
+
+	if (const size_t len = s.size(); len && len <= maxLength)
+	{
+		size_t count = 0;
+		const wchar_t* data = s.data();
+		for (size_t i = 0; i < len; ++i)
+		{
+			const wchar_t c = data[i];
+			if (c >= '0' && c <= '9')
+				buffer[count++] = static_cast<char>(c);
+			else if (c != ' ' && c != ',' && c != '\'')
+				return false;
+		}
+
+		if (count)
+		{
+			buffer[count] = 0;
+			number.Set(buffer);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 float GetRangeProgress(size_t range, uint64_t count)
 {
