@@ -14,9 +14,11 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//   ListAllPalindromes - анализ базы данных и перечисление всех палиндромов для шагов 230 и более
+//   Анализ базы данных и перечисление всех палиндромов для шагов 230 и более
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+constexpr unsigned STEP_OF_INTEREST = 230;
 
 //--------------------------------------------------------------------------------------------------------------------------------
 struct Palindrome
@@ -73,7 +75,12 @@ static bool LoadResults(std::set<Palindrome>& allPalindromes)
 	bool isLoaded = false;
 	if (util::BinaryFile f; f.Open(L"results.txt", util::FILE_OPEN_READ))
 	{
-		if (long long fileSize = f.GetSize(); fileSize > 0 && fileSize <= 1024 * 1024)
+		if (long long fileSize = f.GetSize(); fileSize == 0)
+		{
+			// Пустой файл ошибкой не считается
+			isLoaded = true;
+		}
+		else if (fileSize > 0 && fileSize <= 1024 * 1024)
 		{
 			size_t dataSize = static_cast<size_t>(fileSize);
 			char* buffer = new char[dataSize];
@@ -83,11 +90,13 @@ static bool LoadResults(std::set<Palindrome>& allPalindromes)
 				isLoaded = true;
 
 				Number num;
+				BigNumber bigNum;
 				std::string s;
+
 				for (const char* p = buffer; dataSize;)
 				{
 					size_t pad = 0, len = GetStringLength(p, dataSize);
-					while (pad < len && p[len - pad - 1] == 10 || p[len - pad - 1] == 13)
+					while (pad < len && (p[len - pad - 1] == 10 || p[len - pad - 1] == 13))
 						++pad;
 
 					s.assign(p, len - pad);
@@ -100,8 +109,24 @@ static bool LoadResults(std::set<Palindrome>& allPalindromes)
 							break;
 						}
 
+						bigNum = num;
+						unsigned steps;
+						if (!bigNum.RAATillPalindrome(500, steps) || steps < 200)
+						{
+							isLoaded = false;
+							break;
+						}
+
 						Palindrome pal(num);
-						allPalindromes.insert(pal);
+						if (auto it = allPalindromes.find(pal); it == allPalindromes.end())
+						{
+							allPalindromes.insert(std::move(pal));
+						}
+						else if (pal.steps > it->steps || (pal.steps == it->steps && pal.number < it->number))
+						{
+							allPalindromes.erase(it);
+							allPalindromes.insert(std::move(pal));
+						}
 					}
 
 					p += len;
@@ -121,6 +146,9 @@ static bool LoadResults(std::set<Palindrome>& allPalindromes)
 //--------------------------------------------------------------------------------------------------------------------------------
 static void SaveResults(const std::set<Palindrome>& allPalindromes)
 {
+	if (allPalindromes.empty())
+		return;
+
 	std::vector<const Palindrome*> sorted;
 	for (const Palindrome& pal : allPalindromes)
 		sorted.push_back(&pal);
@@ -133,57 +161,82 @@ static void SaveResults(const std::set<Palindrome>& allPalindromes)
 
 	if (util::MemoryFile f; f.Open())
 	{
+		// Основная группа палиндромов, которая нас интересует. С ними
+		// мы продолжим работу с помощью алгоритма обратного вывода
 		for (const Palindrome* p : sorted)
 		{
-			auto s = p->ToString() + '\n';
-			f.Write(s.c_str(), s.size());
+			if (p->steps >= STEP_OF_INTEREST)
+			{
+				auto s = p->ToString() + '\n';
+				f.Write(s.c_str(), s.size());
+			}
 		}
+
+		f.Write("\n", 1);
+
+		// Дополнительная группа палиндромов, разрешающихся за меньшее количество шагов. Их мы тоже подвергнем
+		// обработке алгоритмом обратного вывода. И если он найдёт среди них родственные отложенные палиндромы,
+		// требующие STEP_OF_INTEREST шагов или больше, то позже мы их включим в основную группу
+		for (const Palindrome* p : sorted)
+		{
+			if (p->steps < STEP_OF_INTEREST)
+			{
+				auto s = p->ToString() + '\n';
+				f.Write(s.c_str(), s.size());
+			}
+		}
+
 		f.SaveTo(L"results.txt");
 	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-static bool ListAllPalindromes(std::set<Palindrome>& allPalindromes)
+static void ListAllPalindromes(std::set<Palindrome>& allPalindromes)
 {
-	constexpr unsigned STEP_OF_INTEREST = 230;
-
 	DataBase data;
 	if (data.Init(false, DBChunkState::HEADERONLY))
 	{
-		size_t fileC = 0;
+		size_t fileCount = 0;
+		size_t newPalCount = 0;
 		uint32_t lastTick = 0;
-		data.ForEachChunk([&](DBChunk* pChunk) {
-			if (!pChunk->LoadData(data, DBChunkState::WITHSTATS))
+
+		static bool error = false;
+		data.ForEachChunk([&](DBChunk* chunk) {
+			if (!chunk->LoadData(data, DBChunkState::WITHSTATS))
 			{
+				error = true;
 				aux::Printc("\r#12Error\n");
 				return false;
 			}
 
-			if (pChunk->GetHighestStep() >= STEP_OF_INTEREST)
+			constexpr size_t LOWEST_STEP = STEP_OF_INTEREST - 10;
+			if (chunk->GetHighestStep() >= LOWEST_STEP)
 			{
-				if (!pChunk->LoadData(data, DBChunkState::FULLDATA))
+				if (!chunk->LoadData(data, DBChunkState::FULLDATA))
 				{
+					error = true;
 					aux::Printc("\r#12Error\n");
 					return false;
 				}
 
 				Number num;
-				for (const auto& item : pChunk->GetNumbers())
+				for (const auto& item : chunk->GetNumbers())
 				{
-					if (item.step >= STEP_OF_INTEREST)
+					if (item.step >= LOWEST_STEP)
 					{
 						num = item.num;
 						Palindrome pal(num);
 						if (pal.palindrome.GetLength() >= 100)
 						{
-							aux::Printf("\r%s\n", pal.ToString().c_str());
-
 							if (auto it = allPalindromes.find(pal); it == allPalindromes.end())
 							{
+								aux::Printf("\r%s\n", pal.ToString().c_str());
+								++newPalCount;
 								allPalindromes.insert(std::move(pal));
 							}
 							else if (pal.steps > it->steps || (pal.steps == it->steps && pal.number < it->number))
 							{
+								aux::Printf("\r%s\n", pal.ToString().c_str());
 								allPalindromes.erase(it);
 								allPalindromes.insert(std::move(pal));
 							}
@@ -192,24 +245,26 @@ static bool ListAllPalindromes(std::set<Palindrome>& allPalindromes)
 				}
 			}
 
-			pChunk->UnloadData(DBChunkState::DATAUNLOADED);
-			++fileC;
+			chunk->UnloadData(DBChunkState::DATAUNLOADED);
+			++fileCount;
 
 			uint32_t tick = ::GetTickCount();
 			if (tick - lastTick >= 500)
 			{
-				aux::Printf("\rFiles processed: %u", fileC);
+				aux::Printf("\rFiles processed: %u", fileCount);
 				lastTick = tick;
 			}
 
 			return true;
 		});
 
-		SaveResults(allPalindromes);
-		aux::Printf("\rTask finished. Files processed: %u\n", fileC);
+		if (!error)
+		{
+			SaveResults(allPalindromes);
+			aux::Printf("\rNew palindromes found: %u, total: %u\n", newPalCount, allPalindromes.size());
+			aux::Printf("Task done. Files processed: %u\n", fileCount);
+		}
 	}
-
-	return 0;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -222,14 +277,17 @@ int ListAllPalindromesMain()
 	}
 
 	std::set<Palindrome> allPalindromes;
-	if (util::FileSystem::FileExists(L"results.txt") && !LoadResults(allPalindromes))
+	if (util::FileSystem::FileExists(L"results.txt"))
 	{
-		aux::Print("Couldn't load results, file format is invalid\n");
-		return 1;
+		if (!LoadResults(allPalindromes))
+		{
+			aux::Print("Couldn't load results, file format is invalid\n");
+			return 1;
+		}
+
+		aux::Printf("Previous results loaded: %u palindrome(s) found\n", allPalindromes.size());
 	}
 
-	if (!ListAllPalindromes(allPalindromes))
-		return 1;
-
+	ListAllPalindromes(allPalindromes);
 	return 0;
 }
