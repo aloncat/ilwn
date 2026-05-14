@@ -53,7 +53,7 @@ inline bool Palindrome::operator <(const Palindrome& that) const
 //--------------------------------------------------------------------------------------------------------------------------------
 std::string Palindrome::ToString() const
 {
-	return util::Format("PAL[%u] %s [%u][%u] %s", palindrome.GetLength(),
+	return util::Format("PAL[%03u] %s [%u][%u] %s", palindrome.GetLength(),
 		palindrome.AsString().substr(0, 20).c_str(), steps, number.GetLength(),
 		SeparateWithCommas(number).c_str());
 }
@@ -205,7 +205,7 @@ static void ListAllPalindromes(std::set<Palindrome>& allPalindromes)
 			if (!chunk->LoadData(data, DBChunkState::WITHSTATS))
 			{
 				error = true;
-				aux::Printc("\r#12Error\n");
+				aux::Printc("\r#12Error loading database chunk\n");
 				return false;
 			}
 
@@ -215,7 +215,7 @@ static void ListAllPalindromes(std::set<Palindrome>& allPalindromes)
 				if (!chunk->LoadData(data, DBChunkState::FULLDATA))
 				{
 					error = true;
-					aux::Printc("\r#12Error\n");
+					aux::Printc("\r#12Error loading database chunk\n");
 					return false;
 				}
 
@@ -226,20 +226,17 @@ static void ListAllPalindromes(std::set<Palindrome>& allPalindromes)
 					{
 						num = item.num;
 						Palindrome pal(num);
-						if (pal.palindrome.GetLength() >= 100)
+						if (auto it = allPalindromes.find(pal); it == allPalindromes.end())
 						{
-							if (auto it = allPalindromes.find(pal); it == allPalindromes.end())
-							{
-								aux::Printf("\r%s\n", pal.ToString().c_str());
-								++newPalCount;
-								allPalindromes.insert(std::move(pal));
-							}
-							else if (pal.steps > it->steps || (pal.steps == it->steps && pal.number < it->number))
-							{
-								aux::Printf("\r%s\n", pal.ToString().c_str());
-								allPalindromes.erase(it);
-								allPalindromes.insert(std::move(pal));
-							}
+							aux::Printf("\r%s\n", pal.ToString().c_str());
+							allPalindromes.insert(std::move(pal));
+							++newPalCount;
+						}
+						else if (pal.steps > it->steps || (pal.steps == it->steps && pal.number < it->number))
+						{
+							aux::Printf("\r%s\n", pal.ToString().c_str());
+							allPalindromes.erase(it);
+							allPalindromes.insert(std::move(pal));
 						}
 					}
 				}
