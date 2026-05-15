@@ -80,10 +80,10 @@ void StepHelper::InitMaxLengths()
 	AML_FILLA(s_MaxLengthA, 0xff, Const::MAX_STEP + 1);
 	s_MaxLengthA[0] = 0;
 
-	// Мы не можем сохранять в БД все найденные отложенные палиндромы, так как их очень и очень много.
+	// Мы не будем сохранять в БД все найденные отложенные палиндромы, так как их очень и очень много.
 	// И так как бОльшую часть всех палиндромов составляют палиндромы для низких шагов, то именно их
 	// мы и исключим из базы данных. Но оставим по меньшей мере по 10 миллиардов первых таких чисел
-	// для каждого из шагов. Начиная с шага 50, мы будем сохранять абсолютно все найденные числа
+	// для каждого из шагов. Начиная с шага 60, мы будем сохранять абсолютно все найденные числа
 	for (unsigned step = 1; step <= 9; ++step)
 		s_MaxLengthA[step] = 12;
 	for (unsigned step = 10; step <= 14; ++step)
@@ -93,9 +93,13 @@ void StepHelper::InitMaxLengths()
 	for (unsigned step = 35; step <= 39; ++step)
 		s_MaxLengthA[step] = 15;
 	for (unsigned step = 40; step <= 44; ++step)
-		s_MaxLengthA[step] = 17;
+		s_MaxLengthA[step] = 16;
 	for (unsigned step = 45; step <= 49; ++step)
-		s_MaxLengthA[step] = 19;
+		s_MaxLengthA[step] = 18;
+	for (unsigned step = 50; step <= 54; ++step)
+		s_MaxLengthA[step] = 20;
+	for (unsigned step = 55; step <= 59; ++step)
+		s_MaxLengthA[step] = 22;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

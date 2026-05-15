@@ -874,11 +874,11 @@ void SearchMode::DoSearch(const Number& firstNum)
 		m_NumBlocks.push_back(p);
 
 	const uint32_t endTime = ::GetTickCount();
-	// NB: к этому моменту поток БД уже завершился, поэтому нет необходимости
+	// К этому моменту поток БД уже завершился, поэтому нет необходимости
 	// захватывать критическую секцию m_DBCS для манипуляций с текущим файлом БД
-	const bool isEnoughData = GetDataSize(m_pActiveChunk) > Const::DATA_SAVE_SIZE / 4;
+	const bool isEnoughData = GetDataSize(m_pActiveChunk) > Const::DATA_SAVE_SIZE / 8;
 	// Сохраним накопленные данные, только если было проверено хотя бы 1 число и: либо накопилось более
-	// четверти обычного объёма данных, либо с момента последнего сохранения прошло не менее 30 секунд
+	// 1/8 обычного объёма данных, либо с момента последнего сохранения прошло не менее 30 секунд
 	if (m_Last > m_Data.GetLast() && (isEnoughData || endTime - m_LastSaveTick >= 30000))
 		SaveResults();
 
@@ -997,11 +997,11 @@ bool SearchMode::UpdateProgress(const Number& lastNum)
 void SearchMode::CreateNewChunk(const Number& first)
 {
 	m_pActiveChunk = new DBChunk;
-	// NB: при текущем размере несжатого блока данных файла БД Const::DATA_SAVE_SIZE в 920 KiB,
-	// файл в среднем содержит от 110К до 130К палиндромов, иногда больше. Так как мы сохраняем
-	// в каждый файл лишь половину этих данных, то зарезервируем сразу 75K элементов (~1.43 MiB),
+	// При текущем размере несжатого блока данных файла БД Const::DATA_SAVE_SIZE в 960 KiB,
+	// файл в среднем содержит от 115К до 160К палиндромов, редко больше. Так как мы сохраняем
+	// в каждый файл лишь четверть этих данных, то зарезервируем сразу 42K элементов (820 КiB),
 	// чтобы избежать потом лишних ресайзов контейнера
-	m_pActiveChunk->Init(first, 75000);
+	m_pActiveChunk->Init(first, 42000);
 
 	m_Data.SetActiveChunk(m_pActiveChunk);
 }
@@ -1216,7 +1216,7 @@ void SearchMode::DBThreadFN()
 							m_Data.AddPalindrome(num, totalStepDoneC);
 							if (!alreadyFound && m_Steps->IsNew(totalStepDoneC))
 								m_Events->OnPalindromeFound(num, totalStepDoneC);
-							else if (totalStepDoneC >= 228)
+							else if (totalStepDoneC >= 225)
 							{
 								m_Events->OnCustomEvent(util::Format("#8Found new number #7#%s#8 for h-step #6#%u",
 									SeparateWithCommas(num).c_str(), totalStepDoneC));
@@ -1230,12 +1230,12 @@ void SearchMode::DBThreadFN()
 				if (allowSave && !m_IsCancelled)
 				{
 					thread::Lock<thread::CriticalSection> lock(m_DBCS);
-					// Формируем файлы, содержащие половину нормального объёма данных. Из-за того, что в
-					// старших диапазонах сохраняется меньше палиндромов, а скорость проверки чисел ниже,
-					// часто будет возникать ситуация, когда за 15 минут не будет набираться нужный объём.
-					// Позже во время операции обновления БД мы будем попарно объединять такие файлы
-					const bool isEnoughData = GetDataSize(m_pActiveChunk) >= Const::DATA_SAVE_SIZE / 2 ||
-						m_pActiveChunk->GetNumbers().size() >= Const::DATA_SAVE_NUMC / 2;
+					// Формируем файлы, содержащие четверть нормального объёма данных. Из-за того, что в старших
+					// диапазонах сохраняется меньше палиндромов, а скорость проверки чисел ниже, часто будет
+					// возникать ситуация, когда за макс. время между сохранениями работы не будет набираться
+					// нужный объём. Позже во время операции обновления БД мы объединим мелкие файлы
+					const bool isEnoughData = GetDataSize(m_pActiveChunk) >= Const::DATA_SAVE_SIZE / 4 ||
+						m_pActiveChunk->GetNumbers().size() >= Const::DATA_SAVE_NUMC / 4;
 					if (isEnoughData || ::GetTickCount() - m_LastSaveTick >= Const::DATA_SAVE_TIME)
 					{
 						SaveResults();
