@@ -43,7 +43,7 @@ unsigned StepHelper::GetSearchLimit(size_t digitC) const
 	// на имеющихся данных 23 диапазонов), чтобы спрогнозировать достаточную
 	// глубину поиска для диапазонов, проверка которых ещё не завершена
 	const float depth = 13.326f * digitC - 10.261f + 6.f * 13.33f;
-	const unsigned limit = static_cast<unsigned>(depth + 2.05f);
+	const unsigned limit = static_cast<unsigned>(depth + 0.999f);
 	// Округляем вверх до кратного 5
 	return ((limit + 4) / 5) * 5;
 }
