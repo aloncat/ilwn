@@ -1,14 +1,20 @@
 @echo off
 
 if exist results.bak (
-  echo Please, remove results.bak and try again
-  exit /b
+  if exist results.txt (
+    fc /b results.txt results.bak >nul
+    if errorlevel 1 (
+      echo Please, remove results.bak and try again
+      goto :end
+    )
+    del results.bak
+  )
 )
 
 if not exist results.txt (
   type nul >results.txt
 ) else (
-  copy results.txt results.bak >nul || exit /b
+  copy results.txt results.bak >nul || goto :end
 )
 
 cd ..
@@ -21,6 +27,19 @@ call :list 23
 call :list 24
 
 cd pal
+if exist results.bak (
+  echo.
+  fc /b results.txt results.bak >nul
+  if errorlevel 1 (
+    echo Update complete. There are some changes!
+  ) else (
+    echo Update complete. No changes made
+    del results.bak
+  )
+)
+
+:end
+pause
 exit /b
 
 :list
