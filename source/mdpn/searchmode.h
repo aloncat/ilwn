@@ -15,6 +15,7 @@
 #include <deque>
 #include <functional>
 #include <mutex>
+#include <set>
 #include <thread>
 #include <vector>
 
@@ -294,6 +295,8 @@ private:
 	volatile uint32_t m_LastSaveTick = 0;		// Тик последнего сохранения данных в файл БД
 	volatile uint64_t m_CPUTime = 0;			// Затраченное на проверку время CPU (в ms)
 	Number m_Last;								// Последнее проверенное число
+
+	std::set<Number> m_HiPalindromes;			// Набор обнаруженных старших палиндромов
 
 	Progress m_Progress;						// Параметры для отслеживания прогресса проверки чисел
 

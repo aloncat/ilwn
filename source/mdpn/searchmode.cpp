@@ -692,6 +692,7 @@ void SearchMode::DoSearch(const Number& firstNum)
 	unsigned stepLimit = m_Steps->GetSearchLimit(firstNum);
 	EventManager::PublishEvent(util::Format("#6Current search depth was set to #12#%u#6 steps", stepLimit));
 	PrintProgress(::GetTickCount(), firstNum);
+	m_HiPalindromes.clear();
 
 	ThreadTime threadTime;
 	CreateNewChunk(firstNum);
@@ -1170,10 +1171,12 @@ bool SearchMode::DoNextTask(ThreadTime& threadTime, bool waitIfNoTask)
 //----------------------------------------------------------------------------------------------------------------------
 void SearchMode::DBThreadFN()
 {
-	// Поток базы данных должен иметь повышенный приоритет
+	// Поток базы данных должен иметь повышенный приоритет, чтобы гарантированно успевать
+	// обрабатывать и сжимать данные, приходящие от главного и (N-1) рабочих потоков
 	::SetThreadPriority(::GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
 
 	Number num;
+	BigNumber bigNum;
 	ThreadTime threadTime;
 	bool allowSave = true;
 
@@ -1212,17 +1215,36 @@ void SearchMode::DBThreadFN()
 						}
 						else if (m_Steps->IsSaveable(num.GetLength(), totalStepDoneC))
 						{
+							constexpr unsigned HI_PAL_STEP = 225;
+
 							bool alreadyFound = m_Data.HasFound(totalStepDoneC);
 							m_Data.AddPalindrome(num, totalStepDoneC);
+
 							if (!alreadyFound && m_Steps->IsNew(totalStepDoneC))
-								m_Events->OnPalindromeFound(num, totalStepDoneC);
-							else if (totalStepDoneC >= 225)
 							{
-								m_Events->OnCustomEvent(util::Format("#8Found new number #7#%s#8 for h-step #6#%u",
-									SeparateWithCommas(num).c_str(), totalStepDoneC));
+								if (totalStepDoneC >= HI_PAL_STEP)
+								{
+									bigNum = num;
+									bigNum.ReverseAndAdd(totalStepDoneC);
+									m_HiPalindromes.insert(bigNum);
+								}
+								m_Events->OnPalindromeFound(num, totalStepDoneC);
+							}
+							else if (totalStepDoneC >= HI_PAL_STEP)
+							{
+								bigNum = num;
+								bigNum.ReverseAndAdd(totalStepDoneC);
+								if (auto res = m_HiPalindromes.insert(bigNum); res.second)
+								{
+									m_Events->OnCustomEvent(util::Format("Palindrome #11#%03u-%s#7 <- #15#%s#7 at"
+										" step #14#%u", bigNum.GetLength(), bigNum.AsString().substr(0, 10).c_str(),
+										SeparateWithCommas(num).c_str(), totalStepDoneC));
+								}
 							}
 						} else
+						{
 							m_Data.AddPalindrome(totalStepDoneC);
+						}
 					}
 				}
 				m_CPUTime += threadTime.GetElapsed(true);
