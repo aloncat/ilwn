@@ -63,7 +63,7 @@ protected:
 	};
 
 	HashTable<23> m_Hashes;				// Обычная хеш-таблица (для поиска коэффициента)
-	thread::CriticalSection m_TaskCS;	// Критическая секция для обработки задания
+	thrd::CriticalSection m_TaskCS;		// Критическая секция для обработки задания
 	SuperHashTable<35> m_SuperHashes;	// Большая хеш-таблица для значений пар
 	SearchFn m_DecomposeFn = nullptr;	// Указатель на функцию декомпозиции
 

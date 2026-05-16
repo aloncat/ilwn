@@ -120,7 +120,7 @@ void SearchX22i::WorkerFunction(Worker* worker)
 	// задание, добавляя новые пары в буфер, а другие потоки будут искать декомпозиции для этих пар из буфера
 	if (m_TaskCS.TryEnter())
 	{
-		thread::Lock lock(m_TaskCS, false);
+		thrd::Lock lock(m_TaskCS, false);
 
 		// Получим задание
 		if (GetNextTask(worker))
@@ -287,7 +287,7 @@ AML_NOINLINE void SearchX22i::Decompose(Worker* worker, const NumberT* powers)
 		// Захватим спин-лок перед тем, как извлечь из буфера следующую пару для обработки
 		for (int lock = 0; !m_Lock.compare_exchange_weak(lock, 1, std::memory_order_acquire);)
 		{
-			thread::CPUPause();
+			thrd::CPUPause();
 			lock = 0;
 		}
 

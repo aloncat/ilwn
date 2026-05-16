@@ -200,7 +200,7 @@ bool FactorSearch::GetNextTask(Worker* worker)
 {
 	if (!m_NoTasks && !m_IsCancelled)
 	{
-		thread::Lock lock(m_TaskCS);
+		thrd::Lock lock(m_TaskCS);
 
 		while (m_NextTask.factors[0] <= m_LastHiFactor)
 		{
@@ -231,7 +231,7 @@ bool FactorSearch::GetNextTask(Worker* worker)
 //--------------------------------------------------------------------------------------------------------------------------------
 void FactorSearch::OnTaskDone(Worker* worker)
 {
-	thread::Lock lock(m_TaskCS);
+	thrd::Lock lock(m_TaskCS);
 
 	for (size_t i = 0, count = m_PendingTasks.size(); i < count; ++i)
 	{
@@ -665,7 +665,7 @@ void FactorSearch::ShowProgress(const unsigned* factors)
 	}
 	m_LastProgressLength = newSize;
 
-	thread::Lock lock(m_ConsoleCS);
+	thrd::Lock lock(m_ConsoleCS);
 	aux::Printc(fmt);
 }
 
@@ -738,7 +738,7 @@ void FactorSearch::OnSolutionReady(const Solution& solution)
 
 	if (m_PrintSolutions)
 	{
-		thread::Lock lock(m_ConsoleCS);
+		thrd::Lock lock(m_ConsoleCS);
 
 		// Выводим решение на экран (первые 1000 решений - в любом
 		// случае, следующие - только при наличии опции "--printall")
@@ -831,13 +831,13 @@ void FactorSearch::UpdateActiveThreadCount()
 	for (util::Console::KeyEvent event; console.GetInputEvent(event);)
 	{
 		// Клавиша - на малой клавиатуре
-		if (event.isKeyDown && event.vkey == util::Console::KEY_PADSUB)
+		if (event.IsKeyDown() && event.vkey == util::Console::KEY_PADSUB)
 		{
 			if (m_ActiveWorkers > 1)
 				--m_ActiveWorkers;
 		}
 		// Клавиша + на малой клавиатуре
-		else if (event.isKeyDown && event.vkey == util::Console::KEY_PADADD)
+		else if (event.IsKeyDown() && event.vkey == util::Console::KEY_PADADD)
 		{
 			if (m_ActiveWorkers < m_Workers.size())
 				++m_ActiveWorkers;

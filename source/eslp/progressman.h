@@ -46,7 +46,7 @@ private:
 	Item* GetItem(uint64_t taskId);
 
 private:
-	thread::CriticalSection m_CS;
+	thrd::CriticalSection m_CS;
 
 	Item m_Items[MAX_TASKS];			// Кольцевой буфер заданий
 	unsigned m_Count = 0;				// Количество заданий в m_Items

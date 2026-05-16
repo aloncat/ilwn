@@ -152,8 +152,8 @@ private:
 	void UpdateActiveThreadCount();
 
 private:
-	thread::CriticalSection m_TaskCS;			// Критическая секция (задания)
-	thread::CriticalSection m_ConsoleCS;		// Критическая секция (вывод в консоль)
+	thrd::CriticalSection m_TaskCS;				// Критическая секция (задания)
+	thrd::CriticalSection m_ConsoleCS;			// Критическая секция (вывод в консоль)
 
 	ThreadTimer m_MainThreadTimer;				// Счётчик времени CPU для главного потока
 	std::vector<Worker*> m_Workers;				// Состояния рабочих потоков

@@ -28,7 +28,7 @@ void ProgressManager::Reset()
 //--------------------------------------------------------------------------------------------------------------------------------
 bool ProgressManager::GetProgress(unsigned* factors)
 {
-	thread::Lock lock(m_CS);
+	thrd::Lock lock(m_CS);
 
 	const unsigned* progress = nullptr;
 	// Если у самого старого незавершённого задания (в
@@ -85,7 +85,7 @@ bool ProgressManager::GetProgress(unsigned* factors)
 //--------------------------------------------------------------------------------------------------------------------------------
 void ProgressManager::SetProgress(const unsigned* factors, uint64_t taskId)
 {
-	thread::Lock lock(m_CS);
+	thrd::Lock lock(m_CS);
 
 	// Сохраняем прогресс задания
 	if (Item* it = GetItem(taskId))
@@ -100,7 +100,7 @@ void ProgressManager::SetProgress(const unsigned* factors, uint64_t taskId)
 //--------------------------------------------------------------------------------------------------------------------------------
 void ProgressManager::SetDone(uint64_t taskId, bool oldest)
 {
-	thread::Lock lock(m_CS);
+	thrd::Lock lock(m_CS);
 
 	if (m_Count)
 	{
