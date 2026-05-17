@@ -2,15 +2,15 @@
 
 *.bat text eol=crlf
 
-script/ilwn-server/*.conf text eol=lf
-script/ilwn-server/db.* text eol=lf
-script/ilwn-server/dmaslov.* text eol=lf
-script/ilwn-server/named.* text eol=lf
-
 source/**/*.sln text eol=crlf
 source/**/*.vcxproj* text eol=crlf
 
-www/**/*.css text eol=lf
-www/**/*.html text eol=lf
-www/**/*.js text eol=lf
-www/**/*.txt text eol=lf
+website/**/*.css text eol=lf
+website/**/*.html text eol=lf
+website/**/*.js text eol=lf
+website/**/*.txt text eol=lf
+
+website/ilwn-server/*.conf text eol=lf
+website/ilwn-server/db.* text eol=lf
+website/ilwn-server/dmaslov.* text eol=lf
+website/ilwn-server/named.* text eol=lf

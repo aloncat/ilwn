@@ -31,4 +31,4 @@ Directory structure:
   dbase		Palindromes database
   script	Various auxiliary scripts
   source	Source code (all subprojects)
-  www		iLWN website sources & scripts
+  website	iLWN website sources & scripts

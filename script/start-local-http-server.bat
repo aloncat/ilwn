@@ -1,4 +1,4 @@
 @echo off
 
-cd ..\www
+cd ..\website\www
 python -m http.server 80
