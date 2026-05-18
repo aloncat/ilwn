@@ -205,7 +205,7 @@ static void ListAllPalindromes(std::set<Palindrome>& allPalindromes)
 			if (!chunk->LoadData(data, DBChunkState::WITHSTATS))
 			{
 				error = true;
-				aux::Printc("\r#12Error loading database chunk\n");
+				aux::Printc("#12\rError loading database chunk\n");
 				return false;
 			}
 
@@ -215,7 +215,7 @@ static void ListAllPalindromes(std::set<Palindrome>& allPalindromes)
 				if (!chunk->LoadData(data, DBChunkState::FULLDATA))
 				{
 					error = true;
-					aux::Printc("\r#12Error loading database chunk\n");
+					aux::Printc("#12\rError loading database chunk\n");
 					return false;
 				}
 
@@ -228,13 +228,16 @@ static void ListAllPalindromes(std::set<Palindrome>& allPalindromes)
 						Palindrome pal(num);
 						if (auto it = allPalindromes.find(pal); it == allPalindromes.end())
 						{
-							aux::Printf("\r%s\n", pal.ToString().c_str());
+							aux::Printf("#10\rNew#7 %s\n", pal.ToString().c_str());
+
 							allPalindromes.insert(std::move(pal));
 							++newPalCount;
 						}
 						else if (pal.steps > it->steps || (pal.steps == it->steps && pal.number < it->number))
 						{
-							aux::Printf("\r%s\n", pal.ToString().c_str());
+							aux::Printf((pal.steps > it->steps) ? "#9\rStp#6 %s\n" : "#8\rLow#6 %s\n",
+								pal.ToString().c_str());
+
 							allPalindromes.erase(it);
 							allPalindromes.insert(std::move(pal));
 						}
@@ -283,6 +286,9 @@ int ListAllPalindromesMain()
 		}
 
 		aux::Printf("Previous results loaded: %u palindrome(s) found\n", allPalindromes.size());
+		// После успешной загрузки всегда пересохраняем результаты, чтобы удалить
+		// из файла дубликаты палиндромов и корректно отсортировать строки
+		SaveResults(allPalindromes);
 	}
 
 	ListAllPalindromes(allPalindromes);
