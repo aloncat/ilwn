@@ -236,7 +236,7 @@ void Arch::CountLychrels::Execute(size_t maxRange, bool countBase, const NumberF
 		if (countBase && (m_Unsifted.empty() || CheckUnsifted(baseLychFn)))
 		{
 			const size_t newC = m_AllBaseC - prevBaseC;
-			aux::Printf("\r#6  New base lychrel numbers found:    %s%s #7(%s)\n", newC ? "+" : "",
+			aux::Printf("#6\r  New base lychrel numbers found:    %s%s #7(%s)\n", newC ? "+" : "",
 				SeparateWithCommas(newC).c_str(), SeparateWithCommas(m_AllBaseC).c_str());
 		}
 	}

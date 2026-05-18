@@ -29,15 +29,15 @@ static int CppExceptionGuard(const std::function<int()>& fn, int errorCode)
 	}
 	catch (const util::EGeneric& e)
 	{
-		aux::Printf("\r#12Fatal error: unhandled exception [%s] -> %s\n", e.ClassName(), e.what());
+		aux::Printf("#12\rFatal error: unhandled exception [%s] -> %s\n", e.ClassName(), e.what());
 	}
 	catch (const std::exception& e)
 	{
-		aux::Printf("\r#12Fatal error: unhandled c++ exception -> %s\n", e.what());
+		aux::Printf("#12\rFatal error: unhandled c++ exception -> %s\n", e.what());
 	}
 	catch (...)
 	{
-		aux::Printc("\r#12Fatal error: unhandled c++ exception\n");
+		aux::Printc("#12\rFatal error: unhandled c++ exception\n");
 	}
 	return errorCode;
 }
@@ -51,7 +51,7 @@ int GuardedCall(const std::function<int()>& fn, int errorCode)
 	}
 	__except(EXCEPTION_EXECUTE_HANDLER)
 	{
-		aux::Printf("\r#12Fatal error: unhandled exception %08X \n",
+		aux::Printf("#12\rFatal error: unhandled exception %08X \n",
 			::GetExceptionCode());
 	}
 	return errorCode;

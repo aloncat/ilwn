@@ -26,7 +26,7 @@ unsigned StepHelper::GetSearchLimit(size_t digitC) const
 	if (digitC > KNOWN_DIGIT_C && !s_RangeWarningShown)
 	{
 		s_RangeWarningShown = true;
-		aux::Printf("\r#12WARNING: #7StepHelper class needs to be updated"
+		aux::Printf("#12\rWARNING: #7StepHelper class needs to be updated"
 			" to process #15#%u#7-digit numbers\n", digitC);
 	}
 

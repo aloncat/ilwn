@@ -86,7 +86,7 @@ void EventManager::PublishEvent(const std::string& msg, bool logFileOnly)
 	util::DateTime dateTime;
 	dateTime.Update(false);
 
-	std::string s = util::Format("\r#2[%02u-%02u-%02u %02u:%02u:%02u]#7 ",
+	std::string s = util::Format("#2\r[%02u-%02u-%02u %02u:%02u:%02u]#7 ",
 		dateTime.year % 100, dateTime.month, dateTime.day,
 		dateTime.hour, dateTime.minute, dateTime.second);
 

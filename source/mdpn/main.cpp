@@ -506,7 +506,7 @@ public:
 			if (!pChunk->LoadData(data, DBChunkState::FULLDATA))
 			{
 				fileC = 0;
-				aux::Printc("\r#12Error: failed to load database file");
+				aux::Printc("#12\rError: failed to load database file");
 				return false;
 			}
 
@@ -552,7 +552,7 @@ public:
 			if (!pChunk->LoadData(data, DBChunkState::FULLDATA))
 			{
 				fileC = 0;
-				aux::Printc("\r#12Error: failed to load database file");
+				aux::Printc("#12\rError: failed to load database file");
 				return false;
 			}
 
