@@ -6,7 +6,7 @@ popd
 
 if not exist %bp%\bin echo Wrong current directory & exit /b
 
-if [%1]==[] goto :processall
+if [%1]==[] goto processall
 if not exist %1\???-* echo Path "%~1" not found or it has no tasks & exit /b
 echo Processing tasks in "%~1" directory...
 

@@ -5,7 +5,7 @@ if exist results.bak (
     fc /b results.txt results.bak >nul
     if errorlevel 1 (
       echo Please, remove results.bak and try again
-      goto :end
+      goto end
     )
     del results.bak
   )
@@ -14,7 +14,7 @@ if exist results.bak (
 if not exist results.txt (
   type nul >results.txt
 ) else (
-  copy results.txt results.bak >nul || goto :end
+  copy results.txt results.bak >nul || goto end
 )
 
 cd ..

@@ -1,12 +1,12 @@
 @echo off
 
-net session
+net session >nul 2>&1
 if %ERRORLEVEL% NEQ 0 goto elevate
 
-cls
 reg add HKLM\Software\Classes\.js /v "Content Type" /t REG_SZ /d "text/javascript" /f
-pause & exit /b
+pause
+exit /b
 
 :elevate
 cd /d "%~dp0"
-mshta "javascript: var shell = new ActiveXObject('shell.application'); shell.ShellExecute('%~nx0', '', '', 'runas', 1); close();"
+powershell -Command "Start-Process '%~nx0' -Verb RunAs"
