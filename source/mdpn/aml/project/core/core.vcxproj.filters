@@ -1,0 +1,131 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="file">
+      <UniqueIdentifier>{6a52a3c2-4c06-4803-93a4-79bce40d7912}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="hash">
+      <UniqueIdentifier>{adb869f4-03b5-452b-864b-c245f37e4bff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="math">
+      <UniqueIdentifier>{5c8efb34-bfdf-451a-8041-5e192be45213}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="platform">
+      <UniqueIdentifier>{5f10ea14-01f3-4fe4-a2db-363d621aad24}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="thread">
+      <UniqueIdentifier>{c8f05f53-09e1-4291-aab3-69418e5e4838}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="util">
+      <UniqueIdentifier>{1cdf1d3c-aa69-4fc6-b82b-9b9d97ae8773}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\core\forward.h" />
+    <ClInclude Include="..\..\core\pch.h" />
+    <ClInclude Include="..\..\core\platform.h">
+      <Filter>platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\exception.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\util.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\winapi.h">
+      <Filter>platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\strutil.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\randgen.h">
+      <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\array.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\fasthash.h">
+      <Filter>hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\threadsync.h">
+      <Filter>thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\thread.h">
+      <Filter>thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\console.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\toggle.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\crc32.h">
+      <Filter>hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\memwriter.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\file.h">
+      <Filter>file</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\filesystem.h">
+      <Filter>file</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\auxutil.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\singleton.h">
+      <Filter>util</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\core\prefix.cpp">
+      <Filter>platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\exception.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\util.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\winapi.cpp">
+      <Filter>platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\strutil.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\randgen.cpp">
+      <Filter>math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\fasthash.cpp">
+      <Filter>hash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\threadsync.cpp">
+      <Filter>thread</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\thread.cpp">
+      <Filter>thread</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\console.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\crc32.cpp">
+      <Filter>hash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\memwriter.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\file.cpp">
+      <Filter>file</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\filesystem.cpp">
+      <Filter>file</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\auxutil.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\singleton.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

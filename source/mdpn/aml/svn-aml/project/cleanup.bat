@@ -1,15 +1,6 @@
 @echo off
 
-if exist "%~dp0.vs" rd /s/q "%~dp0.vs"
-
-call :clean eslp
-call :clean lab
-call :clean mdpn
-
-call ..\aml\project\cleanup.bat
-call ..\extern\project\cleanup.bat
-call ..\mdpn\aml\project\cleanup.bat
-call ..\mdpn\aml\svn-aml\project\cleanup.bat
+call :clean core
 exit /b
 
 :clean

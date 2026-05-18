@@ -1,0 +1,188 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="arch">
+      <UniqueIdentifier>{fc9b8a4a-6a98-4077-a1b8-719ca0b7f7cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dbase">
+      <UniqueIdentifier>{b28547c6-d498-4e19-b27e-9ae199843003}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="main">
+      <UniqueIdentifier>{4ad4abc2-3f9e-4e19-a1d2-e4683f6d5bba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="main\mode">
+      <UniqueIdentifier>{52560f4a-1c51-487b-a614-5857eea4ed2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="num">
+      <UniqueIdentifier>{b05225a9-d5a9-402b-ad09-1dbaf1e941ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="platform">
+      <UniqueIdentifier>{3b03faa1-6a37-4a9d-a9b7-c76312e97134}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="test">
+      <UniqueIdentifier>{ef3aaddb-fe7f-4ab7-bc87-8e3d0ddeb471}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="util">
+      <UniqueIdentifier>{4e9b011d-dd9a-412c-aa48-77e7f11934ef}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\mdpn\pch.h" />
+    <ClInclude Include="..\..\mdpn\arch.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\log.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\ttime.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\const.h" />
+    <ClInclude Include="..\..\mdpn\version.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\util.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\numset.h">
+      <Filter>num</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\test.h">
+      <Filter>test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\dbase.h">
+      <Filter>dbase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\number.h">
+      <Filter>num</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\numbertest.h">
+      <Filter>test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\numsettest.h">
+      <Filter>test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\dbprogress.h">
+      <Filter>dbase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\dbstruct.h">
+      <Filter>dbase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\assert.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\dbchunk.h">
+      <Filter>dbase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\dbchunklist.h">
+      <Filter>dbase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\stephlp.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\eventmgr.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\dbmode.h">
+      <Filter>main\mode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\mode.h">
+      <Filter>main\mode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\upddbmode.h">
+      <Filter>main\mode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\chkdbmode.h">
+      <Filter>main\mode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\searchmode.h">
+      <Filter>main\mode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\largemempages.h">
+      <Filter>util</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\mdpn\prefix.cpp">
+      <Filter>platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\arch.cpp">
+      <Filter>arch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\log.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\ttime.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\version.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\util.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\numset.cpp">
+      <Filter>num</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\test.cpp">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\dbase.cpp">
+      <Filter>dbase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\number.cpp">
+      <Filter>num</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\numbertest.cpp">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\numsettest.cpp">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\dbprogress.cpp">
+      <Filter>dbase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\dbstruct.cpp">
+      <Filter>dbase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\dbchunk.cpp">
+      <Filter>dbase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\dbchunklist.cpp">
+      <Filter>dbase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\main.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\parser.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\stephlp.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\eventmgr.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\dbmode.cpp">
+      <Filter>main\mode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\mode.cpp">
+      <Filter>main\mode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\upddbmode.cpp">
+      <Filter>main\mode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\chkdbmode.cpp">
+      <Filter>main\mode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\searchmode.cpp">
+      <Filter>main\mode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\largemempages.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\list.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
