@@ -20,6 +20,8 @@ if not exist results.txt (
 cd ..
 set bp="%cd%\"
 
+rem call :list 18
+rem call :list 19
 rem call :list 20
 call :list 21
 call :list 22
