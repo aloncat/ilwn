@@ -55,7 +55,7 @@ private:
 
 	bool RemoveChunk(DBChunk* pChunk);
 	void CreateNewChunk(const Number& first);
-	bool ConcatChunks(DBChunk* pPrev, DBChunk* pLast);
+	void MergeChunks(DBChunk* pPrev);
 	bool LoadChunkData(DBChunk* pChunk, DBChunkState dataState);
 	void SaveActiveChunk(const Number& last, ThreadTime& threadTime);
 	void SaveActiveChunk();
@@ -64,6 +64,7 @@ private:
 	unsigned GetMinSavedStep(const DBChunk* pChunk) const;
 
 	bool PrintProgress(uint32_t tick, const Number& last);
+	bool PrintProgress(uint32_t tick, size_t doneCount, size_t total);
 	bool CheckIfCancelled();
 
 	NumberSet m_LychThreads;
@@ -72,7 +73,8 @@ private:
 
 	Progress m_Progress;				// Параметры для отслеживания прогресса проверки чисел
 	RangeProgress m_RangeProgressA;		// Количество проверенных чисел в каждом из диапазонов
-	size_t m_SavedFileC = 0;			// Общее количество сохранённых файлов
+	size_t m_SavedFileC = 0;			// Общее количество сохранённых (добавленных) файлов
+	size_t m_RemovedFileC = 0;			// Общее количество удалённых файлов
 
 	Number m_Last;						// Последнее проверенное число
 	unsigned m_CPUTime = 0;				// Затраченное на проверку время CPU (в ms)
@@ -81,4 +83,6 @@ private:
 	bool m_IsCancelled = false;			// true, если пользователь отменил операцию
 	bool m_DontFillGaps = false;		// true, если не нужно проверять пропущенные интервалы
 	bool m_From1stKnown = false;		// true, если нужно начать с первого проверенного числа в БД
+
+	bool m_HasGaps = false;				// true, если есть пропущенные диапазоны перед текущим чанком
 };
