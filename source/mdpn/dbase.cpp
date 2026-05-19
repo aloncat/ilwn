@@ -131,7 +131,7 @@ void DataBase::AddLychrel(const Number& num, unsigned stepC)
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-void DataBase::Save(const Number& last, unsigned minSavedStep, unsigned timeSpent)
+void DataBase::Save(const Number& last, unsigned minSavedStep, unsigned timeSpent, bool maxCompression)
 {
 	EE::Assert(m_pActiveChunk, "No active chunk");
 
@@ -148,7 +148,7 @@ void DataBase::Save(const Number& last, unsigned minSavedStep, unsigned timeSpen
 			m_Last = last;
 	}
 
-	if (!m_pActiveChunk->Save(*this, minSavedStep, timeSpent))
+	if (!m_pActiveChunk->Save(*this, minSavedStep, timeSpent, maxCompression))
 	{
 		util::FileSystem::RemoveFile(m_BasePath + m_pActiveChunk->GetFilePath());
 		throw util::ERuntime("Failed to save database file");

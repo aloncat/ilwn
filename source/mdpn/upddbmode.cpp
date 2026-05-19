@@ -28,8 +28,8 @@ bool UpdateDBMode::Run()
 {
 	if (!m_IsExecuted)
 	{
-		// Команда "update" - обновление существующих файлов БД и проверка пропущенных интервалов
-		// чисел. Опционально может быть указан один из параметров: "--skipgaps" или "--fromknown"
+		// Команда "update" - обновление существующих файлов БД и проверка пропущенных интервалов чисел.
+		// Опционально может быть указан один из параметров: "--skipgaps", "--fromknown" или "--compress"
 		if (m_Params.size() >= 1 && m_Params.size() <= 2 && !util::StrInsCmp(m_Params[0], "update"))
 		{
 			bool okToGo = true;
@@ -43,6 +43,10 @@ bool UpdateDBMode::Run()
 				// интервала перед первым существующим файлом базы данных
 				else if (!util::StrInsCmp(m_Params[1], "--fromknown"))
 					m_From1stKnown = true;
+				// Параметр "--compress" заставляет пересохранить все файлы
+				// БД с максимально возможной степенью сжатия
+				else if (!util::StrInsCmp(m_Params[1], "--compress"))
+					m_MaxCompression = true;
 				else
 					okToGo = false;
 			}
@@ -203,6 +207,7 @@ float UpdateDBMode::UpdateAllChunks()
 		return true;
 	});
 
+	m_From1stKnown |= m_MaxCompression;
 	if (gapsFound == 1 && m_From1stKnown)
 	{
 		DBChunk* pChunk = chunkList.front().first;
@@ -215,6 +220,23 @@ float UpdateDBMode::UpdateAllChunks()
 
 	if (!m_IsCancelled)
 	{
+		if (m_MaxCompression)
+		{
+			if (toUpdateC)
+			{
+				EventManager::PublishEvent("#12Before compressing, please update database first");
+				return 0;
+			}
+			if (gapsFound)
+			{
+				EventManager::PublishEvent("#12Unable to compress database while it has any gaps");
+				return 0;
+			}
+
+			m_Progress.lastTick = ::GetTickCount();
+			return CompressChunks(chunkList);
+		}
+
 		if (toUpdateC || (gapsFound && !m_DontFillGaps) || hasShortFiles)
 		{
 			EventManager::PublishEvent(!gapsFound ? "Database has #10no gaps" :
@@ -236,7 +258,53 @@ float UpdateDBMode::UpdateAllChunks()
 
 		EventManager::PublishEvent("Database doesn't need to be updated, exiting...");
 	}
+
 	return 0;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+float UpdateDBMode::CompressChunks(const std::vector<std::pair<DBChunk*, bool>>& chunks)
+{
+	bool errorFlag = false;
+	size_t chunksProcessed = 0;
+	uint64_t dataSizeBefore = 0;
+	uint64_t dataSizeAfter = 0;
+
+	for (auto& item : chunks)
+	{
+		++chunksProcessed;
+		const uint32_t tick = ::GetTickCount();
+		if (tick - m_Progress.lastTick >= 500 && PrintProgress(tick, chunksProcessed, chunks.size()))
+			break;
+
+		DBChunk* pChunk = item.first;
+		if (!LoadChunkData(pChunk, DBChunkState::FULLDATA))
+		{
+			errorFlag = true;
+			break;
+		}
+
+		m_Data.SetActiveChunk(pChunk);
+		dataSizeBefore += pChunk->GetFileSize();
+		m_Data.Save(0u, 0, 0, true);
+		dataSizeAfter += pChunk->GetFileSize();
+
+		pChunk->UnloadData(DBChunkState::DATAUNLOADED);
+
+		if (m_IsCancelled)
+			break;
+	}
+
+	if (!errorFlag && !m_IsCancelled)
+	{
+		float ratio = 100.f * (dataSizeBefore - dataSizeAfter) / std::max(dataSizeBefore, 1ull);
+		EventManager::PublishEvent(util::Format("Update finished, files compressed: %u", chunksProcessed));
+		EventManager::PublishEvent(util::Format("%s -> %s, %.1f%% smaller", FormatSize(dataSizeBefore, true).c_str(),
+			FormatSize(dataSizeAfter, true).c_str(), ratio));
+	}
+
+	const uint32_t endTime = ::GetTickCount();
+	return m_Progress.totalSeconds + .001f * (endTime - m_Progress.startTime);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -534,14 +602,16 @@ void UpdateDBMode::MergeChunks(DBChunk* pPrev)
 	{
 		if (pPrev->GetLast() + 1u == pLast->GetFirst() &&
 			pPrev->GetLast().GetLength() == pLast->GetFirst().GetLength() &&
-			pLast->LoadData(m_Data, DBChunkState::HEADERONLY))
+			pLast->LoadData(m_Data, DBChunkState::HEADERONLY) &&
+			pPrev->GetMinSavedStep() == pLast->GetMinSavedStep())
 		{
 			const size_t totalSize = pPrev->GetDataSize() + pLast->GetDataSize();
 			if (totalSize <= Const::DATA_SAVE_SIZE || (totalSize < 5 * Const::DATA_SAVE_SIZE / 4 &&
 				pLast->GetDataSize() < Const::DATA_SAVE_SIZE / 2))
 			{
 				success = false;
-				if (LoadChunkData(pPrev, DBChunkState::FULLDATA) && LoadChunkData(pLast, DBChunkState::FULLDATA))
+				if (LoadChunkData(pPrev, DBChunkState::FULLDATA) &&
+					LoadChunkData(pLast, DBChunkState::FULLDATA))
 				{
 					m_Data.SetActiveChunk(pPrev);
 					pPrev->Append(pLast);
@@ -630,6 +700,10 @@ bool UpdateDBMode::NeedsUpdate(const DBChunk* pChunk) const
 	Assert(m_Steps && pChunk);
 
 	const size_t digitC = pChunk->GetFirst().GetLength();
+	// В самых первых версиях формата v5 (используемого сейчас) не сохранялось поле MINSTEP (я решил
+	// не менять версию формата, при загрузке БД этот параметр вычисляется, а здесь я добавил проверку),
+	// поэтому если это поле отсутствует в чанке, то его необходимо обновить
+	static_assert(DBChunkData::LATEST_FORMAT_VERSION == 5, "Remove obsolete condition below. See comment above");
 	return pChunk->HasOldFormat() || !pChunk->GetMinSavedStep() ||
 		GetMinSavedStep(pChunk) > m_Steps->GetMinSaveable(digitC);
 }

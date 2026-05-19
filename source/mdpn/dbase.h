@@ -78,7 +78,7 @@ public:
 	// содержать последнее проверенное число интервала. Параметр minSavedStep должен содержать значение
 	// шага, начиная с которого палиндромы сохранялись в файл. Параметр timeSpent должен быть равен
 	// суммарному времени CPU (в ms), которое было затрачено на проверку добавленных в файл данных
-	void Save(const Number& last, unsigned minSavedStep, unsigned timeSpent);
+	void Save(const Number& last, unsigned minSavedStep, unsigned timeSpent, bool maxCompression = false);
 
 	// Возвращает количество файлов в базе данных
 	size_t GetChunkC() const { return m_Chunks.GetSize(); }

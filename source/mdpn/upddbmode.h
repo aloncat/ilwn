@@ -49,6 +49,7 @@ private:
 	bool RemoveOverlaps();
 
 	float UpdateAllChunks();
+	float CompressChunks(const std::vector<std::pair<DBChunk*, bool>>& chunks);
 	float UpdateChunks(const std::vector<std::pair<DBChunk*, bool>>& chunks);
 
 	void DoSearch(const Number& target, KnownInfo known);
@@ -83,6 +84,7 @@ private:
 	bool m_IsCancelled = false;			// true, если пользователь отменил операцию
 	bool m_DontFillGaps = false;		// true, если не нужно проверять пропущенные интервалы
 	bool m_From1stKnown = false;		// true, если нужно начать с первого проверенного числа в БД
+	bool m_MaxCompression = false;		// true, если нужно максимально сжать БД (пересохраняет все файлы)
 
 	bool m_HasGaps = false;				// true, если есть пропущенные диапазоны перед текущим чанком
 };

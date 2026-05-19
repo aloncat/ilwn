@@ -453,13 +453,13 @@ void DBChunkData::UnloadData(State stateNeeded)
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-bool DBChunkData::Save(util::File& file, bool forceFullSave)
+bool DBChunkData::Save(util::File& file, bool forceFullSave, bool maxCompression)
 {
 	std::string stats;
 	util::MemoryFile numData;
 	bool didFullSave = false;
 
-	forceFullSave |= m_Chunk->HasOldFormat();
+	forceFullSave |= m_Chunk->HasOldFormat() || maxCompression;
 	if (m_Chunk->GetSaveState() >= State::DATACHANGED || forceFullSave)
 	{
 		SaveStats(stats);
@@ -475,7 +475,7 @@ bool DBChunkData::Save(util::File& file, bool forceFullSave)
 			{
 				util::MemoryFile packedData;
 				if (packedData.Open() && numData.GetCRC32(m_DataCRC) && numData.SetPosition(0) &&
-					CompressFile(numData, packedData, 5) && packedData.GetSize() > 0)
+					CompressFile(numData, packedData, maxCompression ? 9 : 6) && packedData.GetSize() > 0)
 				{
 					m_CDataSize = static_cast<unsigned>(packedData.GetSize());
 					numData = std::move(packedData);
@@ -650,7 +650,8 @@ void DBChunkData::AddLychrel(const Number& num, unsigned stepC)
 bool DBChunkData::RemovePalindromes(unsigned minStep)
 {
 	Assert(m_NumCountA && m_pData);
-	EE::Assert(minStep && minStep <= Const::MAX_STEP, "Invalid minStep value");
+	EE::Assert(minStep && minStep <= Const::MAX_STEP && minStep >= m_MinSavedStep,
+		"Invalid minStep value");
 
 	size_t removedC = 0;
 	DataItems& numbers = *m_pData;
@@ -1261,9 +1262,9 @@ void DBChunk::UnloadData(State stateNeeded)
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-bool DBChunk::Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime)
+bool DBChunk::Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime, bool maxCompression)
 {
-	if (GetSaveState() == State::UNCHANGED)
+	if (GetSaveState() == State::UNCHANGED && !maxCompression)
 		return true;
 
 	Assert(m_pData && m_pData->GetLast());
@@ -1274,7 +1275,7 @@ bool DBChunk::Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime)
 
 	// Если изменились данные или файл имеет старую версию, то перезапишем
 	// весь файл целиком. Иначе можно ограничиться лишь сохранением заголовка
-	const bool needFullSave = GetSaveState() >= State::DATACHANGED || HasOldFormat();
+	const bool needFullSave = GetSaveState() >= State::DATACHANGED || HasOldFormat() || maxCompression;
 	unsigned openMode = needFullSave ? util::FILE_CREATE_ALWAYS : util::FILE_OPEN_ALWAYS;
 
 	util::BinaryFile file;
@@ -1282,7 +1283,7 @@ bool DBChunk::Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime)
 	if (!file.Open(filePath, util::FILE_OPEN_WRITE | openMode))
 		return false;
 
-	bool ok = m_pData->Save(file);
+	bool ok = m_pData->Save(file, maxCompression, maxCompression);
 	file.Close();
 	return ok;
 }

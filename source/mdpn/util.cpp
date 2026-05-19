@@ -66,18 +66,14 @@ int GuardedCall(const std::function<int()>& fn, int errorCode)
 //----------------------------------------------------------------------------------------------------------------------
 bool CompressFile(util::File& src, util::File& dst, int level)
 {
-	constexpr int MAX_LEVEL = 5;
-	level = util::Clamp(level, 0, MAX_LEVEL);
-	// Не используем степени 8 и 9, потому что в подавляющем большинстве случаев они не приводят к уменьшению
-	// размера сжатых данных (или эта разница незначительна), но сильно снижают скорость работы алгоритма
-	static const int zipLevels[1 + MAX_LEVEL] = { 0, 1, 4, 5, 6, 7 };
+	level = util::Clamp(level, 0, 9);
 
 	z_stream stream;
 	memset(&stream, 0, sizeof(stream));
 	// Инициализируем zlib. В расширенных параметрах выключаем заголовок zlib (что также отключает
 	// и вычисление контрольных сумм adler32). Остальные параметры инициализируем значениями по
 	// умолчанию, так как они обеспечивают наилучший баланс между скоростью и степенью сжатия
-	if (::deflateInit2(&stream, zipLevels[level], Z_DEFLATED, -15, 8, Z_DEFAULT_STRATEGY) != Z_OK)
+	if (::deflateInit2(&stream, level, Z_DEFLATED, -15, 8, Z_DEFAULT_STRATEGY) != Z_OK)
 		return false;
 
 	constexpr size_t BUFFER_SIZE = 128 * 1024;

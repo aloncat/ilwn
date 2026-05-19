@@ -73,6 +73,9 @@ public:
 	// формате. Оставшееся неиспользованным простраство заголовка заполняется символами #
 	static constexpr size_t FILE_HEADER_SIZE = 400;
 
+	// Текущий (последний) формат файлов БД
+	static constexpr unsigned LATEST_FORMAT_VERSION = 5;
+
 	// Элемент данных
 	struct DataItem {
 		FixNumber num;	// Число - отложенный палиндром
@@ -102,7 +105,7 @@ public:
 
 	// Сохраняет данные в файл: заголовок сохраняется всегда, блоки статистики и данных
 	// сохраняются при наличии изменений в данных или если forceFullSave равен true
-	bool Save(util::File& file, bool forceFullSave = false);
+	bool Save(util::File& file, bool forceFullSave = false, bool maxCompression = false);
 
 	unsigned GetFormatVer() const { return m_FormatVer; }
 	const Number& GetLast() const { return m_Last; }
@@ -154,7 +157,6 @@ public:
 	void Append(const DBChunkData* pOther);
 
 private:
-	static constexpr unsigned LATEST_FORMAT_VERSION = 5;
 	// В то время как обычные Assert/Verify используются для контроля логических ошибок в
 	// самом классе, EE::Assert и EE::Verify генерируют при ошибках исключение EDBLogic и
 	// предназначены для контроля корректности использования классов DBChunk/DBChunkData
@@ -250,7 +252,7 @@ public:
 	// Сохраняет накопленные изменения в файл. Параметр minSavedStep должен содержать значение шага,
 	// начиная с которого найденные палиндромы сохранялись. Параметр cpuTime должен быть равен
 	// суммарному времени CPU (в ms), которое было затрачено на проверку добавленных данных
-	bool Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime);
+	bool Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime, bool maxCompression = false);
 
 	unsigned GetFormatVer() const { return GetData(State::HEADERONLY)->GetFormatVer(); }
 	const FixNumber& GetFirst() const { CheckState(State::DATAUNLOADED); return m_First; }
