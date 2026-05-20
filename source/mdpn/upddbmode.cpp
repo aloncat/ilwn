@@ -606,8 +606,9 @@ void UpdateDBMode::MergeChunks(DBChunk* pPrev)
 			pPrev->GetMinSavedStep() == pLast->GetMinSavedStep())
 		{
 			const size_t totalSize = pPrev->GetDataSize() + pLast->GetDataSize();
-			if (totalSize <= Const::DATA_SAVE_SIZE || (totalSize < 5 * Const::DATA_SAVE_SIZE / 4 &&
-				pLast->GetDataSize() < Const::DATA_SAVE_SIZE / 2))
+			if (totalSize < 13 * Const::DATA_SAVE_SIZE / 12 ||
+				(totalSize < 5 * Const::DATA_SAVE_SIZE / 4 &&
+				pLast->GetLast().GetLength() < (pLast->GetLast() + 1u).GetLength()))
 			{
 				success = false;
 				if (LoadChunkData(pPrev, DBChunkState::FULLDATA) &&
