@@ -484,148 +484,261 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //----------------------------------------------------------------------------------------------------------------------
-/*static*/ void ShrinkDB()
+/*static*/ int ShrinkDB()
 {
+	// Используем увеличенное значение вместо Const::DATA_SAVE_SIZE;
+	constexpr size_t DATA_SAVE_SIZE = 1200 * 1024;
 	// Шаги, начиная с которых отложенные палиндромы будут сохраняться в БД (для каждого диапазона чисел).
 	// При значении 1 будут сохрнаяться абсолютно все найденные палиндромы. Чем ниже значение, тем больше
 	// размер файлов. В основной БД ограничения начинаются с 13-значных чисел: 10, 15, 35, 40, 40, 45...
-	static const unsigned stepA[Const::MAX_DIGIT_C + 1] = { 0,
+	static const unsigned minSteps[Const::MAX_DIGIT_C + 1] = { 0,
 		  1,   1,   1,   1,   1,   1,   1,   1,   1,   1,		//  1 - 10
-		  1,   1,  10,  15,  40,  45,  70,  75,  95, 100,		// 11 - 20
+		  1,  14,  32,  51,  61,  80,  89, 109, 118, 120,		// 11 - 20
 		115, 120, 120, 120, 120, 120, 120, 120, 120, 120 };		// 21 - 30
 
 	DataBase data;
 	if (data.Init(false, DBChunkState::HEADERONLY))
 	{
-		uint64_t totalPalCountA[Const::MAX_STEP + 1];
-		AML_FILLA(totalPalCountA, 0, Const::MAX_STEP + 1);
+		uint64_t basePalCount[Const::MAX_STEP + 1];
+		AML_FILLA(basePalCount, 0, Const::MAX_STEP + 1);
+		uint64_t totalPalCount[Const::MAX_STEP + 1];
+		AML_FILLA(totalPalCount, 0, Const::MAX_STEP + 1);
+
+		const size_t totalFileCount = data.GetChunkC();
+		std::set<DBChunk*> compressList;
 
 		uint32_t lastTick = 0;
-		size_t fileC = 0, modifiedC = 0;
+		size_t fileCount = 0;
+		size_t modifiedCount = 0;
 		data.ForEachChunk([&](DBChunk* pChunk) {
 			if (!pChunk->LoadData(data, DBChunkState::FULLDATA))
 			{
-				fileC = 0;
-				aux::Printc("#12\rError: failed to load database file");
+				fileCount = 0;
+				aux::Printc("#12\rError: failed to load DB chunk");
 				return false;
 			}
 
 			const size_t range = pChunk->GetLast().GetLength();
-			if (range > 3 && range <= Const::MAX_DIGIT_C && stepA[range] > 1)
+			if (range > 3 && range <= Const::MAX_DIGIT_C && minSteps[range] > 1 &&
+				pChunk->GetMinSavedStep() < minSteps[range])
 			{
-				if (pChunk->RemovePalindromes(stepA[range]))
+				compressList.insert(pChunk);
+				if (pChunk->RemovePalindromes(minSteps[range]))
 				{
 					data.SetActiveChunk(pChunk);
 					data.Save(0u, 0, 0);
-					++modifiedC;
+					++modifiedCount;
 				}
 			}
 
 			Number num;
+			for (unsigned i = 1; i <= pChunk->GetHighestStep(); ++i)
+				basePalCount[i] += pChunk->GetNumCountA()[i];
 			for (const auto& item : pChunk->GetNumbers())
 			{
 				num = item.num;
-				totalPalCountA[item.step] += 1 + num.GetKinNumberC();
+				totalPalCount[item.step] += 1 + num.GetKinNumberC();
 			}
 
-			++fileC;
+			++fileCount;
 			pChunk->UnloadData(DBChunkState::HEADERONLY);
 
 			uint32_t tick = ::GetTickCount();
-			if (tick - lastTick >= 250)
+			if (tick - lastTick >= 500)
 			{
-				aux::Printf("\rFiles resized: %u/%u", modifiedC, fileC);
+				aux::Printf("\rFiles resized/total: %u/%u of %u", modifiedCount, fileCount, totalFileCount);
 				lastTick = tick;
 			}
 			return true;
 		});
-		aux::Printf("\rFiles resized: %u/%u\n", modifiedC, fileC);
+		aux::Printf("\rFiles resized/total: %u/%u of %u\n", modifiedCount, fileCount, totalFileCount);
+		if (!fileCount)
+		{
+			// Если произошла ошибка
+			return totalFileCount ? 1 : 0;
+		}
 
-		fileC = 0;
 		lastTick = 0;
-		modifiedC = 0;
-		bool isSaved = true;
+		fileCount = 0;
 		unsigned dataSize = 0;
+		size_t mergedCount = 0;
+		size_t compressedCount = 0;
+		std::set<DBChunk*> removeList;
 		DBChunk* pActiveChunk = nullptr;
-		std::vector<DBChunk*> removeList;
 		data.ForEachChunk([&](DBChunk* pChunk) {
-			if (!pChunk->LoadData(data, DBChunkState::FULLDATA))
-			{
-				fileC = 0;
-				aux::Printc("#12\rError: failed to load database file");
-				return false;
-			}
-
 			if (pActiveChunk && pActiveChunk->GetLast() + 1u == pChunk->GetFirst() &&
 				pActiveChunk->GetLast().GetLength() == pChunk->GetFirst().GetLength() &&
-				dataSize + pChunk->GetDataSize() <= Const::DATA_SAVE_SIZE)
+				pActiveChunk->GetMinSavedStep() == pChunk->GetMinSavedStep() &&
+				dataSize + pChunk->GetDataSize() < 13 * DATA_SAVE_SIZE / 12)
 			{
-				isSaved = false;
-				pActiveChunk->Append(pChunk);
-				dataSize += pChunk->GetDataSize();
-				if (dataSize > Const::DATA_SAVE_SIZE - Const::DATA_SAVE_SIZE / 8 ||
-					dataSize + 2 * pChunk->GetDataSize() > Const::DATA_SAVE_SIZE)
+				if ((pActiveChunk->GetDataState() < DBChunkState::FULLDATA &&
+					!pActiveChunk->LoadData(data, DBChunkState::FULLDATA)) ||
+					!pChunk->LoadData(data, DBChunkState::FULLDATA))
 				{
-					data.Save(0u, 0, 0);
-					dataSize = pActiveChunk->GetDataSize();
-					isSaved = true;
+					fileCount = 0;
+					aux::Printc("#12\rError: failed to load DB chunk");
+					return false;
 				}
-				++modifiedC;
+
+				pActiveChunk->Append(pChunk);
+				compressList.insert(pActiveChunk);
+				// Здесь мы не знаем точно, каким получится размер данных в результирующем чанке (он вычисляется только
+				// в момент сохранения чанка). Однако тестирование показало, что при простом сложении ошибка весьма
+				// незначительна и всегда завышает размер (при сохранении объединённый чанк будет меньше)
+				dataSize += pChunk->GetDataSize();
+				++mergedCount;
 
 				pChunk->UnloadData(DBChunkState::DATAUNLOADED);
-				removeList.push_back(pChunk);
+				compressList.erase(pChunk);
+				removeList.insert(pChunk);
 			} else
 			{
-				if (!isSaved)
+				if (pActiveChunk)
 				{
-					data.Save(0u, 0, 0);
-					isSaved = true;
+					if (auto it = compressList.find(pActiveChunk); it != compressList.end())
+					{
+						data.Save(0u, 0, 0, true);
+						compressList.erase(it);
+						++compressedCount;
+					}
+					pActiveChunk->UnloadData(DBChunkState::HEADERONLY);
 				}
 				data.SetActiveChunk(pChunk);
 				dataSize = pChunk->GetDataSize();
-
-				if (pActiveChunk)
-					pActiveChunk->UnloadData(DBChunkState::HEADERONLY);
 				pActiveChunk = pChunk;
 			}
 
-			++fileC;
+			++fileCount;
 			uint32_t tick = ::GetTickCount();
-			if (tick - lastTick >= 250)
+			if (tick - lastTick >= 500)
 			{
-				aux::Printf("\rFiles combined: %u/%u", modifiedC, fileC);
+				aux::Printf("\rFiles merged/compressed/total: %u/%u/%u", mergedCount, compressedCount, fileCount);
 				lastTick = tick;
 			}
 			return true;
 		});
-		if (fileC && !isSaved)
-			data.Save(0u, 0, 0);
-		aux::Printf("\rFiles combined: %u/%u\n", modifiedC, fileC);
+		if (!fileCount)
+		{
+			// Если произошла ошибка
+			return totalFileCount ? 1 : 0;
+		}
+		if (pActiveChunk)
+		{
+			if (compressList.find(pActiveChunk) != compressList.end())
+			{
+				data.Save(0u, 0, 0, true);
+				++compressedCount;
+			}
+			pActiveChunk->UnloadData(DBChunkState::HEADERONLY);
+			pActiveChunk = nullptr;
+		}
 
-		fileC = 0;
+		dataSize = 0;
+		data.ForEachChunk([&](DBChunk* pChunk) {
+			if (removeList.find(pChunk) != removeList.end())
+				return true;
+			if (pChunk->GetLast().GetLength() == (pChunk->GetLast() + 1u).GetLength())
+			{
+				dataSize = pChunk->GetDataSize();
+				pActiveChunk = pChunk;
+			}
+			else if (pActiveChunk && pActiveChunk->GetLast() + 1u == pChunk->GetFirst() &&
+				pActiveChunk->GetLast().GetLength() == pChunk->GetFirst().GetLength() &&
+				pActiveChunk->GetMinSavedStep() == pChunk->GetMinSavedStep() &&
+				dataSize + pChunk->GetDataSize() < 6 * DATA_SAVE_SIZE / 5)
+			{
+				if (!pActiveChunk->LoadData(data, DBChunkState::FULLDATA) ||
+					!pChunk->LoadData(data, DBChunkState::FULLDATA))
+				{
+					fileCount = 0;
+					aux::Printc("#12\rError: failed to load DB chunk");
+					return false;
+				}
+
+				data.SetActiveChunk(pActiveChunk);
+				pActiveChunk->Append(pChunk);
+				++mergedCount;
+				data.Save(0u, 0, 0, true);
+				++compressedCount;
+
+				dataSize = pActiveChunk->GetDataSize();
+				pActiveChunk->UnloadData(DBChunkState::HEADERONLY);
+				pChunk->UnloadData(DBChunkState::DATAUNLOADED);
+				removeList.insert(pChunk);
+			}
+			return true;
+		});
+		if (!fileCount)
+		{
+			// Если произошла ошибка
+			return totalFileCount ? 1 : 0;
+		}
+		aux::Printf("\rFiles merged/compressed/total: %u/%u/%u\n", mergedCount, compressedCount, fileCount);
+
+		fileCount = 0;
 		lastTick = 0;
 		for (DBChunk* pChunk : removeList)
 		{
-			++fileC;
+			++fileCount;
 			data.RemoveChunk(pChunk);
 			uint32_t tick = ::GetTickCount();
-			if (tick - lastTick >= 250)
+			if (tick - lastTick >= 500)
 			{
-				aux::Printf("\rFiles removed: %u", fileC);
+				aux::Printf("\rFiles removed: %u", fileCount);
 				lastTick = tick;
 			}
 		}
-		aux::Printf("\rFiles removed: %u\n", fileC);
 
-		aux::Print("---\n");
-		constexpr unsigned halfSteps = 60;
-		for (unsigned step = 1; step <= halfSteps; ++step)
+		size_t lastRange = 0;
+		uint64_t databaseSize = 0;
+		bool ranges[Const::MAX_DIGIT_C + 1] = {};
+		data.ForEachChunk([&](DBChunk* pChunk) {
+			databaseSize += pChunk->GetFileSize();
+			auto firstRange = pChunk->GetFirst().GetLength();
+			lastRange = pChunk->GetLast().GetLength();
+			for (; firstRange <= lastRange; ++firstRange)
+				ranges[firstRange] = true;
+			return true;
+		});
+
+		aux::Printf("\rFiles removed: %u, remains: %u\n", fileCount, data.GetChunkC());
+		aux::Printf("Database size: %s\n---\n", FormatSize(databaseSize).c_str());
+
+		std::string s1, s2 = "Ranges:";
+		for (size_t i = 1; i <= lastRange; ++i)
 		{
-			aux::Printf("Step %3u: %18s   #8|#7   Step %3u: %18s\n", step,
-				SeparateWithCommas(totalPalCountA[step]).c_str(), step + halfSteps,
-				SeparateWithCommas(totalPalCountA[step + halfSteps]).c_str());
+			if (i > 1 && i % 5 == 1)
+				s2 += "  ";
+			s2 += util::Format(" #%u#%u", ranges[i] ? 15 : 4, i);
+		}
+		aux::Printc(s2 + "\n---\n");
+
+		constexpr int COLUMNS = 6;
+		constexpr unsigned STEPS_IN_COLUMN = 25;
+		uint64_t lastCounts[COLUMNS] = { size_t(-1) };
+		for (int i = 1; i < COLUMNS; ++i)
+			lastCounts[i] = basePalCount[i * STEPS_IN_COLUMN];
+		for (unsigned step = 1; step <= STEPS_IN_COLUMN; ++step)
+		{
+			s1.clear(); s2.clear();
+			for (int i = 0; i < COLUMNS; ++i)
+			{
+				s1 += i ? "   #8|#7   " : "";
+				const size_t total = basePalCount[step + i * STEPS_IN_COLUMN];
+				bool isColored = (2 * lastCounts[i] < total) && (i || step > 2);
+				s1 += util::Format("Step %-10s #%u#%15s", util::Format("#%02u#%u#7:",
+					isColored ? 14 : 11, step + i * STEPS_IN_COLUMN).c_str(),
+					isColored ? 14 : 7, SeparateWithCommas(total).c_str());
+				s2 += i ? "   #8|#7   " : "";
+				s2 += util::Format("#%u#%25s", isColored ? 6 : 8,
+					SeparateWithCommas(totalPalCount[step + i * STEPS_IN_COLUMN]).c_str());
+				lastCounts[i] = total;
+			}
+			aux::Printc(s1 + "\n" + s2 + "\n");
 		}
 	}
+
+	return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1288,6 +1401,7 @@ int wmain(int argCount, const wchar_t* args[])
 	//return GuardedCall(P196ProblemMain, 1);
 	//return GuardedCall(AllLychrelsMain, 1);
 	//return GuardedCall(ListAllPalindromesMain, 1);
+	//return GuardedCall(ShrinkDB, 1);
 
 	return GuardedCall(std::bind(Main, argCount, args), 1);
 }
