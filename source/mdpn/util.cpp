@@ -305,3 +305,17 @@ std::string FormatSize(uint64_t sizeInBytes, bool colored)
 
 	return util::Format(formatA, n) + (colored ? coloredA[k] : suffixA[k]);
 }
+
+//----------------------------------------------------------------------------------------------------------------------
+std::string EraseTextSequence(size_t charsToErase, bool twice)
+{
+	std::string s;
+	if (charsToErase)
+	{
+		util::SmartArray<char> buf(3 * charsToErase);
+		memset(buf, '\b', 3 * charsToErase);
+		memset(buf + charsToErase, ' ', charsToErase);
+		s.assign(buf, (twice ? 3 : 2) * charsToErase);
+	}
+	return s;
+}

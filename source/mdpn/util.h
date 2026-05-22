@@ -49,3 +49,7 @@ std::string FormatSpeed(float speed);
 // в *байтах (где Z может принимать одно из значений: "K", "M", "G" или "T"). Если параметр
 // colored == true, то вместо пробела/суффикса будет суффикс с маркерами цвета "#8ZiB#7"
 std::string FormatSize(uint64_t sizeInBytes, bool colored = false);
+
+// Возвращает строку, содержащую указанное количество символов '\b' и пробелов.
+// Если twice == true, то в конце добавляет ещё столько же символов '\b'
+std::string EraseTextSequence(size_t charsToErase, bool twice = false);
