@@ -184,5 +184,8 @@
     <ClCompile Include="..\..\mdpn\list.cpp">
       <Filter>main</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\mdpn\shrinkdb.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

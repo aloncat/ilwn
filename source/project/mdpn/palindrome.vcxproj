@@ -250,6 +250,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\mdpn\searchmode.cpp" />
+    <ClCompile Include="..\..\mdpn\shrinkdb.cpp" />
     <ClCompile Include="..\..\mdpn\stephlp.cpp" />
     <ClCompile Include="..\..\mdpn\test.cpp" />
     <ClCompile Include="..\..\mdpn\ttime.cpp" />
