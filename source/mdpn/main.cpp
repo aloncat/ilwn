@@ -1130,7 +1130,7 @@ void Problem49Main()
 }
 
 extern int ListAllPalindromesMain();
-extern int ShrinkDB();
+extern int ShrinkDBMain();
 
 //----------------------------------------------------------------------------------------------------------------------
 int wmain(int argCount, const wchar_t* args[])
@@ -1138,7 +1138,7 @@ int wmain(int argCount, const wchar_t* args[])
 	//return GuardedCall(P196ProblemMain, 1);
 	//return GuardedCall(AllLychrelsMain, 1);
 	//return GuardedCall(ListAllPalindromesMain, 1);
-	//return GuardedCall(ShrinkDB, 1);
+	//return GuardedCall(ShrinkDBMain, 1);
 
 	return GuardedCall(std::bind(Main, argCount, args), 1);
 }

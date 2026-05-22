@@ -6,6 +6,7 @@
 #include "dbchunk.h"
 #include "eventmgr.h"
 #include "number.h"
+#include "test.h"
 #include "util.h"
 
 #include <core/auxutil.h>
@@ -19,35 +20,51 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Используем увеличенное значение вместо Const::DATA_SAVE_SIZE,
+// чтобы уменьшить количество чанков в "сжатой" БД
+constexpr size_t DATA_SAVE_SIZE = 1200 * 1024;
+
+// Шаги, начиная с которых отложенные палиндромы будут сохраняться в БД (для каждого диапазона чисел).
+// При значении 1 будут сохрнаяться абсолютно все найденные палиндромы. Чем ниже значение, тем больше
+// размер файлов. В основной БД ограничения начинаются с 13-значных чисел: 10, 15, 35, 40, 40, 45...
+const unsigned minSteps[Const::MAX_DIGIT_C + 1] = { 0,
+	  1,   1,   1,   1,   1,   1,   1,   1,   1,   1,	//  1 - 10
+	  1,  14,  32,  51,  61,  80,  89, 109, 118, 120,	// 11 - 20
+	115, 120, 120, 120, 120, 120, 120, 120, 120, 120 };	// 21 - 30
+
 //--------------------------------------------------------------------------------------------------------------------------------
-int ShrinkDB()
+class Shrinker
 {
-	// Используем увеличенное значение вместо Const::DATA_SAVE_SIZE;
-	constexpr size_t DATA_SAVE_SIZE = 1200 * 1024;
-	// Шаги, начиная с которых отложенные палиндромы будут сохраняться в БД (для каждого диапазона чисел).
-	// При значении 1 будут сохрнаяться абсолютно все найденные палиндромы. Чем ниже значение, тем больше
-	// размер файлов. В основной БД ограничения начинаются с 13-значных чисел: 10, 15, 35, 40, 40, 45...
-	static const unsigned minSteps[Const::MAX_DIGIT_C + 1] = { 0,
-		1,   1,   1,   1,   1,   1,   1,   1,   1,   1,		//  1 - 10
-		1,  14,  32,  51,  61,  80,  89, 109, 118, 120,		// 11 - 20
-		115, 120, 120, 120, 120, 120, 120, 120, 120, 120 };		// 21 - 30
+	AML_NONCOPYABLE(Shrinker)
 
-	DataBase data;
-	if (data.Init(false, DBChunkState::HEADERONLY))
+public:
+	Shrinker() = default;
+
+	bool Run();
+
+protected:
+	DataBase m_Data;
+
+	uint64_t m_BasePalCount[Const::MAX_STEP + 1];
+	uint64_t m_TotalPalCount[Const::MAX_STEP + 1];
+};
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool Shrinker::Run()
+{
+	AML_FILLA(m_BasePalCount, 0, Const::MAX_STEP + 1);
+	AML_FILLA(m_TotalPalCount, 0, Const::MAX_STEP + 1);
+
+	if (m_Data.Init(false, DBChunkState::HEADERONLY))
 	{
-		uint64_t basePalCount[Const::MAX_STEP + 1];
-		AML_FILLA(basePalCount, 0, Const::MAX_STEP + 1);
-		uint64_t totalPalCount[Const::MAX_STEP + 1];
-		AML_FILLA(totalPalCount, 0, Const::MAX_STEP + 1);
-
-		const size_t totalFileCount = data.GetChunkC();
+		const size_t totalFileCount = m_Data.GetChunkC();
 		std::set<DBChunk*> compressList;
 
 		uint32_t lastTick = 0;
 		size_t fileCount = 0;
 		size_t modifiedCount = 0;
-		data.ForEachChunk([&](DBChunk* pChunk) {
-			if (!pChunk->LoadData(data, DBChunkState::FULLDATA))
+		m_Data.ForEachChunk([&](DBChunk* pChunk) {
+			if (!pChunk->LoadData(m_Data, DBChunkState::FULLDATA))
 			{
 				fileCount = 0;
 				aux::Printc("#12\rError: failed to load DB chunk");
@@ -61,19 +78,19 @@ int ShrinkDB()
 				compressList.insert(pChunk);
 				if (pChunk->RemovePalindromes(minSteps[range]))
 				{
-					data.SetActiveChunk(pChunk);
-					data.Save(0u, 0, 0);
+					m_Data.SetActiveChunk(pChunk);
+					m_Data.Save(0u, 0, 0);
 					++modifiedCount;
 				}
 			}
 
 			Number num;
 			for (unsigned i = 1; i <= pChunk->GetHighestStep(); ++i)
-				basePalCount[i] += pChunk->GetNumCountA()[i];
+				m_BasePalCount[i] += pChunk->GetNumCountA()[i];
 			for (const auto& item : pChunk->GetNumbers())
 			{
 				num = item.num;
-				totalPalCount[item.step] += 1 + num.GetKinNumberC();
+				m_TotalPalCount[item.step] += 1 + num.GetKinNumberC();
 			}
 
 			++fileCount;
@@ -91,7 +108,7 @@ int ShrinkDB()
 		if (!fileCount)
 		{
 			// Если произошла ошибка
-			return totalFileCount ? 1 : 0;
+			return !totalFileCount;
 		}
 
 		lastTick = 0;
@@ -101,15 +118,15 @@ int ShrinkDB()
 		size_t compressedCount = 0;
 		std::set<DBChunk*> removeList;
 		DBChunk* pActiveChunk = nullptr;
-		data.ForEachChunk([&](DBChunk* pChunk) {
+		m_Data.ForEachChunk([&](DBChunk* pChunk) {
 			if (pActiveChunk && pActiveChunk->GetLast() + 1u == pChunk->GetFirst() &&
 				pActiveChunk->GetLast().GetLength() == pChunk->GetFirst().GetLength() &&
 				pActiveChunk->GetMinSavedStep() == pChunk->GetMinSavedStep() &&
 				dataSize + pChunk->GetDataSize() < 13 * DATA_SAVE_SIZE / 12)
 			{
 				if ((pActiveChunk->GetDataState() < DBChunkState::FULLDATA &&
-					!pActiveChunk->LoadData(data, DBChunkState::FULLDATA)) ||
-					!pChunk->LoadData(data, DBChunkState::FULLDATA))
+					!pActiveChunk->LoadData(m_Data, DBChunkState::FULLDATA)) ||
+					!pChunk->LoadData(m_Data, DBChunkState::FULLDATA))
 				{
 					fileCount = 0;
 					aux::Printc("#12\rError: failed to load DB chunk");
@@ -133,13 +150,13 @@ int ShrinkDB()
 				{
 					if (auto it = compressList.find(pActiveChunk); it != compressList.end())
 					{
-						data.Save(0u, 0, 0, true);
+						m_Data.Save(0u, 0, 0, true);
 						compressList.erase(it);
 						++compressedCount;
 					}
 					pActiveChunk->UnloadData(DBChunkState::HEADERONLY);
 				}
-				data.SetActiveChunk(pChunk);
+				m_Data.SetActiveChunk(pChunk);
 				dataSize = pChunk->GetDataSize();
 				pActiveChunk = pChunk;
 			}
@@ -156,13 +173,13 @@ int ShrinkDB()
 		if (!fileCount)
 		{
 			// Если произошла ошибка
-			return totalFileCount ? 1 : 0;
+			return !totalFileCount;
 		}
 		if (pActiveChunk)
 		{
 			if (compressList.find(pActiveChunk) != compressList.end())
 			{
-				data.Save(0u, 0, 0, true);
+				m_Data.Save(0u, 0, 0, true);
 				++compressedCount;
 			}
 			pActiveChunk->UnloadData(DBChunkState::HEADERONLY);
@@ -170,7 +187,7 @@ int ShrinkDB()
 		}
 
 		dataSize = 0;
-		data.ForEachChunk([&](DBChunk* pChunk) {
+		m_Data.ForEachChunk([&](DBChunk* pChunk) {
 			if (removeList.find(pChunk) != removeList.end())
 				return true;
 			if (pChunk->GetLast().GetLength() == (pChunk->GetLast() + 1u).GetLength())
@@ -183,18 +200,18 @@ int ShrinkDB()
 				pActiveChunk->GetMinSavedStep() == pChunk->GetMinSavedStep() &&
 				dataSize + pChunk->GetDataSize() < 6 * DATA_SAVE_SIZE / 5)
 			{
-				if (!pActiveChunk->LoadData(data, DBChunkState::FULLDATA) ||
-					!pChunk->LoadData(data, DBChunkState::FULLDATA))
+				if (!pActiveChunk->LoadData(m_Data, DBChunkState::FULLDATA) ||
+					!pChunk->LoadData(m_Data, DBChunkState::FULLDATA))
 				{
 					fileCount = 0;
 					aux::Printc("#12\rError: failed to load DB chunk");
 					return false;
 				}
 
-				data.SetActiveChunk(pActiveChunk);
+				m_Data.SetActiveChunk(pActiveChunk);
 				pActiveChunk->Append(pChunk);
 				++mergedCount;
-				data.Save(0u, 0, 0, true);
+				m_Data.Save(0u, 0, 0, true);
 				++compressedCount;
 
 				dataSize = pActiveChunk->GetDataSize();
@@ -207,7 +224,7 @@ int ShrinkDB()
 		if (!fileCount)
 		{
 			// Если произошла ошибка
-			return totalFileCount ? 1 : 0;
+			return !totalFileCount;
 		}
 		aux::Printf("\rFiles merged/compressed/total: %u/%u/%u\n", mergedCount, compressedCount, fileCount);
 
@@ -216,7 +233,7 @@ int ShrinkDB()
 		for (DBChunk* pChunk : removeList)
 		{
 			++fileCount;
-			data.RemoveChunk(pChunk);
+			m_Data.RemoveChunk(pChunk);
 			uint32_t tick = ::GetTickCount();
 			if (tick - lastTick >= 500)
 			{
@@ -228,7 +245,7 @@ int ShrinkDB()
 		size_t lastRange = 0;
 		uint64_t databaseSize = 0;
 		bool ranges[Const::MAX_DIGIT_C + 1] = {};
-		data.ForEachChunk([&](DBChunk* pChunk) {
+		m_Data.ForEachChunk([&](DBChunk* pChunk) {
 			databaseSize += pChunk->GetFileSize();
 			auto firstRange = pChunk->GetFirst().GetLength();
 			lastRange = pChunk->GetLast().GetLength();
@@ -237,7 +254,7 @@ int ShrinkDB()
 			return true;
 		});
 
-		aux::Printf("\rFiles removed: %u, remains: %u\n", fileCount, data.GetChunkC());
+		aux::Printf("\rFiles removed: %u, remains: %u\n", fileCount, m_Data.GetChunkC());
 		aux::Printf("Database size: %s\n---\n", FormatSize(databaseSize).c_str());
 
 		std::string s1, s2 = "Ranges:";
@@ -253,26 +270,39 @@ int ShrinkDB()
 		constexpr unsigned STEPS_IN_COLUMN = 25;
 		uint64_t lastCounts[COLUMNS] = { size_t(-1) };
 		for (int i = 1; i < COLUMNS; ++i)
-			lastCounts[i] = basePalCount[i * STEPS_IN_COLUMN];
+			lastCounts[i] = m_BasePalCount[i * STEPS_IN_COLUMN];
 		for (unsigned step = 1; step <= STEPS_IN_COLUMN; ++step)
 		{
 			s1.clear(); s2.clear();
 			for (int i = 0; i < COLUMNS; ++i)
 			{
 				s1 += i ? "   #8|#7   " : "";
-				const size_t total = basePalCount[step + i * STEPS_IN_COLUMN];
+				const size_t total = m_BasePalCount[step + i * STEPS_IN_COLUMN];
 				bool isColored = (2 * lastCounts[i] < total) && (i || step > 2);
 				s1 += util::Format("Step %-10s #%u#%15s", util::Format("#%02u#%u#7:",
 					isColored ? 14 : 11, step + i * STEPS_IN_COLUMN).c_str(),
 					isColored ? 14 : 7, SeparateWithCommas(total).c_str());
 				s2 += i ? "   #8|#7   " : "";
 				s2 += util::Format("#%u#%25s", isColored ? 6 : 8,
-					SeparateWithCommas(totalPalCount[step + i * STEPS_IN_COLUMN]).c_str());
+					SeparateWithCommas(m_TotalPalCount[step + i * STEPS_IN_COLUMN]).c_str());
 				lastCounts[i] = total;
 			}
 			aux::Printc(s1 + "\n" + s2 + "\n");
 		}
 	}
 
-	return 0;
+	return true;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+int ShrinkDBMain()
+{
+	if (!TestFacility::CheckRequirements(false))
+	{
+		aux::Printc("#12Error: #7failed to pass one or more crucial checks\n");
+		return 1;
+	}
+
+	Shrinker shrinker;
+	return shrinker.Run() ? 0 : 1;
 }
