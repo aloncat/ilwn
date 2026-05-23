@@ -593,7 +593,7 @@ void DBChunkData::AddPalindrome(const Number& num, unsigned step)
 	}
 	++m_SavedPalC;
 	uint64_t allSavedPalIntC = m_AllSavedPalIntC;
-	m_AllSavedPalIntC = allSavedPalIntC += 1 + num.GetKinNumberC();
+	m_AllSavedPalIntC = allSavedPalIntC += 1 + num.GetKinNumberCount();
 	// NB: при длине числа до 30 знаков включительно макс. значение, которое может быть добавлено
 	// к переменной *IntC, равно 9*10^14. Чтобы не прибавлять *IntC к *NumC слишком часто (это долго),
 	// мы хотим накапливать в *IntC как можно большее значение. Но оно всегда должно оставаться таким,
@@ -632,7 +632,7 @@ void DBChunkData::AddLychrel(const Number& num, unsigned stepC)
 	++m_PrimaryLychrelC;
 
 	uint64_t allLychrelIntC = m_AllLychrelIntC;
-	m_AllLychrelIntC = allLychrelIntC += 1 + num.GetKinNumberC();
+	m_AllLychrelIntC = allLychrelIntC += 1 + num.GetKinNumberCount();
 	constexpr uint64_t MAX_INTC_VALUE = ~0ull - 900000000000000ull;
 	if (allLychrelIntC > MAX_INTC_VALUE)
 	{
@@ -682,7 +682,7 @@ bool DBChunkData::RemovePalindromes(unsigned minStep)
 	for (const auto& item : *m_pData)
 	{
 		num = item.num;
-		m_AllSavedPalNumC += 1 + num.GetKinNumberC();
+		m_AllSavedPalNumC += 1 + num.GetKinNumberCount();
 
 		++m_NumCountA[item.step];
 		m_HighestStep = (item.step > m_HighestStep) ? item.step : m_HighestStep;

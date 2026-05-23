@@ -219,7 +219,7 @@ bool Shrinker::RemovePalindromes(std::set<DBChunk*>& compressList)
 		for (const auto& item : pChunk->GetNumbers())
 		{
 			num = item.num;
-			m_TotalPalCount[item.step] += 1 + num.GetKinNumberC();
+			m_TotalPalCount[item.step] += 1 + num.GetKinNumberCount();
 		}
 
 		++fileCount;

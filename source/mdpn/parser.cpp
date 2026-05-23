@@ -210,7 +210,7 @@ static bool ParseDataFile(util::MemoryFile& data, uint64_t& totalCPUTime, BigNum
 		num.Set(s);
 
 		++counterBaseA[step];
-		counterA[step] += 1 + num.GetKinNumberC();
+		counterA[step] += 1 + num.GetKinNumberCount();
 
 		if (!lowestA[step] || (num < lowestA[step]))
 			lowestA[step] = num;

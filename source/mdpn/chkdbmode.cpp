@@ -793,7 +793,7 @@ bool CheckDBMode::CheckLevel3(DBChunk* pChunk)
 	{
 		num = item.num;
 		unsigned doneC = 0;
-		allSavedPalC += 1 + num.GetKinNumberC();
+		allSavedPalC += 1 + num.GetKinNumberCount();
 		if (!num.RAATillPalindrome(item.step, doneC) || doneC != item.step)
 		{
 			num = item.num;
@@ -915,7 +915,7 @@ bool CheckDBMode::CheckLevel5Or6(DBChunk* pChunk, unsigned level)
 		// Случай 2: число не стало палиндромом, попытаемся его отсеять,
 		// то есть проверим, не является ли оно числом Лишрел
 		else if (m_LychThreads.Exists(cur))
-			allLychrelC += 1 + num.GetKinNumberC();
+			allLychrelC += 1 + num.GetKinNumberCount();
 		else
 		{
 			// Случай 3: num - найденный палиндром из блока данных
@@ -945,7 +945,7 @@ bool CheckDBMode::CheckLevel5Or6(DBChunk* pChunk, unsigned level)
 								totalDoneC + doneC, SeparateWithCommas(num).c_str()));
 						}
 					}
-					allLychrelC += 1 + num.GetKinNumberC();
+					allLychrelC += 1 + num.GetKinNumberCount();
 					m_LychThreads.Insert(cnum);
 				}
 			}

@@ -564,7 +564,7 @@ bool TestNumber::TestGetKinNumberC()
 			} else
 				--i;
 		}
-		return num.GetKinNumberC() == counter;
+		return num.GetKinNumberCount() == counter;
 	};
 
 	char buffer[40];
@@ -588,7 +588,7 @@ bool TestNumber::TestGetKinNumberC()
 			buffer[i] = (i < len / 2) ? '0' : '9';
 		num.Set(buffer);
 		totalC *= (len & 1) ? 1 : 10;
-		if (1 + num.GetKinNumberC() != totalC)
+		if (1 + num.GetKinNumberCount() != totalC)
 			return OnError(31);
 	}
 
@@ -1170,7 +1170,7 @@ bool TestBigNumberSkipRAADups::TestMain()
 		{
 			--counter;
 			++processedC;
-			kinC += num.GetKinNumberC();
+			kinC += num.GetKinNumberCount();
 			if (nextToProcess && n != nextToProcess)
 				break;
 			nextToProcess.SetZero();
@@ -1237,7 +1237,7 @@ bool TestBigNumberSkipRAADups::TestHigh()
 		if (num < n)
 			break;
 		++processedC;
-		skippedC += num.GetKinNumberC();
+		skippedC += num.GetKinNumberCount();
 
 		if (j <= MAX_SET_RANGE + 1)
 		{

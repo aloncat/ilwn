@@ -992,7 +992,7 @@ void DoNumberTest()
 uint64_t GetKinCount(const std::string& n, BigNumber& maxNum)
 {
 	BigNumber num(n);
-	const uint64_t count = num.GetKinNumberC();
+	const uint64_t count = num.GetKinNumberCount();
 	aux::Printf("Number %s, kin count: %llu\n", SeparateWithCommas(num).c_str(), count);
 
 	std::string s = n;

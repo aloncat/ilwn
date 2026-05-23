@@ -139,7 +139,7 @@ unsigned Number::GetHash() const
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-uint64_t Number::GetKinNumberC() const
+uint64_t Number::GetKinNumberCount() const
 {
 	if (m_Length > 39)
 		OnError("Too big number");
