@@ -73,7 +73,7 @@ bool UpdateDBMode::UpdateDataBase()
 	{
 		if (!CheckIfCancelled())
 		{
-			aux::Print("Database not found, exiting...\n");
+			aux::Print("Failed to load database, exiting...\n");
 		}
 		return false;
 	}
@@ -222,7 +222,7 @@ float UpdateDBMode::UpdateAllChunks()
 	{
 		if (m_MaxCompression)
 		{
-			if (toUpdateC)
+			/*if (toUpdateC)
 			{
 				EventManager::PublishEvent("#12Before compressing, please update database first");
 				return 0;
@@ -231,7 +231,7 @@ float UpdateDBMode::UpdateAllChunks()
 			{
 				EventManager::PublishEvent("#12Unable to compress database while it has any gaps");
 				return 0;
-			}
+			}*/
 
 			m_Progress.lastTick = ::GetTickCount();
 			return CompressChunks(chunkList);
@@ -267,29 +267,41 @@ float UpdateDBMode::CompressChunks(const std::vector<std::pair<DBChunk*, bool>>&
 {
 	bool errorFlag = false;
 	size_t chunksProcessed = 0;
+	size_t chunksSkipped = 0;
 	uint64_t dataSizeBefore = 0;
 	uint64_t dataSizeAfter = 0;
 
 	for (auto& item : chunks)
 	{
 		++chunksProcessed;
-		const uint32_t tick = ::GetTickCount();
-		if (tick - m_Progress.lastTick >= 500 && PrintProgress(tick, chunksProcessed, chunks.size()))
-			break;
-
-		DBChunk* pChunk = item.first;
-		if (!LoadChunkData(pChunk, DBChunkState::FULLDATA))
+		if (auto tick = ::GetTickCount(); tick - m_Progress.lastTick >= 500)
 		{
-			errorFlag = true;
-			break;
+			if (PrintProgress(tick, chunksProcessed, chunks.size()))
+				break;
 		}
 
-		m_Data.SetActiveChunk(pChunk);
-		dataSizeBefore += pChunk->GetFileSize();
-		m_Data.Save(0u, 0, 0, true);
-		dataSizeAfter += pChunk->GetFileSize();
+		DBChunk* chunk = item.first;
+		if (chunk->GetFormatVer() != DBChunkData::LATEST_FORMAT_VERSION ||
+			!chunk->GetMinSavedStep())
+		{
+			++chunksSkipped;
+			EventManager::PublishEvent(util::Format("Skipped chunk %s, because of old format",
+				chunk->GetFilePath().c_str()));
+		} else
+		{
+			if (!LoadChunkData(chunk, DBChunkState::FULLDATA))
+			{
+				errorFlag = true;
+				break;
+			}
 
-		pChunk->UnloadData(DBChunkState::DATAUNLOADED);
+			m_Data.SetActiveChunk(chunk);
+			dataSizeBefore += chunk->GetFileSize();
+			m_Data.Save(0u, 0, 0, true);
+			dataSizeAfter += chunk->GetFileSize();
+
+			chunk->UnloadData(DBChunkState::DATAUNLOADED);
+		}
 
 		if (m_IsCancelled)
 			break;
@@ -298,8 +310,10 @@ float UpdateDBMode::CompressChunks(const std::vector<std::pair<DBChunk*, bool>>&
 	if (!errorFlag && !m_IsCancelled)
 	{
 		float ratio = 100.f * (dataSizeBefore - dataSizeAfter) / std::max(dataSizeBefore, 1ull);
-		EventManager::PublishEvent(util::Format("Update finished, files compressed: %u", chunksProcessed));
-		EventManager::PublishEvent(util::Format("%s -> %s, %.1f%% smaller", FormatSize(dataSizeBefore, true).c_str(),
+		EventManager::PublishEvent(util::Format("Update finished, files compressed: %u, skipped: %u",
+			chunksProcessed, chunksSkipped));
+		EventManager::PublishEvent(util::Format("DB size: %s -> %s, %.1f%% smaller",
+			FormatSize(dataSizeBefore, true).c_str(),
 			FormatSize(dataSizeAfter, true).c_str(), ratio));
 	}
 
