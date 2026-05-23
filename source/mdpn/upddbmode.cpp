@@ -458,7 +458,6 @@ void UpdateDBMode::DoSearch(const Number& target, KnownInfo known)
 
 			if (lastNumLength >= 3)
 			{
-				m_Events->PublishAll();
 				const auto last = lastNum - 1u;
 				PrintProgress(::GetTickCount(), last);
 				SaveActiveChunk(last, threadTime);

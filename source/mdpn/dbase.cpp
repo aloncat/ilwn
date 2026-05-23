@@ -242,6 +242,8 @@ void DataBase::LoadFileHeaders(std::vector<std::wstring>& dbFiles, DBProgress on
 		DBChunk* pChunk = new DBChunk;
 		m_Chunks.Insert(pChunk);
 
+		// TODO: сейчас это самая долгая операция. И проблема, каежется, в том, что задержки при
+		// последовательном открытии файлов заставляют поток простаивать бОльшую часть времени
 		pChunk->SetFilePath(dbFiles[i]);
 		if (!pChunk->LoadData(*this, DBChunkState::HEADERONLY))
 		{
