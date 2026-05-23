@@ -1,0 +1,25 @@
+-arch.cpp   -assert.h   -chkdbmode.cpp   -eventmgr.cpp   -largemempages.cpp
+-arch.h     -const.h    -chkdbmode.h     -eventmgr.h     -largemempages.h
+
+-dbase.cpp         -dbmode.cpp       -number.cpp   -log.cpp
+-dbase.h           -dbmode.h         -number.h     -log.h
+-dbchunk.cpp       -dbprogress.cpp   -numset.cpp
+-dbchunk.h         -dbprogress.h     -numset.h
+-dbchunklist.cpp   -dbstruct.cpp
+-dbchunklist.h     -dbstruct.h
+
+-guess.cpp      -mode.h     -searchmode.cpp   -stephlp.cpp
+-list.cpp       -mode.cpp   -searchmode.h     -stephlp.h
+                            -upddbmode.cpp
+                            -upddbmode.h
+
+-pch.h        -parser.cpp   -util.cpp      -test.cpp
+-prefix.cpp   -ttime.cpp    -util.h        -test.h
+-main.cpp     -ttime.h      -version.cpp   -numbertest.cpp
+                            -version.h     -numbertest.h
+                                           -numsettest.cpp
+                                           -numsettest.h
+
+===
+
++shrinkdb.cpp
