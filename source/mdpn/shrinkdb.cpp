@@ -282,7 +282,7 @@ void DBShrinker::PrintStatistics()
 		s1.clear(); s2.clear();
 		for (int i = 0; i < COLUMNS; ++i)
 		{
-			size_t total = m_BasePalCount[step + i * STEPS_IN_COLUMN];
+			uint64_t total = m_BasePalCount[step + i * STEPS_IN_COLUMN];
 			bool isColored = (2 * lastCounts[i] < total) && (i || step > 2);
 			lastCounts[i] = total;
 
