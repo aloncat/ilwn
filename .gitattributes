@@ -2,6 +2,8 @@
 
 *.bat text eol=crlf
 
+dbase/**/*.txt text eol=lf
+
 source/**/*.sln text eol=crlf
 source/**/*.vcxproj* text eol=crlf
 
