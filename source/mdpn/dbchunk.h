@@ -124,6 +124,7 @@ public:
 	// актуальны, только если в блоке данных нет несохранённых изменений
 	unsigned GetDataSize() const { return m_DataSize; }
 	unsigned GetCDataSize() const { return m_CDataSize; }
+	bool IsMaxCompressed() const { return m_MaxCompressed; }
 	unsigned GetFileSize() const;
 
 	void SetCPUTimeSpent(unsigned cpuTime);
@@ -196,6 +197,7 @@ private:
 	unsigned m_DataSize = 0;		// Размер несжатого блока данных в байтах
 	uint32_t m_DataCRC = 0;			// CRC несжатого блока данных (dataSize байт)
 	unsigned m_CDataSize = 0;		// Размер сжатого блока данных (расположен сразу за блоком статистики)
+	bool m_MaxCompressed = false;	// true, если файл сохранён с максимальным сжатием
 
 	// Блок статистики
 	unsigned* m_NumCountA = nullptr;	// Количество найденных в интервале палиндромов для каждого шага
@@ -249,9 +251,10 @@ public:
 	// количество. Объект не должен содержать изменений
 	void UnloadData(State stateNeeded);
 
-	// Сохраняет накопленные изменения в файл. Параметр minSavedStep должен содержать значение шага,
-	// начиная с которого найденные палиндромы сохранялись. Параметр cpuTime должен быть равен
-	// суммарному времени CPU (в ms), которое было затрачено на проверку добавленных данных
+	// Сохраняет накопленные изменения в файл. Параметр minSavedStep должен содержать значение
+	// шага, начиная с которого найденные палиндромы сохранялись. Параметр cpuTime должен быть
+	// равен суммарному времени CPU (в ms), которое было затрачено на проверку добавленных
+	// данных. Если maxCompression == true, то файл будет сохранён с максимальным сжатием
 	bool Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime, bool maxCompression = false);
 
 	unsigned GetFormatVer() const { return GetData(State::HEADERONLY)->GetFormatVer(); }
@@ -272,6 +275,7 @@ public:
 	// только если данные не менялись после загрузки БД или последнего сохранения файла
 	unsigned GetDataSize() const { return GetData(State::HEADERONLY)->GetDataSize(); }
 	unsigned GetCDataSize() const { return GetData(State::HEADERONLY)->GetCDataSize(); }
+	bool IsMaxCompressed() const {  return GetData(State::HEADERONLY)->IsMaxCompressed(); }
 	unsigned GetFileSize() const { return GetData(State::HEADERONLY)->GetFileSize(); }
 
 	const unsigned* GetNumCountA() const { return GetData(State::WITHSTATS)->GetNumCountA(); }
