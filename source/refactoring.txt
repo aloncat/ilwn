@@ -1,5 +1,5 @@
 -arch.cpp   -assert.h   -chkdbmode.cpp   -eventmgr.cpp   -largemempages.cpp
--arch.h     -const.h    -chkdbmode.h     -eventmgr.h     -largemempages.h
+-arch.h                 -chkdbmode.h     -eventmgr.h     -largemempages.h
 
 -dbase.cpp         -dbmode.cpp       -number.cpp   -log.cpp
 -dbase.h           -dbmode.h         -number.h     -log.h
@@ -13,13 +13,12 @@
                             -upddbmode.cpp
                             -upddbmode.h
 
--pch.h        -parser.cpp   -util.cpp      -test.cpp
--prefix.cpp   -ttime.cpp    -util.h        -test.h
--main.cpp     -ttime.h      -version.cpp   -numbertest.cpp
-                            -version.h     -numbertest.h
-                                           -numsettest.cpp
-                                           -numsettest.h
+              -parser.cpp   -util.cpp   -numsettest.cpp
+              -ttime.cpp    -util.h     -numsettest.h
+-main.cpp     -ttime.h      -test.cpp   -numbertest.cpp
+                            -test.h     -numbertest.h
 
 ===
 
-+shrinkdb.cpp
++const.h   +pch.h        +shrinkdb.cpp   +version.h
+           +prefix.cpp                   +version.cpp
