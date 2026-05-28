@@ -1,4 +1,5 @@
 ﻿//∙MDPN
+
 #include "pch.h"
 #include "upddbmode.h"
 
@@ -270,76 +271,6 @@ float UpdateDBMode::UpdateAllChunks()
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-float UpdateDBMode::CompressChunks(const std::vector<std::pair<DBChunk*, bool>>& chunks)
-{
-	size_t chunksProcessed = 0;
-	size_t chunksCompressed = 0;
-	size_t chunksSkipped = 0;
-	uint64_t dataSizeBefore = 0;
-	uint64_t dataSizeAfter = 0;
-	bool errorFlag = false;
-
-	m_Progress.ResetLastTick();
-
-	for (auto& item : chunks)
-	{
-		++chunksProcessed;
-		if (auto tick = ::GetTickCount(); tick - m_Progress.lastTick >= 500)
-		{
-			if (PrintProgress(tick, chunksProcessed, chunks.size()))
-				break;
-		}
-
-		DBChunk* chunk = item.first;
-		if (chunk->GetFormatVer() != DBChunkData::LATEST_FORMAT_VERSION || !chunk->GetMinSavedStep())
-		{
-			++chunksSkipped;
-			EventManager::PublishEvent(util::Format("Skipped file %s, because of old format",
-				chunk->GetFilePath().c_str()));
-		}
-		else if (chunk->IsMaxCompressed())
-		{
-			++chunksSkipped;
-		} else
-		{
-			if (!LoadChunkData(chunk, DBChunkState::FULLDATA))
-			{
-				errorFlag = true;
-				break;
-			}
-
-			m_Data.SetActiveChunk(chunk);
-			dataSizeBefore += chunk->GetFileSize();
-			m_Data.Save(0u, 0, 0, true);
-			dataSizeAfter += chunk->GetFileSize();
-
-			chunk->UnloadData(DBChunkState::DATAUNLOADED);
-			++chunksCompressed;
-		}
-
-		if (m_IsCancelled)
-			break;
-	}
-
-	if (!m_IsCancelled && !errorFlag)
-	{
-		EventManager::PublishEvent(util::Format("Update finished. Files compressed: %u, skipped: %u",
-			chunksCompressed, chunksSkipped));
-
-		if (chunksCompressed)
-		{
-			float ratio = 100.f * (dataSizeBefore - dataSizeAfter) / std::max(dataSizeBefore, 1ull);
-			EventManager::PublishEvent(util::Format("File size: %s -> %s, %.1f%% smaller",
-				FormatSize(dataSizeBefore, true).c_str(),
-				FormatSize(dataSizeAfter, true).c_str(),
-				ratio));
-		}
-	}
-
-	return m_Progress.GetTotalElapsed();
-}
-
-//----------------------------------------------------------------------------------------------------------------------
 float UpdateDBMode::UpdateChunks(const std::vector<std::pair<DBChunk*, bool>>& chunks)
 {
 	m_Progress.ResetLastTick();
@@ -431,6 +362,76 @@ float UpdateDBMode::UpdateChunks(const std::vector<std::pair<DBChunk*, bool>>& c
 
 		EventManager::PublishEvent(util::Format("Total files removed: %u, remains: %u",
 			m_RemovedFileC, m_Data.GetChunkC()));
+	}
+
+	return m_Progress.GetTotalElapsed();
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+float UpdateDBMode::CompressChunks(const std::vector<std::pair<DBChunk*, bool>>& chunks)
+{
+	size_t chunksProcessed = 0;
+	size_t chunksCompressed = 0;
+	size_t chunksSkipped = 0;
+	uint64_t dataSizeBefore = 0;
+	uint64_t dataSizeAfter = 0;
+	bool errorFlag = false;
+
+	m_Progress.ResetLastTick();
+
+	for (auto& item : chunks)
+	{
+		++chunksProcessed;
+		if (auto tick = ::GetTickCount(); tick - m_Progress.lastTick >= 500)
+		{
+			if (PrintProgress(tick, chunksProcessed, chunks.size()))
+				break;
+		}
+
+		DBChunk* chunk = item.first;
+		if (chunk->GetFormatVer() != DBChunkData::LATEST_FORMAT_VERSION || !chunk->GetMinSavedStep())
+		{
+			++chunksSkipped;
+			EventManager::PublishEvent(util::Format("Skipped file %s, because of old format",
+				chunk->GetFilePath().c_str()));
+		}
+		else if (chunk->IsMaxCompressed())
+		{
+			++chunksSkipped;
+		} else
+		{
+			if (!LoadChunkData(chunk, DBChunkState::FULLDATA))
+			{
+				errorFlag = true;
+				break;
+			}
+
+			m_Data.SetActiveChunk(chunk);
+			dataSizeBefore += chunk->GetFileSize();
+			m_Data.Save(0u, 0, 0, true);
+			dataSizeAfter += chunk->GetFileSize();
+
+			chunk->UnloadData(DBChunkState::DATAUNLOADED);
+			++chunksCompressed;
+		}
+
+		if (m_IsCancelled)
+			break;
+	}
+
+	if (!m_IsCancelled && !errorFlag)
+	{
+		EventManager::PublishEvent(util::Format("Update finished. Files compressed: %u, skipped: %u",
+			chunksCompressed, chunksSkipped));
+
+		if (chunksCompressed)
+		{
+			float ratio = 100.f * (dataSizeBefore - dataSizeAfter) / std::max(dataSizeBefore, 1ull);
+			EventManager::PublishEvent(util::Format("File size: %s -> %s, %.1f%% smaller",
+				FormatSize(dataSizeBefore, true).c_str(),
+				FormatSize(dataSizeAfter, true).c_str(),
+				ratio));
+		}
 	}
 
 	return m_Progress.GetTotalElapsed();
@@ -565,7 +566,7 @@ void UpdateDBMode::DoSearch(const Number& startFrom, const Number& target, Known
 			}
 
 			if (GetDataSize(m_pActiveChunk) >= Const::DATA_SAVE_SIZE / 4 ||
-				m_pActiveChunk->GetNumbers().size() >= Const::DATA_SAVE_NUMC / 4)
+				m_pActiveChunk->GetNumbers().size() >= Const::DATA_SAVE_NUM_COUNT / 4)
 			{
 				if (m_Events->HasEvents())
 					PrintProgress(tick, lastNum);
@@ -584,32 +585,6 @@ void UpdateDBMode::DoSearch(const Number& startFrom, const Number& target, Known
 		m_CPUTime += static_cast<unsigned>(testedC * known.CPUTimeShare);
 		SaveActiveChunk(m_Last, threadTime);
 	}
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-bool UpdateDBMode::RemoveChunk(DBChunk* pChunk)
-{
-	if (m_Data.RemoveChunk(pChunk))
-		return true;
-
-	std::wstring filePath = pChunk->GetFilePath();
-	EventManager::PublishEvent(util::Format("#12Error: #7failed to remove file %s. #12Aborting...",
-		util::ToAnsi(filePath).c_str()));
-	return false;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-void UpdateDBMode::CreateNewChunk(const Number& first)
-{
-	Assert(!m_pActiveChunk && first);
-
-	m_pActiveChunk = new DBChunk;
-	m_pActiveChunk->Init(first, 125000);
-
-	m_Data.SetActiveChunk(m_pActiveChunk);
-
-	m_Last = first - 1u;
-	m_CPUTime = 0;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -718,6 +693,32 @@ void UpdateDBMode::MergeChunks()
 
 		removeList.clear();
 	}
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+bool UpdateDBMode::RemoveChunk(DBChunk* pChunk)
+{
+	if (m_Data.RemoveChunk(pChunk))
+		return true;
+
+	std::wstring filePath = pChunk->GetFilePath();
+	EventManager::PublishEvent(util::Format("#12Error: #7failed to remove file %s. #12Aborting...",
+		util::ToAnsi(filePath).c_str()));
+	return false;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+void UpdateDBMode::CreateNewChunk(const Number& first)
+{
+	Assert(!m_pActiveChunk && first);
+
+	m_pActiveChunk = new DBChunk;
+	m_pActiveChunk->Init(first, 125000);
+
+	m_Data.SetActiveChunk(m_pActiveChunk);
+
+	m_Last = first - 1u;
+	m_CPUTime = 0;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

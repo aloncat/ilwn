@@ -1,4 +1,5 @@
 ﻿//∙MDPN
+
 #include "pch.h"
 #include "searchmode.h"
 
@@ -1257,8 +1258,8 @@ void SearchMode::DBThreadFN()
 					// возникать ситуация, когда за макс. время между сохранениями работы не будет набираться
 					// нужный объём. Позже во время операции обновления БД мы объединим мелкие файлы
 					const bool isEnoughData = GetDataSize(m_pActiveChunk) >= Const::DATA_SAVE_SIZE / 4 ||
-						m_pActiveChunk->GetNumbers().size() >= Const::DATA_SAVE_NUMC / 4;
-					if (isEnoughData || ::GetTickCount() - m_LastSaveTick >= Const::DATA_SAVE_TIME)
+						m_pActiveChunk->GetNumbers().size() >= Const::DATA_SAVE_NUM_COUNT / 4;
+					if (isEnoughData || ::GetTickCount() - m_LastSaveTick >= Const::DATA_SAVE_INTERVAL)
 					{
 						SaveResults();
 						CreateNewChunk(m_Last + 1u);

@@ -27,7 +27,7 @@
 constexpr size_t DATA_SAVE_SIZE = 1200 * 1024;
 
 // Шаги, начиная с которых отложенные палиндромы будут сохраняться в БД (для каждого диапазона чисел).
-// При значении 1 будут сохрнаяться абсолютно все найденные палиндромы. Чем ниже значение, тем больше
+// При значении 1 будут сохраняться абсолютно все найденные палиндромы. Чем ниже значение, тем больше
 // размер файлов. В основной БД ограничения начинаются с 13-значных чисел: 10, 15, 35, 40, 45, 45...
 const unsigned minSteps[Const::MAX_DIGIT_C + 1] = { 0,
 	  1,   1,   1,   1,   1,   1,   1,   1,   1,   1,		//  1 - 10
@@ -35,7 +35,7 @@ const unsigned minSteps[Const::MAX_DIGIT_C + 1] = { 0,
 	150, 150, 150, 150, 150, 150, 150, 150, 150, 150 };		// 21 - 30
 
 //--------------------------------------------------------------------------------------------------------------------------------
-class DBShrinker
+class DBShrinker final
 {
 	AML_NONCOPYABLE(DBShrinker)
 
@@ -44,11 +44,11 @@ public:
 
 	bool Run();
 
-protected:
+private:
 	bool RemovePalindromes(std::set<DBChunk*>& compressList);
 	void PrintStatistics();
 
-protected:
+private:
 	DataBase m_Data;
 
 	uint64_t m_BasePalCount[Const::MAX_STEP + 1];
