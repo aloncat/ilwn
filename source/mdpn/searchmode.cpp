@@ -618,7 +618,7 @@ bool SearchMode::SlowSearch(bool createNewDb, const Number& startFrom)
 	m_Progress.startTime = ::GetTickCount();
 	if (!m_Data.Init(createNewDb, DBChunkState::HEADERONLY))
 	{
-		aux::Print(createNewDb ? "Failed to create new database, exiting...\n" :
+		aux::Print(createNewDb ? "Failed to create new database. Exiting...\n" :
 			"Failed to load existing database, exiting...\n");
 		return false;
 	}
@@ -629,14 +629,14 @@ bool SearchMode::SlowSearch(bool createNewDb, const Number& startFrom)
 	if (createNewDb)
 	{
 		firstNum = startFrom;
-		initMsg = (firstNum <= Number(1u)) ? "Database has been created, starting from scratch..." :
+		initMsg = (firstNum <= Number(1u)) ? "Database has been created. Starting from scratch..." :
 			util::Format("Starting new database from number #15#%s#7...", SeparateWithCommas(firstNum).c_str());
 	} else
 	{
 		firstNum = m_Data.GetLast() + 1u;
 		if (firstNum.GetLength() > Const::MAX_DIGIT_C)
 			return false;
-		initMsg = util::Format("Database loaded, continuing from #15#%s#7...",
+		initMsg = util::Format("Database loaded. Continuing from #15#%s#7...",
 			SeparateWithCommas(firstNum).c_str());
 	}
 
@@ -953,7 +953,7 @@ void SearchMode::PrintProgress(uint32_t tick, const Number& lastNum)
 		FormatSize(dataSize, true).c_str(), GetRangeProgress(lastNum.GetLength(), m_Progress.progress));
 
 	if (util::SystemConsole::Instance().IsCtrlCPressed(false))
-		aux::Printc("\b\b\b, #12stopping...");
+		aux::Printc("\b\b\b. #12Stopping...");
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1208,7 +1208,7 @@ void SearchMode::DBThreadFN()
 						if (totalStepDoneC > Const::MAX_STEP)
 						{
 							m_Events->OnCustomEvent(util::Format("#12FATAL ERROR: a number"
-								" is found for HUGE step #10#%u#12!", totalStepDoneC));
+								" found for HUGE step #10#%u#12!", totalStepDoneC));
 							allowSave = false;
 							m_Last = --num;
 							break;
