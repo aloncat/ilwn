@@ -235,7 +235,7 @@ static void ListAllPalindromes(std::set<Palindrome>& allPalindromes)
 						}
 						else if (pal.steps > it->steps || (pal.steps == it->steps && pal.number < it->number))
 						{
-							aux::Printf((pal.steps > it->steps) ? "#9\rStp#6 %s\n" : "#8\rLow#6 %s\n",
+							aux::Printf((pal.steps > it->steps) ? "#9\rH/s#6 %s\n" : "#8\rL/n#6 %s\n",
 								pal.ToString().c_str());
 
 							allPalindromes.erase(it);
