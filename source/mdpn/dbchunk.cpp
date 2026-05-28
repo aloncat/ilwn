@@ -213,6 +213,7 @@ struct FileHeaderV5 final : public FileHeaderBase
 	unsigned dataSize = 0;		// Размер несжатого блока данных в байтах
 	uint32_t dataCRC = 0;		// CRC несжатого блока данных (dataSize байт)
 	unsigned zippedSize = 0;	// Размер сжатого блока данных (расположен сразу за блоком статистики)
+	bool maxCompressed = false;	// true, если блок данных максимально сжат
 
 	FileHeaderV5(const FileHeaderBase& header);
 	// Инициализирует значения всех полей
@@ -294,6 +295,7 @@ bool FileHeaderV5::Load(const char* pData)
 				{
 					if (!Util::AToInt(zippedSize, p + 6, len - 6))
 						return false;
+					maxCompressed = !zippedSize || p[6] != '0';
 				}
 				break;
 			case 'd':
@@ -459,25 +461,27 @@ bool DBChunkData::Save(util::File& file, bool forceFullSave, bool maxCompression
 	util::MemoryFile numData;
 	bool didFullSave = false;
 
-	forceFullSave |= m_Chunk->HasOldFormat() || maxCompression;
+	forceFullSave |= m_Chunk->HasOldFormat() || (maxCompression && !m_MaxCompressed);
 	if (m_Chunk->GetSaveState() >= State::DATACHANGED || forceFullSave)
 	{
 		SaveStats(stats);
 		m_StatSize = static_cast<unsigned>(stats.size());
 		m_StatCRC = m_StatSize ? hash::GetCRC32(stats.c_str(), m_StatSize) : 0;
 		m_DataSize = m_DataCRC = m_CDataSize = 0;
+		m_MaxCompressed = false;
 
 		if (numData.Open() && SaveData(numData) && numData.GetSize() >= 0)
 		{
 			m_DataSize = static_cast<unsigned>(numData.GetSize());
-			didFullSave = !m_DataSize;
+			m_MaxCompressed = didFullSave = !m_DataSize;
 			if (m_DataSize)
 			{
 				util::MemoryFile packedData;
 				if (packedData.Open() && numData.GetCRC32(m_DataCRC) && numData.SetPosition(0) &&
-					CompressFile(numData, packedData, maxCompression ? 9 : 6) && packedData.GetSize() > 0)
+					CompressFile(numData, packedData, maxCompression ? 9 : 5) && packedData.GetSize() > 0)
 				{
 					m_CDataSize = static_cast<unsigned>(packedData.GetSize());
+					m_MaxCompressed = maxCompression;
 					numData = std::move(packedData);
 					didFullSave = true;
 				}
@@ -791,6 +795,7 @@ bool DBChunkData::ReloadHeader(util::File& file)
 		m_DataSize = header.dataSize;
 		m_DataCRC = header.dataCRC;
 		m_CDataSize = header.zippedSize;
+		m_MaxCompressed = header.maxCompressed;
 
 		m_Chunk.SetDataState(State::HEADERONLY);
 	}
@@ -1029,7 +1034,7 @@ bool DBChunkData::SaveHeader(util::File& file)
 
 	header += util::Format("SSIZE:%u\nSCRC:%08X\n", m_StatSize, m_StatSize ? m_StatCRC : 0);
 	header += util::Format("DSIZE:%u\nDCRC:%08X\n", m_DataSize, m_DataSize ? m_DataCRC : 0);
-	header += util::Format("CSIZE:%u\n", m_CDataSize);
+	header += util::Format((m_MaxCompressed || !m_CDataSize) ? "CSIZE:%u\n" : "CSIZE:0%u\n", m_CDataSize);
 
 	header += "---\n";
 	while (header.size() < FILE_HEADER_SIZE - 8)
@@ -1264,8 +1269,16 @@ void DBChunk::UnloadData(State stateNeeded)
 //----------------------------------------------------------------------------------------------------------------------
 bool DBChunk::Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime, bool maxCompression)
 {
-	if (GetSaveState() == State::UNCHANGED && !maxCompression)
+	if (GetSaveState() == State::UNCHANGED)
+	{
+		if (maxCompression)
+		{
+			Assert(GetDataState() >= State::FULLDATA, "Data not loaded");
+			if (m_pData->IsMaxCompressed())
+				return true;
+		}
 		return true;
+	}
 
 	Assert(m_pData && m_pData->GetLast());
 	Assert(m_Flags.Check(Flag::HAS_FILE_PATH));
@@ -1275,7 +1288,8 @@ bool DBChunk::Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime, bool m
 
 	// Если изменились данные или файл имеет старую версию, то перезапишем
 	// весь файл целиком. Иначе можно ограничиться лишь сохранением заголовка
-	const bool needFullSave = GetSaveState() >= State::DATACHANGED || HasOldFormat() || maxCompression;
+	const bool needFullSave = GetSaveState() >= State::DATACHANGED || HasOldFormat() ||
+		(maxCompression && !m_pData->IsMaxCompressed());
 	unsigned openMode = needFullSave ? util::FILE_CREATE_ALWAYS : util::FILE_OPEN_ALWAYS;
 
 	util::BinaryFile file;
@@ -1283,7 +1297,7 @@ bool DBChunk::Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime, bool m
 	if (!file.Open(filePath, util::FILE_OPEN_WRITE | openMode))
 		return false;
 
-	bool ok = m_pData->Save(file, maxCompression, maxCompression);
+	bool ok = m_pData->Save(file, false, maxCompression);
 	file.Close();
 	return ok;
 }

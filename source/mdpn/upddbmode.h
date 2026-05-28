@@ -43,20 +43,23 @@ private:
 		uint32_t startTime = 0;		// Тик времени в момент начала работы (периодически обновляется)
 		uint32_t lastTick = 0;		// Тик, в котором прогресс выводился на экран в последний раз
 		float lastSpeed = 0;		// Последнее вычисленное значение скорости проверки чисел
+
+		void ResetLastTick();
+		float GetTotalElapsed();
 	};
 
 	bool UpdateDataBase();
 	bool RemoveOverlaps();
 
 	float UpdateAllChunks();
-	float CompressChunks(const std::vector<std::pair<DBChunk*, bool>>& chunks);
 	float UpdateChunks(const std::vector<std::pair<DBChunk*, bool>>& chunks);
+	float CompressChunks(const std::vector<std::pair<DBChunk*, bool>>& chunks);
 
-	void DoSearch(const Number& target, KnownInfo known);
+	void DoSearch(const Number& startFrom, const Number& target, KnownInfo known);
+	void MergeChunks();
 
 	bool RemoveChunk(DBChunk* pChunk);
 	void CreateNewChunk(const Number& first);
-	void MergeChunks(DBChunk* pPrev);
 	bool LoadChunkData(DBChunk* pChunk, DBChunkState dataState);
 	void SaveActiveChunk(const Number& last, ThreadTime& threadTime);
 	void SaveActiveChunk();
@@ -68,13 +71,13 @@ private:
 	bool PrintProgress(uint32_t tick, size_t doneCount, size_t total);
 	bool CheckIfCancelled();
 
+private:
 	NumberSet m_LychThreads;
-	DBChunk* m_pActiveChunk = nullptr;	// Текущий (активный) блок
-	DBChunk* m_pPrevChunk = nullptr;	// Блок, расположенный перед текущим
+	DBChunk* m_pActiveChunk = nullptr;	// Текущий (активный) чанк (файл БД)
 
 	Progress m_Progress;				// Параметры для отслеживания прогресса проверки чисел
 	RangeProgress m_RangeProgressA;		// Количество проверенных чисел в каждом из диапазонов
-	size_t m_SavedFileC = 0;			// Общее количество сохранённых (добавленных) файлов
+	size_t m_SavedFileC = 0;			// Общее количество добавленных файлов
 	size_t m_RemovedFileC = 0;			// Общее количество удалённых файлов
 
 	Number m_Last;						// Последнее проверенное число
@@ -84,7 +87,5 @@ private:
 	bool m_IsCancelled = false;			// true, если пользователь отменил операцию
 	bool m_DontFillGaps = false;		// true, если не нужно проверять пропущенные интервалы
 	bool m_From1stKnown = false;		// true, если нужно начать с первого проверенного числа в БД
-	bool m_MaxCompression = false;		// true, если нужно максимально сжать БД (пересохраняет все файлы)
-
-	bool m_HasGaps = false;				// true, если есть пропущенные диапазоны перед текущим чанком
+	bool m_MaxCompression = false;		// true, если нужно максимально сжать файлы БД
 };

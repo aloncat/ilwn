@@ -29,6 +29,7 @@ This software is distributed under LGPL version 2.1
 Directory structure:
 --------------------
   dbase		Palindromes database
+  files		Various notes & documents
   script	Various auxiliary scripts
   source	Source code (all subprojects)
   website	iLWN website sources & scripts

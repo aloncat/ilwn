@@ -1,20 +1,20 @@
 @echo off
 
-if exist results.bak (
-  if exist results.txt (
-    fc /b results.txt results.bak >nul
+if exist all-palindromes.bak (
+  if exist all-palindromes.txt (
+    fc /b all-palindromes.txt all-palindromes.bak >nul
     if errorlevel 1 (
-      echo Please, remove results.bak and try again
+      echo Please, remove 'all-palindromes.bak' and try again
       goto end
     )
-    del results.bak
+    del all-palindromes.bak
   )
 )
 
-if not exist results.txt (
-  type nul >results.txt
+if not exist all-palindromes.txt (
+  type nul >all-palindromes.txt
 ) else (
-  copy results.txt results.bak >nul || goto end
+  copy all-palindromes.txt all-palindromes.bak >nul || goto end
 )
 
 cd ..
@@ -29,14 +29,14 @@ call :list 23
 call :list 24
 
 cd pal
-if exist results.bak (
+if exist all-palindromes.bak (
   echo.
-  fc /b results.txt results.bak >nul
+  fc /b all-palindromes.txt all-palindromes.bak >nul
   if errorlevel 1 (
     echo Update complete. There are some changes!
   ) else (
     echo Update complete. No changes made
-    del results.bak
+    del all-palindromes.bak
   )
 )
 
@@ -51,9 +51,9 @@ pushd %1 || (
 )
 echo.
 echo Processing folder %1...
-move %bp%pal\results.txt . >nul && (
+move %bp%pal\all-palindromes.txt . >nul && (
   %bp%bin\list.exe
-  move results.txt %bp%pal >nul
+  move all-palindromes.txt %bp%pal >nul
 )
 popd
 exit /b

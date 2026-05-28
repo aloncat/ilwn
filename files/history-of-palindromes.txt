@@ -1,0 +1,624 @@
+﻿*RSN (Reliably Smallest Number)
+
+Steps[200]:
+  [RSN] not later than April 16, 2003; Jason Doucette; 130,000,074,931,591; PAL[92] 16616723795884852455
+
+  * The exact date when Jason found the smallest number (that resolves in 200 steps) is unknown. On April 16, 2003, he was iterating 17-digit numbers. By this time, he had already resolved all 15- and 16-digit numbers (according to his personal web page).
+
+***
+
+Steps[201]:
+  [RSN] August 4, 2000; Jason Doucette; 100,120,849,299,260; PAL[92] 16616723795884852455
+
+***
+
+Steps[202]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 195,030,047,999,791,993; PAL[105] 88995667489658743585
+
+  * The exact date when Jason found the smallest number (that resolves in 202 steps) is unknown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[203]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 100,000,078,999,111,766; PAL[105] 88995667489658743585
+
+  * The exact date when Jason found the smallest number (that resolves in 203 steps) is unknown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[204]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 100,710,000,333,399,973; PAL[90] 79588487572056993774
+
+  * The exact date when Jason found the smallest number (that resolves in 204 steps) is unknown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[205]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 100,000,002,973,751,552; PAL[90] 79588487572056993774
+
+  * The exact date when Jason found the smallest number (that resolves in 205 steps) is unknown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[206]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 20,005,000,862,599,819; PAL[90] 79588487572056993774
+
+  * The exact date when Jason found the smallest number (that resolves in 206 steps) is unknown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[207]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 11,450,360,479,969,994; PAL[90] 79588487572056993774
+
+  * The exact date when Jason found the smallest number (that resolves in 207 steps) is unknown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[208]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 10,009,000,275,899,569; PAL[90] 79588487572056993774
+
+  * The exact date when Jason found the smallest number (that resolves in 208 steps) is unknown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[209]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 10,059,430,139,999,234; PAL[90] 79588487572056993774
+
+  * The exact date when Jason found the smallest number (that resolves in 209 steps) is unknown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[210]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 12,179,702,595,999,991; PAL[90] 79588487572056993774
+
+  * The exact date when Jason found the smallest number (that resolves in 210 steps) is unknown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[211]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 100,000,277,999,334,202; PAL[107] 16625459966833465379
+
+  * The exact date when Jason found the smallest number (that resolves in 211 steps) is unknown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[212]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 110,300,361,999,869,090; PAL[107] 16625459966833465379
+
+  * The exact date when Jason found the smallest number (that resolves in 212 steps) is unknown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[213]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 300,000,000,128,545,799; PAL[101] 14884695685311269599
+
+  * The exact date when Jason found the smallest number (that resolves in 213 steps) is unknown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[214]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 104,300,000,514,769,945; PAL[101] 14884695685311269599
+
+  * The exact date when Jason found the smallest number (that resolves in 214 steps) is unknown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[215]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 100,700,000,509,609,622; PAL[101] 14884695685311269599
+
+  * The exact date when Jason found the smallest number (that resolves in 215 steps) is unknown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[216]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 120,906,490,499,909,290; PAL[101] 14884695685311269599
+
+  * The exact date when Jason found the smallest number (that resolves in 216 steps) is unknown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[217]:
+  [RSN] October, 2005; Jason Doucette; 1,000,000,038,990,407,538; PAL[107] 49627604840136499793
+
+  * Vaughn Suite found the same 19-digit number on November 27, 2005.
+  * Jason Doucette started processing 19-digit numbers on September 25, 2005. On November 30, 2005 he found the number that resolves in 261 iterations. So somewhere between these two dates he should also have found 19-digit delayed palindromes that resolve in 217, 225, 226, 259 and 260 iterations. Though there are no exact dates.
+
+***
+
+Steps[218]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 900,040,000,881,499,569; PAL[103] 15965699344587301794
+
+  * The exact date when Jason found the smallest number (that resolves in 218 steps) is unknown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[219]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 100,072,100,489,999,238; PAL[103] 15965699344587301794
+
+  * The exact date when Jason found the smallest number (that resolves in 219 steps) is unknown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[220]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 121,506,542,999,979,993; PAL[103] 15965699344587301794
+
+  * The exact date when Jason found the smallest number (that resolves in 220 steps) is unknown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[221]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 106,096,507,979,997,951; PAL[103] 15965699344587301794
+
+  * The exact date when Jason found the smallest number (that resolves in 221 steps) is unknown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[222]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 100,980,800,839,699,830; PAL[103] 15965699344587301794
+
+  * The exact date when Jason found the smallest number (that resolves in 222 steps) is unknown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[223]:
+  [RSN] September 20, 2007; Vaughn Suite; 10,000,000,039,513,841,287; PAL[112] 45772672672651139732
+
+***
+
+Steps[224]:
+  [RSN] February 26, 2006; Vaughn Suite; 9,000,000,000,255,353,839; PAL[111] 57992244767868888525
+
+***
+
+Steps[225]:
+  [RSN] September, 2005; Jason Doucette; 1,000,000,005,577,676,468; PAL[111] 57992244767868888525
+
+  * Vaughn Suite found the same 19-digit number on November 24, 2005.
+  * Jason Doucette started processing 19-digit numbers on September 25, 2005. On November 30, 2005 he found the number that resolves in 261 iterations. So somewhere between these two dates he should also have found 19-digit delayed palindromes that resolve in 217, 225, 226, 259 and 260 iterations. Though there are no exact dates.
+
+***
+
+Steps[226]:
+  [RSN] November, 2005; Jason Doucette; 1,060,000,000,523,124,995; PAL[112] 45772672672651139732
+
+  * Vaughn Suite found the same 19-digit number on March 9, 2006.
+  * Jason Doucette started processing 19-digit numbers on September 25, 2005. On November 30, 2005 he found the number that resolves in 261 iterations. So somewhere between these two dates he should also have found 19-digit delayed palindromes that resolve in 217, 225, 226, 259 and 260 iterations. Though there are no exact dates.
+
+***
+
+Steps[227]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 600,000,000,606,339,049; PAL[112] 45772672672651139732
+
+  * The exact date when Jason found the smallest number (that resolves in 227 steps) is unknown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[228]:
+  [RSN] not later than September 25, 2005; Jason Doucette; 170,500,000,303,619,996; PAL[112] 45772672672651139732
+
+  * The exact date when Jason found the smallest number (that resolves in 228 steps) is unknown. On September 25, 2005, he finally resolved all 18-digit numbers.
+
+***
+
+Steps[229]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 79,000,000,445,783,599; PAL[112] 45772672672651139732
+
+  * The exact date when Jason found the smallest number (that resolves in 229 steps) is unknown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[230]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 10,000,000,767,846,797; PAL[112] 45772672672651139732
+
+  * The exact date when Jason found the smallest number (that resolves in 230 steps) is unknown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[231]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 10,000,000,673,402,336; PAL[111] 57992244767868888525
+
+  * The exact date when Jason found the smallest number (that resolves in 231 steps) is unknown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[232]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 10,000,000,525,586,206; PAL[111] 57992244767868888525
+
+  * The exact date when Jason found the smallest number (that resolves in 232 steps) is unknown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[233]:
+  June 2, 2003, 14:47; Jason Doucette; 10,078,083,499,399,210; PAL[112] 45772672672651139732
+  [RSN] not later than December 15, 2004; Jason Doucette; 10,005,000,760,994,249; PAL[111] 57992244767868888525
+
+  * The exact date when Jason found the smallest number (that resolves in 233 steps) is unknown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[234]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 10,030,503,899,969,524; PAL[111] 57992244767868888525
+
+  * The exact date when Jason found the smallest number (that resolves in 234 steps) is unknown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[235]:
+  [RSN] not later than December 15, 2004; Jason Doucette; 12,000,009,694,736,291; PAL[111] 57992244767868888525
+
+  * The exact date when Jason found the smallest number (that resolves in 235 steps) is unknown. On December 15, 2004, he finally resolved all 17-digit numbers.
+
+***
+
+Steps[236]:
+  [RSN] July 10, 2003, 0:49; Jason Doucette; 10,442,000,392,399,960; PAL[111] 57992244767868888525
+
+***
+
+Steps[237]:
+  November 5, 2020; Michael Piepgras; 1,060,000,000,000,567,176,574,962; PAL[115] 49678666687499312255
+  June 22, 2021, 5:05 UTC+10; Dmitry V. Maslov; 11,000,000,004,098,618,096,797; PAL[117] 13465674237544234685
+  October 21, 2021, 8:11 UTC+10; Dmitry V. Maslov; 10,060,095,109,893,999,779,862; PAL[120] 88569823887836615745
+  October 27, 2021, 21:13 UTC+10; Dmitry V. Maslov; 10,010,020,600,686,999,559,662; PAL[120] 88569823887836615745
+
+***
+
+Steps[238]:
+  April 26, 2019; Rob van Nobelen; 40,000,000,000,021,391,578,709; PAL[106] 14862795258971484574
+  [RSN] January 26, 2021, 4:10 UTC+10; Dmitry V. Maslov; 3,000,800,040,089,968,999,539; PAL[120] 88569823887836615745
+
+***
+
+Steps[239]:
+  April 26, 2019; Rob van Nobelen; 15,844,005,200,010,990,299,995; PAL[106] 14862795258971484574
+  February 6, 2021, 17:54 UTC+10; Dmitry V. Maslov; 1,005,900,005,499,634,499,265; PAL[120] 88569823887836615745
+  [RSN] February 16, 2021, 5:19 UTC+10; Dmitry V. Maslov; 1,000,950,870,044,993,999,265; PAL[120] 88569823887836615745
+
+***
+
+Steps[240]:
+  April 26, 2019; Rob van Nobelen; 10,080,000,010,009,595,119,352; PAL[106] 14862795258971484574
+  [RSN] January 1, 2021, 10:24 UTC+10; Dmitry V. Maslov; 1,000,000,040,796,912,297,132; PAL[120] 88569823887836615745
+
+***
+
+Steps[241]:
+  April 26, 2019; Rob van Nobelen; 13,200,130,000,005,299,908,990; PAL[106] 14862795258971484574
+  October 27, 2021, 20:47 UTC+10; Dmitry V. Maslov; 10,900,000,673,599,965,900,991; PAL[106] 14862795258971484574
+  October 28, 2021, 19:51 UTC+10; Dmitry V. Maslov; 10,108,000,002,095,990,099,950; PAL[125] 38731882752356223546
+
+***
+
+Steps[242]:
+  October 26, 2020; Michael Piepgras; 1,070,000,000,000,387,391,437,944; PAL[127] 66333309989224741895
+  October 21, 2021; Dmitry V. Maslov; 500,000,092,000,432,999,874,429; PAL[119] 44562665878976437622
+  October 27, 2021, 23:51 UTC+10; Dmitry V. Maslov; 10,060,300,040,069,783,909,870; PAL[106] 14862795258971484574
+
+***
+
+Steps[243]:
+  December 4, 2020; Michael Piepgras; 1,060,000,000,001,215,241,774,949; PAL[112] 99456798188671113399
+  October 21, 2021; Dmitry V. Maslov; 100,005,000,200,219,594,932,216; PAL[119] 44562665878976437622
+  October 27, 2021, 21:22 UTC+10; Dmitry V. Maslov; 100,005,000,000,261,194,932,216; PAL[119] 44562665878976437622
+  November 13, 2021, 10:03 UTC+10; Dmitry V. Maslov; 10,807,308,105,195,993,997,970; PAL[128] 13982799767454467968
+
+***
+
+Steps[244]:
+  November 7, 2020; Michael Piepgras; 1,090,000,000,000,618,133,128,985; PAL[123] 89228898275770485662
+  October 21, 2021; Dmitry V. Maslov; 111,120,050,011,997,799,699,992; PAL[119] 44562665878976437622
+  October 27, 2021, 21:22 UTC+10; Dmitry V. Maslov; 111,120,050,000,380,599,699,992; PAL[119] 44562665878976437622
+
+***
+
+Steps[245]:
+  April 26, 2019; Rob van Nobelen; 90,000,000,000,010,051,667,559; PAL[112] 99456798188671113399
+  October 21, 2021; Dmitry V. Maslov; 30,370,000,300,182,999,249,979; PAL[119] 44562665878976437622
+  October 27, 2021, 21:27 UTC+10; Dmitry V. Maslov; 30,000,000,000,837,077,247,379; PAL[119] 44562665878976437622
+
+***
+
+Steps[246]:
+  April 26, 2019; Rob van Nobelen; 10,004,013,000,009,999,293,778; PAL[112] 99456798188671113399
+  [RSN] February 11, 2021, 19:16 UTC+10; Dmitry V. Maslov; 10,000,000,000,500,075,338,778; PAL[112] 99456798188671113399
+
+***
+
+Steps[247]:
+  April 26, 2019; Rob van Nobelen; 12,002,200,550,029,932,991,893; PAL[112] 99456798188671113399
+  [RSN] March 30, 2021, 8:23 UTC+10; Dmitry V. Maslov; 10,000,000,380,589,999,534,342; PAL[119] 44562665878976437622
+
+***
+
+Steps[248]:
+  April 26, 2019; Rob van Nobelen; 10,500,020,000,017,719,681,951; PAL[112] 99456798188671113399
+  October 27, 2021, 20:05 UTC+10; Dmitry V. Maslov; 10,385,926,000,014,999,999,951; PAL[112] 99456798188671113399
+  October 28, 2021, 23:17 UTC+10; Dmitry V. Maslov; 10,385,810,003,399,979,999,951; PAL[112] 99456798188671113399
+
+***
+
+Steps[249]:
+  April 26, 2019; Rob van Nobelen; 10,800,494,000,001,399,940,920; PAL[112] 99456798188671113399
+  February 13, 2021, 18:49 UTC+10; Dmitry V. Maslov; 10,000,000,000,650,647,815,830; PAL[112] 99456798188671113399
+  [RSN] March 7, 2021, 3:07 UTC+10; Dmitry V. Maslov; 1,990,000,200,024,599,902,999; PAL[119] 44562665878976437622
+
+***
+
+Steps[250]:
+  April 26, 2019; Rob van Nobelen; 10,080,000,400,000,911,869,790; PAL[112] 99456798188671113399
+  [RSN] January 17, 2021, 17:32 UTC+10; Dmitry V. Maslov; 1,000,000,630,016,999,401,994; PAL[119] 44562665878976437622
+
+***
+
+Steps[251]:
+  [RSN] August 12, 2016, 14:07 UTC; Michael Piepgras; 500,000,060,001,199,990,549; PAL[119] 44562665878976437622
+
+***
+
+Steps[252]:
+  [RSN] August 12, 2017, 10:15 UTC; Michael Piepgras; 100,000,081,000,999,940,726; PAL[119] 44562665878976437622
+
+***
+
+Steps[253]:
+  [RSN] September 13, 2007; Vaughn Suite; 70,000,000,000,507,277,299; PAL[119] 44562665878976437622
+
+***
+
+Steps[254]:
+  [RSN] March 28, 2007; Vaughn Suite; 10,200,000,000,708,183,947; PAL[119] 44562665878976437622
+
+***
+
+Steps[255]:
+  [RSN] December 3, 2007; Vaughn Suite; 10,022,000,904,998,799,523; PAL[119] 44562665878976437622
+
+***
+
+Steps[256]:
+  [RSN] September 20, 2007; Vaughn Suite; 10,000,000,039,395,795,416; PAL[119] 44562665878976437622
+
+***
+
+Steps[257]:
+  [RSN] March 28, 2007; Vaughn Suite; 10,200,000,000,065,287,900; PAL[119] 44562665878976437622
+
+***
+
+Steps[258]:
+  [RSN] April 20, 2006; Vaughn Suite; 3,000,000,022,999,288,679; PAL[119] 44562665878976437622
+
+***
+
+Steps[259]:
+  [RSN] July 26, 2005, 8:27; Vaughn Suite; 1,000,000,079,994,144,385; PAL[119] 44562665878976437622
+
+***
+
+Steps[260]:
+  [RSN] November, 2005; Jason Doucette; 1,003,062,289,999,939,142; PAL[119] 44562665878976437622
+
+  * Vaughn Suite found the same number on March 19, 2006.
+  * Jason Doucette started processing 19-digit numbers on September 25, 2005. On November 30, 2005 he found the number that resolves in 261 iterations. So somewhere between these two dates he should also have found 19-digit delayed palindromes that resolve in 217, 225, 226, 259 and 260 iterations. Though there are no exact dates.
+
+***
+
+Steps[261]:
+  [RSN] November 30, 2005, 5:20; Jason Doucette; 1,186,060,307,891,929,990; PAL[119] 44562665878976437622
+
+***
+
+Steps[262]:
+  October 21, 2021; Dmitry V. Maslov; 1,020,010,060,205,799,999,798,929,938,933; PAL[142] 66343434455441881783
+  November 16, 2021; Dmitry V. Maslov; 1,020,000,000,005,799,999,569,012,518,933; PAL[142] 66343434455441881783
+  November 21, 2021; Dmitry V. Maslov; 1,000,000,000,000,017,962,259,012,516,613; PAL[142] 66343434455441881783
+  November 27, 2021, 18:09 UTC+10; Dmitry V. Maslov; 120,000,006,120,509,999,993,599,893; PAL[127] 12552346744768997366
+  December 17, 2021, 19:19 UTC+10; Dmitry V. Maslov; 1,200,000,000,001,425,142,796,291; PAL[128] 15973543338649745984
+  January 22, 2022, 22:33 UTC+10; Dmitry V. Maslov; 15,007,060,502,692,999,894,096; PAL[134] 46974516736549999599
+
+***
+
+Steps[263]:
+  October 21, 2021; Dmitry V. Maslov; 1,064,200,200,047,899,999,954,799,499,911; PAL[142] 66343434455441881783
+  November 16, 2021; Dmitry V. Maslov; 1,063,030,004,037,899,999,929,703,979,911; PAL[142] 66343434455441881783
+  November 21, 2021; Dmitry V. Maslov; 1,040,130,105,005,458,999,439,990,992,901; PAL[142] 66343434455441881783
+  November 27, 2021, 18:12 UTC+10; Dmitry V. Maslov; 40,000,400,000,005,685,599,918,179; PAL[127] 12552346744768997366
+  December 17, 2021, 19:19 UTC+10; Dmitry V. Maslov; 1,010,000,000,019,912,549,260,950; PAL[128] 15973543338649745984
+
+***
+
+Steps[264]:
+  October 21, 2021; Dmitry V. Maslov; 200,831,800,008,099,998,950,439,999,599; PAL[142] 66343434455441881783
+  October 31, 2021, 4:29 UTC+10; Dmitry V. Maslov; 200,000,000,000,000,998,850,438,138,599; PAL[142] 66343434455441881783
+  November 27, 2021, 18:03 UTC+10; Dmitry V. Maslov; 14,100,000,330,007,389,999,658,995; PAL[127] 12552346744768997366
+  June 22, 2022, 18:07 UTC+10; Dmitry V. Maslov; 10,000,013,142,009,999,999,998,117; PAL[130] 19914964974414978847
+
+***
+
+Steps[265]:
+  October 21, 2021; Dmitry V. Maslov; 153,000,022,030,000,994,899,998,568,994; PAL[142] 66343434455441881783
+  October 31, 2021, 5:10 UTC+10; Dmitry V. Maslov; 103,420,000,000,000,994,470,264,099,994; PAL[142] 66343434455441881783
+  November 27, 2021, 18:04 UTC+10; Dmitry V. Maslov; 6,000,000,000,003,126,663,605,379; PAL[127] 12552346744768997366
+
+***
+
+Steps[266]:
+  October 21, 2021; Dmitry V. Maslov; 59,351,407,000,006,693,175,494,999,999; PAL[142] 66343434455441881783
+  October 28, 2021; Dmitry V. Maslov; 59,000,000,000,000,663,175,474,415,399; PAL[142] 66343434455441881783
+  October 31, 2021, 16:27 UTC+10; Dmitry V. Maslov; 50,002,000,000,000,254,084,565,399,849; PAL[142] 66343434455441881783
+  November 27, 2021, 18:06 UTC+10; Dmitry V. Maslov; 1,420,000,000,004,713,336,302,996; PAL[127] 12552346744768997366
+
+***
+
+Steps[267]:
+  October 21, 2021; Dmitry V. Maslov; 10,000,030,300,120,379,932,979,657,696; PAL[142] 66343434455441881783
+  October 30, 2021, 14:14 UTC+10; Dmitry V. Maslov; 10,000,000,000,000,876,587,282,257,696; PAL[142] 66343434455441881783
+  November 12, 2021, 9:26 UTC+10; Dmitry V. Maslov; 10,000,000,000,000,540,430,982,257,696; PAL[142] 66343434455441881783
+  November 27, 2021, 18:08 UTC+10; Dmitry V. Maslov; 700,000,000,000,668,930,560,769; PAL[127] 12552346744768997366
+
+***
+
+Steps[268]:
+  October 21, 2021; Dmitry V. Maslov; 7,240,048,000,304,039,790,299,923,999; PAL[142] 66343434455441881783
+  October 28, 2021, 1:14 UTC+10; Dmitry V. Maslov; 7,000,008,000,000,034,730,299,423,429; PAL[142] 66343434455441881783
+  October 30, 2021, 19:08 UTC+10; Dmitry V. Maslov; 7,000,008,000,000,030,194,299,423,429; PAL[142] 66343434455441881783
+  November 12, 2021, 10:04 UTC+10; Dmitry V. Maslov; 7,000,000,000,000,032,256,094,025,499; PAL[142] 66343434455441881783
+  November 27, 2021, 18:08 UTC+10; Dmitry V. Maslov; 100,000,000,008,974,960,730,837; PAL[127] 12552346744768997366
+
+***
+
+Steps[269]:
+  October 21, 2021; Dmitry V. Maslov; 1,072,079,001,047,019,959,099,909,957; PAL[142] 66343434455441881783
+  October 28, 2021, 1:31 UTC+10; Dmitry V. Maslov; 1,000,000,510,200,062,399,998,216,217; PAL[142] 66343434455441881783
+  October 30, 2021, 22:58 UTC+10; Dmitry V. Maslov; 1,000,000,020,000,060,596,998,216,217; PAL[142] 66343434455441881783
+  November 27, 2021, 18:08 UTC+10; Dmitry V. Maslov; 102,516,500,000,669,459,999,913; PAL[127] 12552346744768997366
+
+***
+
+Steps[270]:
+  October 21, 2021; Dmitry V. Maslov; 1,090,000,010,370,197,994,949,805,923; PAL[142] 66343434455441881783
+  October 28, 2021, 12:49 UTC+10; Dmitry V. Maslov; 1,020,019,705,104,059,399,999,950,903; PAL[142] 66343434455441881783
+  October 30, 2021, 23:17 UTC+10; Dmitry V. Maslov; 1,000,000,000,050,059,982,414,991,789; PAL[142] 66343434455441881783
+  November 27, 2021, 18:09 UTC+10; Dmitry V. Maslov; 106,758,031,110,599,996,999,901; PAL[127] 12552346744768997366
+
+***
+
+Steps[271]:
+  October 21, 2021; Dmitry V. Maslov; 1,000,100,303,090,053,959,499,392,911; PAL[142] 66343434455441881783
+  October 28, 2021, 12:46 UTC+10; Dmitry V. Maslov; 1,000,000,000,000,497,800,064,910,811; PAL[142] 66343434455441881783
+  October 31, 2021, 1:36 UTC+10; Dmitry V. Maslov; 1,000,000,000,000,394,741,252,995,844; PAL[142] 66343434455441881783
+  November 27, 2021, 18:09 UTC+10; Dmitry V. Maslov; 100,100,020,010,790,098,449,800; PAL[127] 12552346744768997366
+
+***
+
+Steps[272]:
+  October 21, 2021; Dmitry V. Maslov; 1,002,025,030,392,029,995,959,949,900; PAL[142] 66343434455441881783
+  October 28, 2021, 12:24 UTC+10; Dmitry V. Maslov; 1,000,040,008,000,076,339,590,966,300; PAL[142] 66343434455441881783
+  October 31, 2021, 2:02 UTC+10; Dmitry V. Maslov; 1,000,040,003,005,499,599,870,966,300; PAL[142] 66343434455441881783
+  November 27, 2021, 20:52 UTC+10; Dmitry V. Maslov; 1,000,080,000,120,994,737,992,874; PAL[127] 12552346744768997366
+  June 22, 2022, 11:40 UTC+10; Dmitry V. Maslov; 1,000,000,049,003,739,995,755,649; PAL[130] 19914964974414978847
+
+***
+
+Steps[273]:
+  October 21, 2021; Dmitry V. Maslov; 100,000,600,000,002,993,299,831,999; PAL[142] 66343434455441881783
+  October 27, 2021, 23:57 UTC+10; Dmitry V. Maslov; 100,000,600,000,002,993,299,386,499; PAL[142] 66343434455441881783
+  November 13, 2021, 16:54 UTC+10; Dmitry V. Maslov; 100,000,000,100,036,659,929,568,199; PAL[142] 66343434455441881783
+  November 27, 2021, 20:52 UTC+10; Dmitry V. Maslov; 1,200,002,200,005,552,399,326,691; PAL[127] 12552346744768997366
+  June 22, 2022, 11:39 UTC+10; Dmitry V. Maslov; 1,000,000,079,641,999,992,877,324; PAL[130] 19914964974414978847
+
+***
+
+Steps[274]:
+  October 21, 2021; Dmitry V. Maslov; 10,021,001,020,200,979,198,799,998; PAL[142] 66343434455441881783
+  October 27, 2021, 23:57 UTC+10; Dmitry V. Maslov; 10,020,000,000,000,272,118,719,998; PAL[142] 66343434455441881783
+  November 27, 2021, 20:54 UTC+10; Dmitry V. Maslov; 1,040,200,620,332,990,995,192,950; PAL[127] 12552346744768997366
+
+***
+
+Steps[275]:
+  October 21, 2021; Dmitry V. Maslov; 10,560,445,100,609,935,999,949,993; PAL[142] 66343434455441881783
+  October 27, 2021, 23:55 UTC+10; Dmitry V. Maslov; 9,000,000,000,006,652,010,882,909; PAL[142] 66343434455441881783
+  June 22, 2022, 11:35 UTC+10; Dmitry V. Maslov; 1,011,050,517,536,999,997,929,950; PAL[130] 19914964974414978847
+
+***
+
+Steps[276]:
+  October 21, 2021; Dmitry V. Maslov; 10,800,077,530,059,719,999,627,941; PAL[142] 66343434455441881783
+  October 27, 2021, 23:20 UTC+10; Dmitry V. Maslov; 1,000,000,000,008,771,050,441,908; PAL[142] 66343434455441881783
+
+***
+
+Steps[277]:
+  October 21, 2021; Dmitry V. Maslov; 10,003,000,800,479,918,958,698,720; PAL[142] 66343434455441881783
+  October 27, 2021, 23:44 UTC+10; Dmitry V. Maslov; 1,100,000,000,004,165,700,220,993; PAL[142] 66343434455441881783
+
+***
+
+Steps[278]:
+  October 21, 2021; Dmitry V. Maslov; 1,070,409,080,308,997,989,896,919; PAL[142] 66343434455441881783
+  October 27, 2021, 22:26 UTC+10; Dmitry V. Maslov; 1,000,000,000,008,037,782,836,719; PAL[142] 66343434455441881783
+
+***
+
+Steps[279]:
+  October 21, 2021; Dmitry V. Maslov; 1,090,749,490,009,463,999,992,904; PAL[142] 66343434455441881783
+  October 27, 2021, 22:32 UTC+10; Dmitry V. Maslov; 1,000,000,000,009,468,449,423,854; PAL[142] 66343434455441881783
+
+***
+
+Steps[280]:
+  October 21, 2021; Dmitry V. Maslov; 1,102,079,702,329,999,899,979,891; PAL[142] 66343434455441881783
+  October 27, 2021, 22:02 UTC+10; Dmitry V. Maslov; 1,000,004,285,088,999,999,687,280; PAL[142] 66343434455441881783
+
+***
+
+Steps[281]:
+  October 21, 2021; Dmitry V. Maslov; 1,000,489,846,069,959,999,995,450; PAL[142] 66343434455441881783
+  October 27, 2021, 21:58 UTC+10; Dmitry V. Maslov; 1,000,000,000,007,468,472,243,350; PAL[142] 66343434455441881783
+
+***
+
+Steps[282]:
+  October 21, 2021; Dmitry V. Maslov; 140,589,900,069,999,589,999,999; PAL[142] 66343434455441881783
+  October 27, 2021, 21:58 UTC+10; Dmitry V. Maslov; 100,000,000,069,999,589,985,049; PAL[142] 66343434455441881783
+
+***
+
+Steps[283]:
+  October 21, 2021; Dmitry V. Maslov; 100,800,000,089,999,249,989,964; PAL[142] 66343434455441881783
+  October 27, 2021, 21:58 UTC+10; Dmitry V. Maslov; 100,000,000,089,999,249,947,024; PAL[142] 66343434455441881783
+
+***
+
+Steps[284]:
+  October 21, 2021; Dmitry V. Maslov; 140,000,030,099,999,099,448,991; PAL[142] 66343434455441881783
+
+***
+
+Steps[285]:
+  October 21, 2021; Dmitry V. Maslov; 105,422,501,000,994,959,999,960; PAL[142] 66343434455441881783
+  October 27, 2021, 22:46 UTC+10; Dmitry V. Maslov; 100,500,000,199,999,537,709,960; PAL[142] 66343434455441881783
+
+***
+
+Steps[286]:
+  [RSN] June 16, 2021, 11:07 UTC+10; Dmitry V. Maslov; 10,000,006,000,090,499,474,959; PAL[142] 66343434455441881783
+
+***
+
+Steps[287]:
+  [RSN] July 12, 2021, 11:04 UTC+10; Dmitry V. Maslov; 10,000,008,700,094,994,282,974; PAL[142] 66343434455441881783
+
+***
+
+Steps[288]:
+  April 26, 2019, 6:57 NZ; Rob van Nobelen; 12,000,700,000,025,339,936,491; PAL[142] 66343434455441881783
+
+***
+
+Steps[289]:
+  January 4, 2021, 16:47 UTC+3; Anton Stefanov; 10,037,000,230,509,917,799,950; PAL[142] 66343434455441881783
+  September 20, 2021, 21:29 UTC+10; Dmitry V. Maslov; 10,037,000,102,799,917,799,950; PAL[142] 66343434455441881783
+  October 14, 2021, 14:42 UTC+10; Dmitry V. Maslov; 10,036,069,400,174,999,499,950; PAL[142] 66343434455441881783
+
+***
+
+Steps[290]:
+  December 14, 2021, 21:48 UTC+10; Dmitry V. Maslov; 1,000,000,009,001,899,177,117,039; PAL[132] 88022661552988847333
+
+***
+
+Steps[291]:
+  December 14, 2021, 21:39 UTC+10; Dmitry V. Maslov; 1,000,000,000,008,799,678,139,630; PAL[132] 88022661552988847333
+
+
+***
+
+Steps[292]:
+  December 14, 2021, 21:36 UTC+10; Dmitry V. Maslov; 1,000,000,000,005,083,294,994,790; PAL[132] 88022661552988847333
+
+***
+
+Steps[293]:
+  December 14, 2021, 22:51 UTC+10; Dmitry V. Maslov; 1,000,206,827,388,999,999,095,750; PAL[132] 88022661552988847333

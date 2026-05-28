@@ -73,7 +73,7 @@ static inline size_t GetStringLength(const char* buffer, size_t size)
 static bool LoadResults(std::set<Palindrome>& allPalindromes)
 {
 	bool isLoaded = false;
-	if (util::BinaryFile f; f.Open(L"results.txt", util::FILE_OPEN_READ))
+	if (util::BinaryFile f; f.Open(L"all-palindromes.txt", util::FILE_OPEN_READ))
 	{
 		if (long long fileSize = f.GetSize(); fileSize == 0)
 		{
@@ -186,7 +186,7 @@ static void SaveResults(const std::set<Palindrome>& allPalindromes)
 			}
 		}
 
-		f.SaveTo(L"results.txt");
+		f.SaveTo(L"all-palindromes.txt");
 	}
 }
 
@@ -235,7 +235,7 @@ static void ListAllPalindromes(std::set<Palindrome>& allPalindromes)
 						}
 						else if (pal.steps > it->steps || (pal.steps == it->steps && pal.number < it->number))
 						{
-							aux::Printf((pal.steps > it->steps) ? "#9\rStp#6 %s\n" : "#8\rLow#6 %s\n",
+							aux::Printf((pal.steps > it->steps) ? "#9\rH/s#6 %s\n" : "#8\rL/n#6 %s\n",
 								pal.ToString().c_str());
 
 							allPalindromes.erase(it);
@@ -277,15 +277,15 @@ int ListAllPalindromesMain()
 	}
 
 	std::set<Palindrome> allPalindromes;
-	if (util::FileSystem::FileExists(L"results.txt"))
+	if (util::FileSystem::FileExists(L"all-palindromes.txt"))
 	{
 		if (!LoadResults(allPalindromes))
 		{
-			aux::Print("Couldn't load results, file format is invalid\n");
+			aux::Print("Couldn't load palindrome list. File format is invalid\n");
 			return 1;
 		}
 
-		aux::Printf("Previous results loaded: %u palindrome(s) found\n", allPalindromes.size());
+		aux::Printf("Previous list loaded: %u palindrome(s) found\n", allPalindromes.size());
 		// После успешной загрузки всегда пересохраняем результаты, чтобы удалить
 		// из файла дубликаты палиндромов и корректно отсортировать строки
 		SaveResults(allPalindromes);
