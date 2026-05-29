@@ -681,7 +681,7 @@ void UpdateDBMode::MergeChunks()
 			m_Data.RemoveChunk(chunk);
 		removeList.clear();
 
-		aux::Print(EraseTextSequence(text.length()));
+		aux::Print(EraseTextSequence(text.length(), true));
 
 		if (!lastInRangeMerged)
 		{

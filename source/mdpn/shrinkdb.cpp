@@ -207,7 +207,7 @@ bool DBShrinker::MergeAndCompress()
 			m_Data.RemoveChunk(chunk);
 		removeList.clear();
 
-		aux::Print(EraseTextSequence(text.size()));
+		aux::Print(EraseTextSequence(text.size(), true));
 
 		if (!lastInRangeMerged)
 			break;
