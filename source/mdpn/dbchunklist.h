@@ -35,17 +35,26 @@ public:
 	void ForEach(const std::function<bool(DBChunk*)>& fn);
 
 	// Возвращает количество объектов в контейнере
-	size_t GetSize() const { return m_Chunks.size(); }
+	size_t GetSize() const { return m_Chunks.size() - m_RemovedCount; }
 
 private:
+	// Количество помеченных к удалению чанков,
+	// после которого они удаляются принудительно
+	static constexpr size_t PURGE_GAIN = 5000;
+
 	// EE::Assert и EE::Verify генерируют при ошибках исключение EDBLogic
 	// и предназначены для контроля корректности использования класса
 	using EE = AssertHelper<EDBLogic>;
 
 	void Sort();
-	std::vector<DBChunk*>::iterator Find(const DBChunk* chunk);
+	void Purge();
+	size_t Find(const DBChunk* chunk);
 
-	std::vector<DBChunk*> m_Chunks;
+private:
+	std::vector<DBChunk*> m_Chunks;		// Все чанки, включая уже удалённые указатели
+	std::vector<uint32_t> m_ToRemove;	// Список индексов элементов в m_Chunks для удаления
+	size_t m_RemovedCount = 0;			// Количество элементов в m_ToRemove
+
 	bool m_IsIterating = false;
 	bool m_IsSorted = true;
 };
