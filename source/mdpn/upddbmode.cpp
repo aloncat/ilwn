@@ -595,21 +595,22 @@ void UpdateDBMode::MergeChunks()
 {
 	EventManager::PublishEvent("Checking if database can be consolidated...");
 
-	std::set<DBChunk*> removeList;
-	size_t fileCount, mergedCount = 0;
+	std::vector<DBChunk*> removeList;
+	removeList.reserve(65000);
+
 	const size_t totalCount = m_Data.GetChunkC();
+	size_t mergedCount = 0;
 
 	for (;;)
 	{
 		bool errorFlag = false;
 		bool lastInRangeMerged = false;
-		fileCount = m_RemovedFileCount;
+		size_t fileCount = m_RemovedFileCount;
 
 		uint32_t lastTick = 0;
 		unsigned dataSize = 0;
 
 		DBChunk* activeChunk = nullptr;
-		bool needSaveActive = false;
 
 		m_Data.ForEachChunk([&](DBChunk* chunk) {
 			bool isLastInRange = chunk->GetLast().GetLength() < (chunk->GetLast() + 1u).GetLength();
@@ -628,7 +629,6 @@ void UpdateDBMode::MergeChunks()
 				}
 
 				activeChunk->Append(chunk);
-				needSaveActive = true;
 				// Здесь мы не знаем точно, каким получится размер данных в результирующем чанке (он вычисляется только
 				// в момент сохранения чанка). Однако тестирование показало, что при простом сложении ошибка весьма
 				// незначительна и всегда завышает размер (при сохранении объединённый чанк будет меньше)
@@ -637,19 +637,17 @@ void UpdateDBMode::MergeChunks()
 				++mergedCount;
 
 				chunk->UnloadData(DBChunkState::DATAUNLOADED);
-				removeList.insert(chunk);
+				removeList.push_back(chunk);
 			} else
 			{
 				if (activeChunk)
 				{
-					if (needSaveActive)
-						m_Data.Save(0u, 0, 0);
+					m_Data.Save(0u, 0, 0);
 					activeChunk->UnloadData(DBChunkState::HEADERONLY);
 				}
 
 				dataSize = chunk->GetDataSize();
 				m_Data.SetActiveChunk(chunk);
-				needSaveActive = false;
 				activeChunk = chunk;
 			}
 
@@ -669,21 +667,18 @@ void UpdateDBMode::MergeChunks()
 
 		if (activeChunk)
 		{
-			if (needSaveActive)
-				m_Data.Save(0u, 0, 0);
+			m_Data.Save(0u, 0, 0);
 			activeChunk->UnloadData(DBChunkState::HEADERONLY);
-			needSaveActive = false;
 			activeChunk = nullptr;
 		}
 
 		const std::string text(", removing files...");
 		aux::Print(text);
 
+		m_RemovedFileCount += removeList.size();
 		for (DBChunk* chunk : removeList)
-		{
 			m_Data.RemoveChunk(chunk);
-			++m_RemovedFileCount;
-		}
+		removeList.clear();
 
 		aux::Print(EraseTextSequence(text.length()));
 
@@ -693,8 +688,6 @@ void UpdateDBMode::MergeChunks()
 				mergedCount, fileCount));
 			break;
 		}
-
-		removeList.clear();
 	}
 }
 
