@@ -115,7 +115,7 @@ bool DBShrinker::RemovePalindromes()
 
 		Number num;
 		for (unsigned i = 1; i <= chunk->GetHighestStep(); ++i)
-			m_BasePalCount[i] += chunk->GetNumCountA()[i];
+			m_BasePalCount[i] += chunk->GetNumCounters()[i];
 		for (const auto& item : chunk->GetNumbers())
 		{
 			num = item.num;

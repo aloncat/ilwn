@@ -289,12 +289,12 @@ static bool AnalyseDBChunk(DataBase& data, RangeInfo& info, PalindromeInfo* pali
 	if (!pChunk->LoadData(data, DBChunkState::WITHSTATS))//FULLDATA))
 		return OnFileNotLoaded(pChunk);
 
-	const unsigned* numCountA = pChunk->GetNumCountA();
+	const unsigned* numCounters = pChunk->GetNumCounters();
 	for (unsigned step = 1; step < Const::MAX_STEP; ++step)
 	{
-		if (numCountA[step])
+		if (numCounters[step])
 		{
-			info.savedNumberC += numCountA[step];
+			info.savedNumberC += numCounters[step];
 			if (!info.lowestStep || step < info.lowestStep)
 				info.lowestStep = step;
 			if (!info.highestStep || step > info.highestStep)

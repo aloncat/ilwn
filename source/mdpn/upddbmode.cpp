@@ -1,4 +1,6 @@
 ﻿//∙MDPN
+// Copyright (C) 2019-2026 Dmitry Maslov
+// For conditions of distribution and use, see readme.txt
 
 #include "pch.h"
 #include "upddbmode.h"
@@ -13,7 +15,6 @@
 
 #include <core/auxutil.h>
 #include <core/console.h>
-#include <core/exception.h>
 #include <core/strutil.h>
 #include <core/util.h>
 #include <core/winapi.h>
@@ -25,7 +26,7 @@ void UpdateDBMode::Progress::ResetLastTick()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-float UpdateDBMode::Progress::GetTotalElapsed()
+float UpdateDBMode::Progress::GetTotalElapsed() const
 {
 	uint32_t now = ::GetTickCount();
 	return totalSeconds + .001f * (now - startTime);
@@ -34,7 +35,7 @@ float UpdateDBMode::Progress::GetTotalElapsed()
 //--------------------------------------------------------------------------------------------------------------------------------
 UpdateDBMode::UpdateDBMode()
 {
-	AML_FILLA(m_RangeProgressA, 0, util::CountOf(m_RangeProgressA));
+	AML_FILLA(m_RangeProgress, 0, util::CountOf(m_RangeProgress));
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -102,10 +103,11 @@ bool UpdateDBMode::UpdateDataBase()
 	if (RemoveOverlaps())
 	{
 		size_t startRange = 0;
-		m_Data.ForEachChunk([&](DBChunk* p) {
-			startRange = p->GetFirst().GetLength();
+		m_Data.ForEachChunk([&](DBChunk* chunk) {
+			startRange = chunk->GetFirst().GetLength();
 			return false;
 		});
+
 		m_Steps = std::make_unique<StepHelper>(startRange);
 		m_Events = std::make_unique<EventManager>(m_Data);
 
@@ -121,26 +123,26 @@ bool UpdateDBMode::UpdateDataBase()
 bool UpdateDBMode::RemoveOverlaps()
 {
 	Number first, last;
-	DBChunk* pPrevChunk = nullptr;
+	DBChunk* prevChunk = nullptr;
 	std::vector<DBChunk*> toRemove;
 
-	m_Data.ForEachChunk([&](DBChunk* pChunk) {
-		first = pChunk->GetFirst();
-		if (first <= last)
+	m_Data.ForEachChunk([&](DBChunk* chunk) {
+		if (first = chunk->GetFirst(); first <= last)
 		{
 			// Если у обоих файлов совпадает первое проверенное число,
 			// то по возможности оставляем тот, что имеет актуальный формат
-			if (pPrevChunk && pPrevChunk->GetFirst() == first && !pChunk->HasOldFormat() && pPrevChunk->HasOldFormat())
+			if (prevChunk && prevChunk->GetFirst() == first &&
+				!chunk->HasOldFormat() && prevChunk->HasOldFormat())
 			{
-				toRemove.push_back(pPrevChunk);
+				toRemove.push_back(prevChunk);
 			} else
 			{
-				toRemove.push_back(pChunk);
+				toRemove.push_back(chunk);
 				return true;
 			}
 		}
-		last = pChunk->GetLast();
-		pPrevChunk = pChunk;
+		last = chunk->GetLast();
+		prevChunk = chunk;
 		return true;
 	});
 
@@ -149,22 +151,22 @@ bool UpdateDBMode::RemoveOverlaps()
 		DBProgress onProgress("Removing files: %.1f%%...");
 		EventManager::PublishEvent("#6Detected overlapping regions. Removing files...");
 
-		size_t removedC = 0;
-		for (DBChunk* pChunk : toRemove)
+		size_t removedCount = 0;
+		for (DBChunk* chunk : toRemove)
 		{
-			if (!(removedC++ & 0x3f))
+			if (!(removedCount++ & 0x3f))
 			{
-				onProgress(100.f * (removedC - 1) / toRemove.size());
+				onProgress(100.f * (removedCount - 1) / toRemove.size());
 				if (CheckIfCancelled())
 					return false;
 			}
 
-			if (!RemoveChunk(pChunk))
+			if (!RemoveChunk(chunk))
 				return false;
 		}
 
 		EventManager::PublishEvent(util::Format("  > Successfully removed %u file(s)", toRemove.size()));
-		m_RemovedFileC += toRemove.size();
+		m_RemovedFileCount += toRemove.size();
 	}
 
 	return true;
@@ -173,68 +175,68 @@ bool UpdateDBMode::RemoveOverlaps()
 //----------------------------------------------------------------------------------------------------------------------
 float UpdateDBMode::UpdateAllChunks()
 {
-	const size_t totalChunkC = m_Data.GetChunkC();
+	const size_t totalChunkCount = m_Data.GetChunkC();
 
 	std::vector<std::pair<DBChunk*, bool>> chunkList;
-	chunkList.reserve(totalChunkC);
+	chunkList.reserve(totalChunkCount);
 
 	Number first, last;
 	size_t gapsFound = 0;
 	bool hasShortFiles = false;
-	size_t testedC = 0, toUpdateC = 0;
+	size_t testedCount = 0, toUpdateCount = 0;
 	size_t compressedCount = 0;
 
 	DBProgress onProgress("Parsing files: %.1f%%...");
-	AML_FILLA(m_RangeProgressA, 0, util::CountOf(m_RangeProgressA));
+	AML_FILLA(m_RangeProgress, 0, util::CountOf(m_RangeProgress));
 
-	m_Data.ForEachChunk([&](DBChunk* pChunk) {
-		if (!(testedC++ & 0x3f))
+	m_Data.ForEachChunk([&](DBChunk* chunk) {
+		if (!(testedCount++ & 0x3f))
 		{
-			onProgress(100.f * (testedC - 1) / totalChunkC);
+			onProgress(100.f * (testedCount - 1) / totalChunkCount);
 			if (CheckIfCancelled())
 				return false;
 		}
 
-		if (!LoadChunkData(pChunk, DBChunkState::WITHSTATS))
+		if (!LoadChunkData(chunk, DBChunkState::WITHSTATS))
 		{
 			m_IsCancelled = true;
 			return false;
 		}
 
-		first = pChunk->GetFirst();
+		first = chunk->GetFirst();
 		if (last + 1u < first)
 			++gapsFound;
-		last = pChunk->GetLast();
+		last = chunk->GetLast();
 
-		if (pChunk->GetDataSize() < Const::DATA_SAVE_SIZE / 2)
+		if (chunk->GetDataSize() < Const::DATA_SAVE_SIZE / 2)
 			hasShortFiles = true;
 
-		const bool needsUpdate = NeedsUpdate(pChunk);
-		chunkList.emplace_back(pChunk, needsUpdate);
+		const bool needsUpdate = NeedsUpdate(chunk);
+		chunkList.emplace_back(chunk, needsUpdate);
 		if (needsUpdate)
 		{
-			++toUpdateC;
+			++toUpdateCount;
 		} else
 		{
-			if (pChunk->IsMaxCompressed())
+			if (chunk->IsMaxCompressed())
 				++compressedCount;
-			size_t range = pChunk->GetLast().GetLength();
+			size_t range = chunk->GetLast().GetLength();
 			if (range >= 4 && range <= Const::MAX_DIGIT_C)
-				m_RangeProgressA[range] += pChunk->GetIterationC();
+				m_RangeProgress[range] += chunk->GetIterationC();
 		}
 
-		pChunk->UnloadData(DBChunkState::HEADERONLY);
+		chunk->UnloadData(DBChunkState::HEADERONLY);
 		return true;
 	});
 
 	m_From1stKnown |= m_MaxCompression;
 	if (gapsFound == 1 && m_From1stKnown)
 	{
-		DBChunk* pChunk = chunkList.front().first;
-		last = pChunk->GetFirst();
+		DBChunk* chunk = chunkList.front().first;
+		last = chunk->GetFirst();
 		--last;
 
-		if (last.GetLength() < pChunk->GetFirst().GetLength())
+		if (last.GetLength() < chunk->GetFirst().GetLength())
 			gapsFound = 0;
 	}
 
@@ -245,15 +247,15 @@ float UpdateDBMode::UpdateAllChunks()
 			return CompressChunks(chunkList);
 		}
 
-		if (toUpdateC || (gapsFound && !m_DontFillGaps) || hasShortFiles)
+		if (toUpdateCount || (gapsFound && !m_DontFillGaps) || hasShortFiles)
 		{
 			EventManager::PublishEvent(!gapsFound ? "  > Database has #15no gaps" :
 				m_DontFillGaps ? "#12Database has gaps, #7but they will be skipped" :
 				"Database has #15gaps to be filled #7(task in queue)...");
 
-			if (toUpdateC)
+			if (toUpdateCount)
 			{
-				EventManager::PublishEvent(util::Format("Update of %u database file(s) queued...", toUpdateC));
+				EventManager::PublishEvent(util::Format("Update of %u database file(s) queued...", toUpdateCount));
 			}
 			else if (!gapsFound)
 			{
@@ -279,11 +281,11 @@ float UpdateDBMode::UpdateChunks(const std::vector<std::pair<DBChunk*, bool>>& c
 	bool hasGaps = false;
 	if (m_From1stKnown && !chunks.empty())
 	{
-		DBChunk* pChunk = chunks.front().first;
-		last = pChunk->GetFirst();
+		DBChunk* chunk = chunks.front().first;
+		last = chunk->GetFirst();
 		--last;
 
-		if (last.GetLength() == pChunk->GetFirst().GetLength() && !last.IsZero())
+		if (last.GetLength() == chunk->GetFirst().GetLength() && !last.IsZero())
 			hasGaps = true;
 	}
 
@@ -294,12 +296,11 @@ float UpdateDBMode::UpdateChunks(const std::vector<std::pair<DBChunk*, bool>>& c
 	for (auto& item : chunks)
 	{
 		++chunksProcessed;
-		const uint32_t tick = ::GetTickCount();
-		if (tick - m_Progress.lastTick >= 500 && PrintProgress(tick, chunksProcessed, chunks.size()))
+		if (PrintProgress(chunksProcessed, chunks.size()))
 			break;
 
-		DBChunk* pChunk = item.first;
-		first = pChunk->GetFirst();
+		DBChunk* chunk = item.first;
+		first = chunk->GetFirst();
 		if (last + 1u < first)
 		{
 			if (m_DontFillGaps)
@@ -315,30 +316,30 @@ float UpdateDBMode::UpdateChunks(const std::vector<std::pair<DBChunk*, bool>>& c
 			}
 		}
 
-		last = pChunk->GetLast();
+		last = chunk->GetLast();
 
 		if (item.second)
 		{
-			if (!LoadChunkData(pChunk, DBChunkState::FULLDATA))
+			if (!LoadChunkData(chunk, DBChunkState::FULLDATA))
 			{
 				errorFlag = true;
 				break;
 			}
 
-			pChunk->SortNumbers();
-			KnownInfo known(pChunk->GetNumbers());
-			known.minSavedStep = GetMinSavedStep(pChunk);
-			known.searchDepth = pChunk->GetSearchDepth();
-			known.CPUTimeShare = static_cast<float>(pChunk->GetCPUTimeSpent());
-			known.CPUTimeShare /= std::max(pChunk->GetIterationC(), 1ull);
+			chunk->SortNumbers();
+			KnownInfo known(chunk->GetNumbers());
+			known.minSavedStep = GetMinSavedStep(chunk);
+			known.searchDepth = chunk->GetSearchDepth();
+			known.CPUTimeShare = static_cast<float>(chunk->GetCPUTimeSpent());
+			known.CPUTimeShare /= std::max(chunk->GetIterationC(), 1ull);
 
-			DoSearch(first, pChunk->GetLast(), known);
-			last = pChunk->GetLast();
+			DoSearch(first, chunk->GetLast(), known);
+			last = chunk->GetLast();
 
 			if (m_IsCancelled)
 				break;
 
-			if (!RemoveChunk(pChunk))
+			if (!RemoveChunk(chunk))
 			{
 				errorFlag = true;
 				break;
@@ -349,19 +350,19 @@ float UpdateDBMode::UpdateChunks(const std::vector<std::pair<DBChunk*, bool>>& c
 
 	if (!m_IsCancelled && !errorFlag)
 	{
-		if (m_SavedFileC || removedCount)
+		if (m_SavedFileCount || removedCount)
 		{
 			EventManager::PublishEvent(util::Format("Update finished. Files"
-				" added: %u, removed: %u", m_SavedFileC, removedCount));
+				" added: %u, removed: %u", m_SavedFileCount, removedCount));
 		}
 
-		m_RemovedFileC += removedCount;
+		m_RemovedFileCount += removedCount;
 
 		if (!hasGaps)
 			MergeChunks();
 
 		EventManager::PublishEvent(util::Format("Total files removed: %u, remains: %u",
-			m_RemovedFileC, m_Data.GetChunkC()));
+			m_RemovedFileCount, m_Data.GetChunkC()));
 	}
 
 	return m_Progress.GetTotalElapsed();
@@ -382,11 +383,8 @@ float UpdateDBMode::CompressChunks(const std::vector<std::pair<DBChunk*, bool>>&
 	for (auto& item : chunks)
 	{
 		++chunksProcessed;
-		if (auto tick = ::GetTickCount(); tick - m_Progress.lastTick >= 500)
-		{
-			if (PrintProgress(tick, chunksProcessed, chunks.size()))
-				break;
-		}
+		if (PrintProgress(chunksProcessed, chunks.size()))
+			break;
 
 		DBChunk* chunk = item.first;
 		if (chunk->GetFormatVer() != DBChunkData::LATEST_FORMAT_VERSION || !chunk->GetMinSavedStep())
@@ -440,7 +438,7 @@ float UpdateDBMode::CompressChunks(const std::vector<std::pair<DBChunk*, bool>>&
 //----------------------------------------------------------------------------------------------------------------------
 void UpdateDBMode::DoSearch(const Number& startFrom, const Number& target, KnownInfo known)
 {
-	Assert(m_Steps && m_Events && !m_pActiveChunk && startFrom <= target);
+	Assert(m_Steps && m_Events && !m_activeChunk && startFrom <= target);
 	CreateNewChunk(startFrom);
 
 	unsigned stepLimit = m_Steps->GetSearchLimit(m_Last + 1u);
@@ -457,7 +455,7 @@ void UpdateDBMode::DoSearch(const Number& startFrom, const Number& target, Known
 		known.searchDepth = stepLimit;
 
 	ThreadTime threadTime;
-	PrintProgress(::GetTickCount(), m_Last + 1u);
+	PrintProgress(m_Last + 1u, true);
 
 	BigNumber current, cnum, lastNum = m_Last;
 	size_t lastNumLength = lastNum.GetLength();
@@ -468,7 +466,7 @@ void UpdateDBMode::DoSearch(const Number& startFrom, const Number& target, Known
 	if (lastNumLength + 4 > conseqLen)
 		conseqLen = std::min(lastNumLength + 4, Const::MAX_DIGIT_C);
 
-	uint64_t testedC = 0;
+	uint64_t testedCount = 0;
 	for (auto nextKnown = known.numbers.cbegin();; ++m_Progress.counter)
 	{
 		++lastNum;
@@ -488,10 +486,10 @@ void UpdateDBMode::DoSearch(const Number& startFrom, const Number& target, Known
 			if (lastNumLength >= 3)
 			{
 				const auto last = lastNum - 1u;
-				PrintProgress(::GetTickCount(), last);
+				PrintProgress(last, true);
 				SaveActiveChunk(last, threadTime);
 				CreateNewChunk(lastNum);
-				testedC = 0;
+				testedCount = 0;
 			}
 			lastNumLength = lastNum.GetLength();
 			if (lastNumLength + 4 > conseqLen)
@@ -504,10 +502,10 @@ void UpdateDBMode::DoSearch(const Number& startFrom, const Number& target, Known
 		}
 
 		bool isPalindrome = false;
-		unsigned totalStepDoneC = 0;
+		unsigned totalStepsDone = 0;
 
 		current = lastNum;
-		if (current.RAATillLength(conseqLen, totalStepDoneC))
+		if (current.RAATillLength(conseqLen, totalStepsDone))
 		{
 			isPalindrome = true;
 			if (nextKnown != known.numbers.end() && lastNum == nextKnown->num)
@@ -518,16 +516,16 @@ void UpdateDBMode::DoSearch(const Number& startFrom, const Number& target, Known
 			if (nextKnown != known.numbers.end() && lastNum == nextKnown->num)
 			{
 				isPalindrome = true;
-				totalStepDoneC = nextKnown->step;
+				totalStepsDone = nextKnown->step;
 				++nextKnown;
 			} else
 			{
 				cnum = current;
-				if (totalStepDoneC < stepLimit)
+				if (totalStepsDone < stepLimit)
 				{
-					unsigned stepDoneC;
-					isPalindrome = current.RAATillPalindrome(stepLimit - totalStepDoneC, stepDoneC);
-					totalStepDoneC += stepDoneC;
+					unsigned stepsDone;
+					isPalindrome = current.RAATillPalindrome(stepLimit - totalStepsDone, stepsDone);
+					totalStepsDone += stepsDone;
 				}
 				if (!isPalindrome)
 					m_LychThreads.Insert(cnum);
@@ -535,54 +533,59 @@ void UpdateDBMode::DoSearch(const Number& startFrom, const Number& target, Known
 		}
 
 		if (!isPalindrome)
+		{
 			m_Data.AddLychrel(lastNum, known.searchDepth);
-		else if (totalStepDoneC > Const::MAX_STEP)
+		}
+		else if (totalStepsDone > Const::MAX_STEP)
 		{
 			m_Events->PublishAll();
 			EventManager::PublishEvent(util::Format("#12FATAL ERROR: #7a"
-				" number is found for HUGE step #10#%u#7!", totalStepDoneC));
+				" number is found for HUGE step #10#%u#7!", totalStepsDone));
 			m_Last = --lastNum;
 			m_IsCancelled = true;
 			break;
 		}
-		else if (m_Steps->IsSaveable(lastNumLength, totalStepDoneC))
+		else if (m_Steps->IsSaveable(lastNumLength, totalStepsDone))
 		{
-			bool alreadyFound = m_Data.HasFound(totalStepDoneC);
-			m_Data.AddPalindrome(lastNum, totalStepDoneC);
-			if (!alreadyFound && m_Steps->IsNew(totalStepDoneC))
-				m_Events->OnPalindromeFound(lastNum, totalStepDoneC);
+			bool alreadyFound = m_Data.HasFound(totalStepsDone);
+			m_Data.AddPalindrome(lastNum, totalStepsDone);
+			if (!alreadyFound && m_Steps->IsNew(totalStepsDone))
+				m_Events->OnPalindromeFound(lastNum, totalStepsDone);
 		} else
-			m_Data.AddPalindrome(totalStepDoneC);
+		{
+			m_Data.AddPalindrome(totalStepsDone);
+		}
 
-		++testedC;
-		++m_RangeProgressA[lastNumLength];
+		++testedCount;
+		++m_RangeProgress[lastNumLength];
 		if (!(m_Progress.counter & 0x3ff))
 		{
-			const uint32_t tick = ::GetTickCount();
-			if (tick - m_Progress.lastTick >= 500 && PrintProgress(tick, lastNum))
+			if (PrintProgress(lastNum))
 			{
 				m_Last = lastNum;
 				break;
 			}
 
-			if (GetDataSize(m_pActiveChunk) >= Const::DATA_SAVE_SIZE / 4 ||
-				m_pActiveChunk->GetNumbers().size() >= Const::DATA_SAVE_NUM_COUNT / 4)
+			if (GetDataSize(m_activeChunk) >= Const::DATA_SAVE_SIZE / 4 ||
+				m_activeChunk->GetNumbers().size() >= Const::DATA_SAVE_NUM_COUNT / 4)
 			{
 				if (m_Events->HasEvents())
-					PrintProgress(tick, lastNum);
-				m_CPUTime += static_cast<unsigned>(testedC * known.CPUTimeShare);
+				{
+					PrintProgress(lastNum, true);
+				}
+				m_CPUTime += static_cast<unsigned>(testedCount * known.CPUTimeShare);
 				SaveActiveChunk(lastNum, threadTime);
 				if (lastNum < target)
 					CreateNewChunk(lastNum + 1u);
-				testedC = 0;
+				testedCount = 0;
 			}
 		}
 	}
 
 	if (!m_IsCancelled)
 	{
-		PrintProgress(::GetTickCount(), m_Last);
-		m_CPUTime += static_cast<unsigned>(testedC * known.CPUTimeShare);
+		PrintProgress(m_Last, true);
+		m_CPUTime += static_cast<unsigned>(testedCount * known.CPUTimeShare);
 		SaveActiveChunk(m_Last, threadTime);
 	}
 }
@@ -600,7 +603,7 @@ void UpdateDBMode::MergeChunks()
 	{
 		bool errorFlag = false;
 		bool lastInRangeMerged = false;
-		fileCount = m_RemovedFileC;
+		fileCount = m_RemovedFileCount;
 
 		uint32_t lastTick = 0;
 		unsigned dataSize = 0;
@@ -608,33 +611,33 @@ void UpdateDBMode::MergeChunks()
 		DBChunk* activeChunk = nullptr;
 		bool needSaveActive = false;
 
-		m_Data.ForEachChunk([&](DBChunk* сhunk) {
-			bool isLastInRange = сhunk->GetLast().GetLength() < (сhunk->GetLast() + 1u).GetLength();
-			bool canMerge = activeChunk && activeChunk->GetLast() + 1u == сhunk->GetFirst() &&
-				activeChunk->GetLast().GetLength() == сhunk->GetFirst().GetLength() &&
-				activeChunk->GetMinSavedStep() == сhunk->GetMinSavedStep();
-			if (canMerge && (dataSize + сhunk->GetDataSize() < 13 * Const::DATA_SAVE_SIZE / 12 ||
-				(isLastInRange && dataSize + сhunk->GetDataSize() < 6 * Const::DATA_SAVE_SIZE / 5)))
+		m_Data.ForEachChunk([&](DBChunk* chunk) {
+			bool isLastInRange = chunk->GetLast().GetLength() < (chunk->GetLast() + 1u).GetLength();
+			bool canMerge = activeChunk && activeChunk->GetLast() + 1u == chunk->GetFirst() &&
+				activeChunk->GetLast().GetLength() == chunk->GetFirst().GetLength() &&
+				activeChunk->GetMinSavedStep() == chunk->GetMinSavedStep();
+			if (canMerge && (dataSize + chunk->GetDataSize() < 13 * Const::DATA_SAVE_SIZE / 12 ||
+				(isLastInRange && dataSize + chunk->GetDataSize() < 6 * Const::DATA_SAVE_SIZE / 5)))
 			{
 				if ((activeChunk->GetDataState() < DBChunkState::FULLDATA &&
 					!LoadChunkData(activeChunk, DBChunkState::FULLDATA)) ||
-					!LoadChunkData(сhunk, DBChunkState::FULLDATA))
+					!LoadChunkData(chunk, DBChunkState::FULLDATA))
 				{
 					errorFlag = true;
 					return false;
 				}
 
-				activeChunk->Append(сhunk);
+				activeChunk->Append(chunk);
 				needSaveActive = true;
 				// Здесь мы не знаем точно, каким получится размер данных в результирующем чанке (он вычисляется только
 				// в момент сохранения чанка). Однако тестирование показало, что при простом сложении ошибка весьма
 				// незначительна и всегда завышает размер (при сохранении объединённый чанк будет меньше)
-				dataSize += сhunk->GetDataSize();
+				dataSize += chunk->GetDataSize();
 				lastInRangeMerged = isLastInRange;
 				++mergedCount;
 
-				сhunk->UnloadData(DBChunkState::DATAUNLOADED);
-				removeList.insert(сhunk);
+				chunk->UnloadData(DBChunkState::DATAUNLOADED);
+				removeList.insert(chunk);
 			} else
 			{
 				if (activeChunk)
@@ -644,10 +647,10 @@ void UpdateDBMode::MergeChunks()
 					activeChunk->UnloadData(DBChunkState::HEADERONLY);
 				}
 
-				dataSize = сhunk->GetDataSize();
-				m_Data.SetActiveChunk(сhunk);
+				dataSize = chunk->GetDataSize();
+				m_Data.SetActiveChunk(chunk);
 				needSaveActive = false;
-				activeChunk = сhunk;
+				activeChunk = chunk;
 			}
 
 			++fileCount;
@@ -679,7 +682,7 @@ void UpdateDBMode::MergeChunks()
 		for (DBChunk* chunk : removeList)
 		{
 			m_Data.RemoveChunk(chunk);
-			++m_RemovedFileC;
+			++m_RemovedFileCount;
 		}
 
 		aux::Print(EraseTextSequence(text.length()));
@@ -696,12 +699,12 @@ void UpdateDBMode::MergeChunks()
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-bool UpdateDBMode::RemoveChunk(DBChunk* pChunk)
+bool UpdateDBMode::RemoveChunk(DBChunk* chunk)
 {
-	if (m_Data.RemoveChunk(pChunk))
+	if (m_Data.RemoveChunk(chunk))
 		return true;
 
-	std::wstring filePath = pChunk->GetFilePath();
+	std::wstring filePath = chunk->GetFilePath();
 	EventManager::PublishEvent(util::Format("#12Error: #7failed to remove file %s. #12Aborting...",
 		util::ToAnsi(filePath).c_str()));
 	return false;
@@ -710,27 +713,27 @@ bool UpdateDBMode::RemoveChunk(DBChunk* pChunk)
 //----------------------------------------------------------------------------------------------------------------------
 void UpdateDBMode::CreateNewChunk(const Number& first)
 {
-	Assert(!m_pActiveChunk && first);
+	Assert(!m_activeChunk && first);
 
-	m_pActiveChunk = new DBChunk;
-	m_pActiveChunk->Init(first, 125000);
+	m_activeChunk = new DBChunk;
+	m_activeChunk->Init(first, 125000);
 
-	m_Data.SetActiveChunk(m_pActiveChunk);
+	m_Data.SetActiveChunk(m_activeChunk);
 
 	m_Last = first - 1u;
 	m_CPUTime = 0;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-bool UpdateDBMode::LoadChunkData(DBChunk* pChunk, DBChunkState dataState)
+bool UpdateDBMode::LoadChunkData(DBChunk* chunk, DBChunkState dataState)
 {
-	if (Verify(pChunk))
+	if (Verify(chunk))
 	{
-		if (pChunk->LoadData(m_Data, dataState))
+		if (chunk->LoadData(m_Data, dataState))
 			return true;
 
 		EventManager::PublishEvent(util::Format("#12Error: #7failed to load DB chunk %s. #12Aborting...",
-			util::ToAnsi(pChunk->GetFilePath()).c_str()));
+			util::ToAnsi(chunk->GetFilePath()).c_str()));
 	}
 	return false;
 }
@@ -748,114 +751,124 @@ AML_NOINLINE void UpdateDBMode::SaveActiveChunk(const Number& last, ThreadTime& 
 //----------------------------------------------------------------------------------------------------------------------
 void UpdateDBMode::SaveActiveChunk()
 {
-	if (m_pActiveChunk)
+	if (m_activeChunk)
 	{
 		Number first;
-		first = m_pActiveChunk->GetFirst();
+		first = m_activeChunk->GetFirst();
 		Assert(m_Steps && first && first <= m_Last);
 
 		m_Data.Save(m_Last, m_Steps->GetMinSaveable(m_Last), m_CPUTime);
-		++m_SavedFileC;
+		++m_SavedFileCount;
 
-		const size_t numberC = m_pActiveChunk->GetNumbers().size();
-		const size_t dataSize = GetDataSize(m_pActiveChunk, m_pActiveChunk->GetDataSize());
+		const size_t numberCount = m_activeChunk->GetNumbers().size();
+		const size_t dataSize = GetDataSize(m_activeChunk, m_activeChunk->GetDataSize());
 		EventManager::PublishEvent(util::Format("Results saved [%u/%.0fKiB]",
-			numberC, (1.f / 1024) * dataSize), true);
+			numberCount, (1.f / 1024) * dataSize), true);
 
-		m_pActiveChunk->UnloadData(DBChunkState::HEADERONLY);
+		m_activeChunk->UnloadData(DBChunkState::HEADERONLY);
 		m_Last.SetZero();
 		m_CPUTime = 0;
 
-		m_pActiveChunk = nullptr;
+		m_activeChunk = nullptr;
 	}
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-bool UpdateDBMode::NeedsUpdate(const DBChunk* pChunk) const
+bool UpdateDBMode::NeedsUpdate(const DBChunk* chunk) const
 {
-	Assert(m_Steps && pChunk);
+	Assert(m_Steps && chunk);
 
-	const size_t digitC = pChunk->GetFirst().GetLength();
+	const size_t digitC = chunk->GetFirst().GetLength();
 	// В самых первых версиях формата v5 (используемого сейчас) не сохранялось поле MINSTEP (я решил
 	// не менять версию формата, при загрузке БД этот параметр вычисляется, а здесь я добавил проверку),
 	// поэтому если это поле отсутствует в чанке, то его необходимо обновить
 	static_assert(DBChunkData::LATEST_FORMAT_VERSION == 5, "Remove obsolete condition below. See comment above");
-	return pChunk->HasOldFormat() || !pChunk->GetMinSavedStep() ||
-		GetMinSavedStep(pChunk) > m_Steps->GetMinSaveable(digitC);
+	return chunk->HasOldFormat() || !chunk->GetMinSavedStep() ||
+		GetMinSavedStep(chunk) > m_Steps->GetMinSaveable(digitC);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-unsigned UpdateDBMode::GetMinSavedStep(const DBChunk* pChunk) const
+unsigned UpdateDBMode::GetMinSavedStep(const DBChunk* chunk) const
 {
-	Assert(pChunk);
+	Assert(chunk);
 
-	unsigned minSavedStep = pChunk->GetMinSavedStep();
+	unsigned minSavedStep = chunk->GetMinSavedStep();
 	if (!minSavedStep || minSavedStep > Const::MAX_STEP)
 		minSavedStep = Const::MAX_STEP;
 
-	const unsigned* numCountA = pChunk->GetNumCountA();
+	const unsigned* numCounters = chunk->GetNumCounters();
 	for (unsigned step = 1; step <= minSavedStep; ++step)
 	{
-		if (numCountA[step])
+		if (numCounters[step])
 			return step;
 	}
 	return minSavedStep;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-bool UpdateDBMode::PrintProgress(uint32_t tick, const Number& last)
+bool UpdateDBMode::PrintProgress(const Number& last, bool always)
 {
-	const size_t numLength = last.GetLength();
-	Assert(m_Events && m_pActiveChunk && last && numLength <= Const::MAX_DIGIT_C);
-
-	m_Events->PublishAll();
-
-	const uint32_t secElapsed = (tick - m_Progress.startTime) / 1000;
-	m_Progress.startTime += 1000 * secElapsed;
-	m_Progress.totalSeconds += secElapsed;
-
-	const uint32_t elapsed = tick - m_Progress.lastTick;
-	const float newSpeed = (elapsed > 50) ? 1000.f * m_Progress.counter / elapsed : m_Progress.lastSpeed;
-	const float speed = (m_Progress.lastSpeed <= 0) ? newSpeed : .5f * (m_Progress.lastSpeed + newSpeed);
-
-	m_Progress.counter = 0;
-	m_Progress.lastTick = tick;
-	m_Progress.lastSpeed = newSpeed;
-
-	const size_t numberC = m_pActiveChunk->GetNumbers().size();
-	const size_t dataSize = GetDataSize(m_pActiveChunk);
-	const float progress = GetRangeProgress(numLength, m_RangeProgressA[numLength]);
-
-	aux::Printf("#8\r[1] #15#%s#7 [%s], %u/%s, %.3f%% done...     \b\b\b\b\b",
-		SeparateWithCommas(last).c_str(), FormatSpeed(speed).c_str(),
-		numberC, FormatSize(dataSize, true).c_str(), progress);
-
-	if (util::SystemConsole::Instance().IsCtrlCPressed())
+	const uint32_t tick = ::GetTickCount();
+	if (tick - m_Progress.lastTick >= 500)
 	{
-		m_IsCancelled = true;
-		aux::Printc("\b\b\b. #12Stopping...\n");
+		const size_t numLength = last.GetLength();
+		Assert(m_Events && m_activeChunk && last && numLength <= Const::MAX_DIGIT_C);
+
+		m_Events->PublishAll();
+
+		const uint32_t secElapsed = (tick - m_Progress.startTime) / 1000;
+		m_Progress.startTime += 1000 * secElapsed;
+		m_Progress.totalSeconds += secElapsed;
+
+		const uint32_t elapsed = tick - m_Progress.lastTick;
+		const float newSpeed = (elapsed > 50) ? 1000.f * m_Progress.counter / elapsed : m_Progress.lastSpeed;
+		const float speed = (m_Progress.lastSpeed <= 0) ? newSpeed : .5f * (m_Progress.lastSpeed + newSpeed);
+
+		m_Progress.counter = 0;
+		m_Progress.lastTick = tick;
+		m_Progress.lastSpeed = newSpeed;
+
+		const size_t numberCount = m_activeChunk->GetNumbers().size();
+		const size_t dataSize = GetDataSize(m_activeChunk);
+		const float progress = GetRangeProgress(numLength, m_RangeProgress[numLength]);
+
+		aux::Printf("#8\r[1] #15#%s#7 [%s], %u/%s, %.3f%% done...     \b\b\b\b\b",
+			SeparateWithCommas(last).c_str(), FormatSpeed(speed).c_str(),
+			numberCount, FormatSize(dataSize, true).c_str(), progress);
+
+		if (util::SystemConsole::Instance().IsCtrlCPressed())
+		{
+			m_IsCancelled = true;
+			aux::Printc("\b\b\b. #12Stopping...\n");
+		}
 	}
+
 	return m_IsCancelled;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-bool UpdateDBMode::PrintProgress(uint32_t tick, size_t doneCount, size_t total)
+bool UpdateDBMode::PrintProgress(size_t doneCount, size_t total)
 {
-	Assert(m_Events && total);
-	m_Events->PublishAll();
-
-	const uint32_t secElapsed = (tick - m_Progress.startTime) / 1000;
-	m_Progress.startTime += 1000 * secElapsed;
-	m_Progress.totalSeconds += secElapsed;
-	m_Progress.lastTick = tick;
-
-	aux::Printf("\rProcessing file %u of %u...", doneCount, total);
-
-	if (util::SystemConsole::Instance().IsCtrlCPressed())
+	const uint32_t tick = ::GetTickCount();
+	if (tick - m_Progress.lastTick >= 500)
 	{
-		m_IsCancelled = true;
-		aux::Printc("\b\b\b. #12Stopping...\n");
+		Assert(m_Events && total);
+		m_Events->PublishAll();
+
+		const uint32_t secElapsed = (tick - m_Progress.startTime) / 1000;
+		m_Progress.startTime += 1000 * secElapsed;
+		m_Progress.totalSeconds += secElapsed;
+		m_Progress.lastTick = tick;
+
+		aux::Printf("\rProcessing file %u of %u...", doneCount, total);
+
+		if (util::SystemConsole::Instance().IsCtrlCPressed())
+		{
+			m_IsCancelled = true;
+			aux::Printc("\b\b\b. #12Stopping...\n");
+		}
 	}
+
 	return m_IsCancelled;
 }
 

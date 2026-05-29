@@ -135,7 +135,7 @@ public:
 	void SetCPUTimeSpent(unsigned cpuTime);
 	void SetMinSavedStep(unsigned minSavedStep);
 
-	const unsigned* GetNumCountA() const { return m_NumCountA; }
+	const unsigned* GetNumCounters() const { return m_NumCounters; }
 	unsigned GetHighestStep() const { return m_HighestStep; }
 	// Вычисляет полное количество сохранённых чисел
 	// в файле (на основе блока статистики)
@@ -205,7 +205,7 @@ private:
 	unsigned m_CDataSize = 0;		// Размер сжатого блока данных (расположен сразу за блоком статистики)
 
 	// Блок статистики
-	unsigned* m_NumCountA = nullptr;	// Количество найденных в интервале палиндромов для каждого шага
+	unsigned* m_NumCounters = nullptr;	// Количество найденных в интервале палиндромов для каждого шага
 	unsigned m_HighestStep = 0;			// Наибольший найденный в интервале шаг
 
 	// Блок данных
@@ -283,7 +283,7 @@ public:
 	unsigned GetFileSize() const { return GetData(State::HEADERONLY)->GetFileSize(); }
 	bool IsMaxCompressed() const { return m_Flags.Check(Flag::MAX_COMPRESSED); }
 
-	const unsigned* GetNumCountA() const { return GetData(State::WITHSTATS)->GetNumCountA(); }
+	const unsigned* GetNumCounters() const { return GetData(State::WITHSTATS)->GetNumCounters(); }
 	unsigned GetHighestStep() const { return GetData(State::WITHSTATS)->GetHighestStep(); }
 	// Вычисляет полное количество сохранённых чисел в файле (на основе блока статистики)
 	size_t GetTotalNumberC() const { return GetData(State::WITHSTATS)->GetTotalNumberC(); }

@@ -48,7 +48,7 @@ private:
 		float lastSpeed = 0;		// Последнее вычисленное значение скорости проверки чисел
 
 		void ResetLastTick();
-		float GetTotalElapsed();
+		float GetTotalElapsed() const;
 	};
 
 	bool UpdateDataBase();
@@ -61,27 +61,27 @@ private:
 	void DoSearch(const Number& startFrom, const Number& target, KnownInfo known);
 	void MergeChunks();
 
-	bool RemoveChunk(DBChunk* pChunk);
+	bool RemoveChunk(DBChunk* chunk);
 	void CreateNewChunk(const Number& first);
-	bool LoadChunkData(DBChunk* pChunk, DBChunkState dataState);
+	bool LoadChunkData(DBChunk* chunk, DBChunkState dataState);
 	void SaveActiveChunk(const Number& last, ThreadTime& threadTime);
 	void SaveActiveChunk();
 
-	bool NeedsUpdate(const DBChunk* pChunk) const;
-	unsigned GetMinSavedStep(const DBChunk* pChunk) const;
+	bool NeedsUpdate(const DBChunk* chunk) const;
+	unsigned GetMinSavedStep(const DBChunk* chunk) const;
 
-	bool PrintProgress(uint32_t tick, const Number& last);
-	bool PrintProgress(uint32_t tick, size_t doneCount, size_t total);
+	bool PrintProgress(const Number& last, bool always = false);
+	bool PrintProgress(size_t doneCount, size_t total);
 	bool CheckIfCancelled();
 
 private:
 	NumberSet m_LychThreads;
-	DBChunk* m_pActiveChunk = nullptr;	// Текущий (активный) чанк (файл БД)
+	DBChunk* m_activeChunk = nullptr;	// Текущий (активный) чанк (файл БД)
 
 	Progress m_Progress;				// Параметры для отслеживания прогресса проверки чисел
-	RangeProgress m_RangeProgressA;		// Количество проверенных чисел в каждом из диапазонов
-	size_t m_SavedFileC = 0;			// Общее количество добавленных файлов
-	size_t m_RemovedFileC = 0;			// Общее количество удалённых файлов
+	RangeProgress m_RangeProgress;		// Количество проверенных чисел в каждом из диапазонов
+	size_t m_SavedFileCount = 0;		// Общее количество добавленных файлов
+	size_t m_RemovedFileCount = 0;		// Общее количество удалённых файлов
 
 	Number m_Last;						// Последнее проверенное число
 	unsigned m_CPUTime = 0;				// Затраченное на проверку время CPU (в ms)

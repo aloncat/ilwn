@@ -714,7 +714,7 @@ bool CheckDBMode::CheckLevel2(DBChunk* pChunk)
 	// Проверка блока статистики
 	unsigned lowestStep = pChunk->GetMinSavedStep();
 	unsigned highestStep = pChunk->GetHighestStep();
-	const unsigned* numCountA = pChunk->GetNumCountA();
+	const unsigned* numCountA = pChunk->GetNumCounters();
 
 	uint64_t totalNumC = 0;
 	unsigned lowest = 0, highest = 0;
@@ -861,7 +861,7 @@ bool CheckDBMode::CheckLevel5Or6(DBChunk* pChunk, unsigned level)
 	// если это файл 3-й версии, то значение будет равно 0. Тогда попытаемся взять его из статистики
 	if (!lowestStep)
 	{
-		const unsigned* numCountA = pChunk->GetNumCountA();
+		const unsigned* numCountA = pChunk->GetNumCounters();
 		for (unsigned step = 1; step <= Const::MAX_STEP; ++step)
 		{
 			if (numCountA[step])

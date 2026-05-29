@@ -1,4 +1,5 @@
 ﻿//∙MDPN
+
 #pragma once
 
 #include <core/exception.h>
@@ -6,13 +7,13 @@
 
 #include <type_traits>
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------
 class EDBLogic : public util::ELogic
 {
 	AML_EXCEPTION(EDBLogic, util::ELogic)
 };
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------
 template<class Excep = util::EAssertion>
 class AssertHelper
 {
@@ -20,25 +21,25 @@ class AssertHelper
 
 public:
 	template<class T, class = std::enable_if_t<std::is_convertible<T, bool>::value, T>>
-	static void Assert(const T& condition, const char* pMsg = nullptr)
+	static void Assert(const T& condition, const char* msg = nullptr)
 	{
 		if (!condition)
-			Failed(pMsg);
+			Failed(msg);
 	}
 
 	template<class T, class = std::enable_if_t<std::is_convertible<T, bool>::value, T>>
-	static bool Verify(const T& condition, const char* pMsg = nullptr)
+	static bool Verify(const T& condition, const char* msg = nullptr)
 	{
 		if (!condition)
 		{
-			Failed(pMsg);
+			Failed(msg);
 		}
 		return true;
 	}
 
 protected:
-	[[noreturn]] static AML_NOINLINE void Failed(const char* pMsg)
+	[[noreturn]] static AML_NOINLINE void Failed(const char* msg)
 	{
-		throw Excep(pMsg ? pMsg : "Assertion failed");
+		throw Excep(msg ? msg : "Assertion failed");
 	}
 };

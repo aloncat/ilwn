@@ -10,15 +10,13 @@
 
 -guess.cpp      -mode.h     -searchmode.cpp   -stephlp.cpp
 -list.cpp       -mode.cpp   -searchmode.h     -stephlp.h
-                            -upddbmode.cpp
-                            -upddbmode.h
 
-              -parser.cpp   -util.cpp   -numsettest.cpp
-              -ttime.cpp    -util.h     -numsettest.h
--main.cpp     -ttime.h      -test.cpp   -numbertest.cpp
-                            -test.h     -numbertest.h
+-main.cpp     -parser.cpp   -test.cpp   -numbertest.cpp
+              -ttime.cpp    -test.h     -numbertest.h
+-util.cpp     -ttime.h                  -numsettest.cpp
+-util.h                                 -numsettest.h
 
 ===
 
-+const.h   +pch.h        +shrinkdb.cpp   +version.h
-           +prefix.cpp                   +version.cpp
++const.h   +pch.h        +shrinkdb.cpp   +upddbmode.h     +version.h
+           +prefix.cpp                   +upddbmode.cpp   +version.cpp

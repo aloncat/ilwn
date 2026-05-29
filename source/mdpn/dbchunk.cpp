@@ -388,16 +388,16 @@ DBChunkData::DBChunkData(DBChunkAccessor& owner)
 DBChunkData::~DBChunkData()
 {
 	AML_SAFE_DELETE(m_pData);
-	AML_SAFE_DELETEA(m_NumCountA);
+	AML_SAFE_DELETEA(m_NumCounters);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 void DBChunkData::Init(size_t reserveCount)
 {
-	Assert(!m_NumCountA && !m_pData);
+	Assert(!m_NumCounters && !m_pData);
 
-	m_NumCountA = new unsigned[Const::MAX_STEP + 1];
-	AML_FILLA(m_NumCountA, 0, Const::MAX_STEP + 1);
+	m_NumCounters = new unsigned[Const::MAX_STEP + 1];
+	AML_FILLA(m_NumCounters, 0, Const::MAX_STEP + 1);
 	m_HighestStep = 0;
 
 	m_pData = new DataItems;
@@ -448,7 +448,7 @@ void DBChunkData::UnloadData(State stateNeeded)
 	}
 	if (stateNeeded < State::WITHSTATS)
 	{
-		AML_SAFE_DELETEA(m_NumCountA);
+		AML_SAFE_DELETEA(m_NumCounters);
 		m_HighestStep = 0;
 	}
 
@@ -573,11 +573,11 @@ void DBChunkData::SetMinSavedStep(unsigned minSavedStep)
 //----------------------------------------------------------------------------------------------------------------------
 size_t DBChunkData::GetTotalNumberC() const
 {
-	Assert(m_NumCountA);
+	Assert(m_NumCounters);
 
 	size_t totalC = 0;
 	for (unsigned i = 1; i <= m_HighestStep; ++i)
-		totalC += m_NumCountA[i];
+		totalC += m_NumCounters[i];
 	return totalC;
 }
 
@@ -595,7 +595,7 @@ void DBChunkData::SortNumbers()
 //----------------------------------------------------------------------------------------------------------------------
 void DBChunkData::AddPalindrome(const Number& num, unsigned step)
 {
-	Assert(m_NumCountA && m_pData);
+	Assert(m_NumCounters && m_pData);
 	EE::Assert(step && step <= Const::MAX_STEP, "Invalid step value");
 
 	if (num > m_Last)
@@ -618,7 +618,7 @@ void DBChunkData::AddPalindrome(const Number& num, unsigned step)
 		m_AllSavedPalIntC = 0;
 	}
 
-	++m_NumCountA[step];
+	++m_NumCounters[step];
 	if (!m_MinSavedStep || step < m_MinSavedStep)
 		m_MinSavedStep = step;
 	m_HighestStep = (step > m_HighestStep) ? step : m_HighestStep;
@@ -661,7 +661,7 @@ void DBChunkData::AddLychrel(const Number& num, unsigned stepC)
 //----------------------------------------------------------------------------------------------------------------------
 bool DBChunkData::RemovePalindromes(unsigned minStep)
 {
-	Assert(m_NumCountA && m_pData);
+	Assert(m_NumCounters && m_pData);
 	EE::Assert(minStep && minStep <= Const::MAX_STEP && minStep >= m_MinSavedStep,
 		"Invalid minStep value");
 
@@ -687,7 +687,7 @@ bool DBChunkData::RemovePalindromes(unsigned minStep)
 	m_AllSavedPalNumC.SetZero();
 	m_MinSavedStep = minStep;
 
-	AML_FILLA(m_NumCountA, 0, Const::MAX_STEP + 1);
+	AML_FILLA(m_NumCounters, 0, Const::MAX_STEP + 1);
 	m_HighestStep = 0;
 
 	Number num;
@@ -696,7 +696,7 @@ bool DBChunkData::RemovePalindromes(unsigned minStep)
 		num = item.num;
 		m_AllSavedPalNumC += 1 + num.GetKinNumberCount();
 
-		++m_NumCountA[item.step];
+		++m_NumCounters[item.step];
 		m_HighestStep = (item.step > m_HighestStep) ? item.step : m_HighestStep;
 	}
 
@@ -707,8 +707,8 @@ bool DBChunkData::RemovePalindromes(unsigned minStep)
 //----------------------------------------------------------------------------------------------------------------------
 void DBChunkData::Append(const DBChunkData* pOther)
 {
-	Assert(m_NumCountA && m_pData);
-	Assert(pOther && pOther->m_NumCountA && pOther->m_pData);
+	Assert(m_NumCounters && m_pData);
+	Assert(pOther && pOther->m_NumCounters && pOther->m_pData);
 	// Проверим, что между началом второго файла и концом первого нет разрыва, а так же
 	// что второй файл был проинициализирован и содержит как минимум одно проверенное число
 	EE::Assert(m_Last + 1u == pOther->m_Chunk.First() && pOther->m_Chunk.First() <= pOther->m_Last,
@@ -731,7 +731,7 @@ void DBChunkData::Append(const DBChunkData* pOther)
 	if (const size_t count = pOther->m_pData->size())
 	{
 		for (unsigned i = 1; i < Const::MAX_STEP; ++i)
-			m_NumCountA[i] += pOther->m_NumCountA[i];
+			m_NumCounters[i] += pOther->m_NumCounters[i];
 
 		m_pData->reserve(m_pData->size() + count);
 		for (const auto& item : *pOther->m_pData)
@@ -821,10 +821,10 @@ bool DBChunkData::ReloadHeader(util::File& file)
 //----------------------------------------------------------------------------------------------------------------------
 bool DBChunkData::LoadStatBlock(util::File& file)
 {
-	Assert(!m_NumCountA && m_Chunk->GetDataState() == State::HEADERONLY);
+	Assert(!m_NumCounters && m_Chunk->GetDataState() == State::HEADERONLY);
 
-	m_NumCountA = new unsigned[Const::MAX_STEP + 1];
-	AML_FILLA(m_NumCountA, 0, Const::MAX_STEP + 1);
+	m_NumCounters = new unsigned[Const::MAX_STEP + 1];
+	AML_FILLA(m_NumCounters, 0, Const::MAX_STEP + 1);
 	m_HighestStep = 0;
 
 	bool ok = false;
@@ -849,7 +849,7 @@ bool DBChunkData::LoadStatBlock(util::File& file)
 		m_Chunk.SetDataState(State::WITHSTATS);
 		return true;
 	}
-	AML_SAFE_DELETEA(m_NumCountA);
+	AML_SAFE_DELETEA(m_NumCounters);
 	m_HighestStep = 0;
 	return false;
 }
@@ -914,7 +914,7 @@ bool DBChunkData::ParseStats(const char* pData)
 			{
 				return false;
 			}
-			m_NumCountA[step] += count;
+			m_NumCounters[step] += count;
 			if (count && step > m_HighestStep)
 				m_HighestStep = step;
 		}
@@ -1071,16 +1071,16 @@ bool DBChunkData::SaveHeader(util::File& file)
 //----------------------------------------------------------------------------------------------------------------------
 void DBChunkData::SaveStats(std::string& out)
 {
-	Assert(m_NumCountA);
+	Assert(m_NumCounters);
 
 	out.reserve(1000);
 	for (unsigned i = 1; i <= Const::MAX_STEP; ++i)
 	{
-		if (m_NumCountA[i])
+		if (m_NumCounters[i])
 		{
 			if (out.empty())
 				out += "---\n";
-			out += util::Format("#%u=%u\n", i, m_NumCountA[i]);
+			out += util::Format("#%u=%u\n", i, m_NumCounters[i]);
 		}
 	}
 	if (!out.empty())
