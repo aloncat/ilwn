@@ -125,6 +125,7 @@ bool UpdateDBMode::RemoveOverlaps()
 	Number first, last;
 	DBChunk* prevChunk = nullptr;
 	std::vector<DBChunk*> toRemove;
+	toRemove.reserve(10000);
 
 	m_Data.ForEachChunk([&](DBChunk* chunk) {
 		if (first = chunk->GetFirst(); first <= last)
