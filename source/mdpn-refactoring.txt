@@ -1,20 +1,25 @@
--arch.cpp   -assert.h   -chkdbmode.cpp   -eventmgr.cpp   -largemempages.cpp
--arch.h                 -chkdbmode.h     -eventmgr.h     -largemempages.h
+-arch.cpp   -chkdbmode.cpp   -eventmgr.cpp   -largemempages.cpp
+-arch.h     -chkdbmode.h     -eventmgr.h     -largemempages.h
 
 -dbase.cpp         -dbmode.cpp       -number.cpp   -log.cpp
 -dbase.h           -dbmode.h         -number.h     -log.h
 -dbchunk.cpp       -dbprogress.cpp   -numset.cpp
 -dbchunk.h         -dbprogress.h     -numset.h
--dbchunklist.cpp   -dbstruct.cpp
--dbchunklist.h     -dbstruct.h
+                   -dbstruct.cpp
+                   -dbstruct.h
 
--guess.cpp      -mode.h     -searchmode.cpp   -stephlp.cpp
--list.cpp       -mode.cpp   -searchmode.h     -stephlp.h
+-guess.cpp      -mode.h     -searchmode.h     -stephlp.h
+-list.cpp       -mode.cpp   -searchmode.cpp   -stephlp.cpp
 
--main.cpp     -parser.cpp   -test.cpp   -numbertest.cpp
-              -ttime.cpp    -test.h     -numbertest.h
--util.cpp     -ttime.h                  -numsettest.cpp
--util.h                                 -numsettest.h
+-main.cpp     -parser.cpp   -test.h     -numbertest.h
+                            -test.cpp   -numbertest.cpp
+-util.h       -ttime.h                  -numsettest.h
+-util.cpp     -ttime.cpp                -numsettest.cpp
+
+***
+
+*assert.h   *dbchunklist.h
+            *dbchunklist.cpp
 
 ===
 
