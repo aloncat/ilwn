@@ -1,4 +1,5 @@
 ﻿//∙MDPN
+
 #include "pch.h"
 #include "dbchunk.h"
 
@@ -212,8 +213,7 @@ struct FileHeaderV5 final : public FileHeaderBase
 
 	unsigned dataSize = 0;		// Размер несжатого блока данных в байтах
 	uint32_t dataCRC = 0;		// CRC несжатого блока данных (dataSize байт)
-	unsigned zippedSize = 0;	// Размер сжатого блока данных (расположен сразу за блоком статистики)
-	bool maxCompressed = false;	// true, если блок данных максимально сжат
+	unsigned zippedSize = 0;	// Размер сжатого блока данных (расположен сразу за блоком статистики) и бит сжатия
 
 	FileHeaderV5(const FileHeaderBase& header);
 	// Инициализирует значения всех полей
@@ -295,7 +295,9 @@ bool FileHeaderV5::Load(const char* pData)
 				{
 					if (!Util::AToInt(zippedSize, p + 6, len - 6))
 						return false;
-					maxCompressed = !zippedSize || p[6] != '0';
+					// 31-й бит - флаг максимального сжатия данных
+					if (!zippedSize || p[6] != '0')
+						zippedSize |= 1 << 31;
 				}
 				break;
 			case 'd':
@@ -461,19 +463,21 @@ bool DBChunkData::Save(util::File& file, bool forceFullSave, bool maxCompression
 	util::MemoryFile numData;
 	bool didFullSave = false;
 
-	forceFullSave |= m_Chunk->HasOldFormat() || (maxCompression && !m_MaxCompressed);
-	if (m_Chunk->GetSaveState() >= State::DATACHANGED || forceFullSave)
+	forceFullSave |= m_Chunk->HasOldFormat();
+	if (m_Chunk->GetSaveState() >= State::DATACHANGED || forceFullSave ||
+		(maxCompression && !m_Chunk.Flags().Check(Flag::MAX_COMPRESSED)))
 	{
 		SaveStats(stats);
 		m_StatSize = static_cast<unsigned>(stats.size());
 		m_StatCRC = m_StatSize ? hash::GetCRC32(stats.c_str(), m_StatSize) : 0;
+
 		m_DataSize = m_DataCRC = m_CDataSize = 0;
-		m_MaxCompressed = false;
+		m_Chunk.Flags().Clear(Flag::MAX_COMPRESSED);
 
 		if (numData.Open() && SaveData(numData) && numData.GetSize() >= 0)
 		{
 			m_DataSize = static_cast<unsigned>(numData.GetSize());
-			m_MaxCompressed = didFullSave = !m_DataSize;
+			bool maxCompressed = didFullSave = !m_DataSize;
 			if (m_DataSize)
 			{
 				util::MemoryFile packedData;
@@ -481,10 +485,14 @@ bool DBChunkData::Save(util::File& file, bool forceFullSave, bool maxCompression
 					CompressFile(numData, packedData, maxCompression ? 9 : 5) && packedData.GetSize() > 0)
 				{
 					m_CDataSize = static_cast<unsigned>(packedData.GetSize());
-					m_MaxCompressed = maxCompression;
+					maxCompressed = maxCompression;
 					numData = std::move(packedData);
 					didFullSave = true;
 				}
+			}
+			if (maxCompressed)
+			{
+				m_Chunk.Flags().Set(Flag::MAX_COMPRESSED);
 			}
 		}
 		if (!didFullSave)
@@ -736,7 +744,7 @@ void DBChunkData::Append(const DBChunkData* pOther)
 //----------------------------------------------------------------------------------------------------------------------
 bool DBChunkData::ReloadHeader(util::File& file)
 {
-	// NB: buffer должен быть null-terminated строкой, чтобы при парсинге заголовка мы не вышли за пределы
+	// Массив buffer должен быть null-terminated строкой, чтобы при парсинге заголовка мы не вышли за пределы
 	// массива. Включительно до 3-й версии формата размер заголовка был равен 512 байтам, а начиная с 4-й
 	// версии был уменьшен до 400 байт. Размер буфера должен быть достаточным для всех актуальных версий
 	constexpr size_t MAX_HEADER_SIZE = std::max(size_t(512), FILE_HEADER_SIZE);
@@ -794,8 +802,15 @@ bool DBChunkData::ReloadHeader(util::File& file)
 
 		m_DataSize = header.dataSize;
 		m_DataCRC = header.dataCRC;
-		m_CDataSize = header.zippedSize;
-		m_MaxCompressed = header.maxCompressed;
+		m_CDataSize = header.zippedSize & 0x7fffffff;
+
+		if (header.zippedSize & (1 << 31))
+		{
+			m_Chunk.Flags().Set(Flag::MAX_COMPRESSED);
+		} else
+		{
+			m_Chunk.Flags().Clear(Flag::MAX_COMPRESSED);
+		}
 
 		m_Chunk.SetDataState(State::HEADERONLY);
 	}
@@ -1034,7 +1049,8 @@ bool DBChunkData::SaveHeader(util::File& file)
 
 	header += util::Format("SSIZE:%u\nSCRC:%08X\n", m_StatSize, m_StatSize ? m_StatCRC : 0);
 	header += util::Format("DSIZE:%u\nDCRC:%08X\n", m_DataSize, m_DataSize ? m_DataCRC : 0);
-	header += util::Format((m_MaxCompressed || !m_CDataSize) ? "CSIZE:%u\n" : "CSIZE:0%u\n", m_CDataSize);
+	header += util::Format((m_Chunk.Flags().Check(Flag::MAX_COMPRESSED) || !m_CDataSize) ?
+		"CSIZE:%u\n" : "CSIZE:0%u\n", m_CDataSize);
 
 	header += "---\n";
 	while (header.size() < FILE_HEADER_SIZE - 8)
@@ -1274,7 +1290,7 @@ bool DBChunk::Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime, bool m
 		if (maxCompression)
 		{
 			Assert(GetDataState() >= State::FULLDATA, "Data not loaded");
-			if (m_pData->IsMaxCompressed())
+			if (IsMaxCompressed())
 				return true;
 		}
 		return true;
@@ -1288,8 +1304,8 @@ bool DBChunk::Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime, bool m
 
 	// Если изменились данные или файл имеет старую версию, то перезапишем
 	// весь файл целиком. Иначе можно ограничиться лишь сохранением заголовка
-	const bool needFullSave = GetSaveState() >= State::DATACHANGED || HasOldFormat() ||
-		(maxCompression && !m_pData->IsMaxCompressed());
+	const bool needFullSave = GetSaveState() >= State::DATACHANGED ||
+		HasOldFormat() || (maxCompression && !IsMaxCompressed());
 	unsigned openMode = needFullSave ? util::FILE_CREATE_ALWAYS : util::FILE_OPEN_ALWAYS;
 
 	util::BinaryFile file;
