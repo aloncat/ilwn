@@ -304,7 +304,7 @@ void DataBase::LoadStatistics(DBChunkState dataState, DBProgress onProgress)
 					throw util::ERuntime("Failed to load database file");
 			} else
 			{
-				const unsigned* numCountA = pChunk->GetNumCountA();
+				const unsigned* numCountA = pChunk->GetNumCounters();
 				const unsigned highestStep = pChunk->GetHighestStep();
 				for (unsigned step = lowestStep; step <= highestStep; ++step)
 					m_FoundStepA[step] |= numCountA[step] > 0;

@@ -1,4 +1,5 @@
 ﻿//∙MDPN
+
 #include "pch.h"
 #include "dbchunk.h"
 
@@ -212,8 +213,7 @@ struct FileHeaderV5 final : public FileHeaderBase
 
 	unsigned dataSize = 0;		// Размер несжатого блока данных в байтах
 	uint32_t dataCRC = 0;		// CRC несжатого блока данных (dataSize байт)
-	unsigned zippedSize = 0;	// Размер сжатого блока данных (расположен сразу за блоком статистики)
-	bool maxCompressed = false;	// true, если блок данных максимально сжат
+	unsigned zippedSize = 0;	// Размер сжатого блока данных (расположен сразу за блоком статистики) и бит сжатия
 
 	FileHeaderV5(const FileHeaderBase& header);
 	// Инициализирует значения всех полей
@@ -295,7 +295,9 @@ bool FileHeaderV5::Load(const char* pData)
 				{
 					if (!Util::AToInt(zippedSize, p + 6, len - 6))
 						return false;
-					maxCompressed = !zippedSize || p[6] != '0';
+					// 31-й бит - флаг максимального сжатия данных
+					if (!zippedSize || p[6] != '0')
+						zippedSize |= 1 << 31;
 				}
 				break;
 			case 'd':
@@ -386,16 +388,16 @@ DBChunkData::DBChunkData(DBChunkAccessor& owner)
 DBChunkData::~DBChunkData()
 {
 	AML_SAFE_DELETE(m_pData);
-	AML_SAFE_DELETEA(m_NumCountA);
+	AML_SAFE_DELETEA(m_NumCounters);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 void DBChunkData::Init(size_t reserveCount)
 {
-	Assert(!m_NumCountA && !m_pData);
+	Assert(!m_NumCounters && !m_pData);
 
-	m_NumCountA = new unsigned[Const::MAX_STEP + 1];
-	AML_FILLA(m_NumCountA, 0, Const::MAX_STEP + 1);
+	m_NumCounters = new unsigned[Const::MAX_STEP + 1];
+	AML_FILLA(m_NumCounters, 0, Const::MAX_STEP + 1);
 	m_HighestStep = 0;
 
 	m_pData = new DataItems;
@@ -446,7 +448,7 @@ void DBChunkData::UnloadData(State stateNeeded)
 	}
 	if (stateNeeded < State::WITHSTATS)
 	{
-		AML_SAFE_DELETEA(m_NumCountA);
+		AML_SAFE_DELETEA(m_NumCounters);
 		m_HighestStep = 0;
 	}
 
@@ -461,19 +463,21 @@ bool DBChunkData::Save(util::File& file, bool forceFullSave, bool maxCompression
 	util::MemoryFile numData;
 	bool didFullSave = false;
 
-	forceFullSave |= m_Chunk->HasOldFormat() || (maxCompression && !m_MaxCompressed);
-	if (m_Chunk->GetSaveState() >= State::DATACHANGED || forceFullSave)
+	forceFullSave |= m_Chunk->HasOldFormat();
+	if (m_Chunk->GetSaveState() >= State::DATACHANGED || forceFullSave ||
+		(maxCompression && !m_Chunk.Flags().Check(Flag::MAX_COMPRESSED)))
 	{
 		SaveStats(stats);
 		m_StatSize = static_cast<unsigned>(stats.size());
 		m_StatCRC = m_StatSize ? hash::GetCRC32(stats.c_str(), m_StatSize) : 0;
+
 		m_DataSize = m_DataCRC = m_CDataSize = 0;
-		m_MaxCompressed = false;
+		m_Chunk.Flags().Clear(Flag::MAX_COMPRESSED);
 
 		if (numData.Open() && SaveData(numData) && numData.GetSize() >= 0)
 		{
 			m_DataSize = static_cast<unsigned>(numData.GetSize());
-			m_MaxCompressed = didFullSave = !m_DataSize;
+			bool maxCompressed = didFullSave = !m_DataSize;
 			if (m_DataSize)
 			{
 				util::MemoryFile packedData;
@@ -481,10 +485,14 @@ bool DBChunkData::Save(util::File& file, bool forceFullSave, bool maxCompression
 					CompressFile(numData, packedData, maxCompression ? 9 : 5) && packedData.GetSize() > 0)
 				{
 					m_CDataSize = static_cast<unsigned>(packedData.GetSize());
-					m_MaxCompressed = maxCompression;
+					maxCompressed = maxCompression;
 					numData = std::move(packedData);
 					didFullSave = true;
 				}
+			}
+			if (maxCompressed)
+			{
+				m_Chunk.Flags().Set(Flag::MAX_COMPRESSED);
 			}
 		}
 		if (!didFullSave)
@@ -565,11 +573,11 @@ void DBChunkData::SetMinSavedStep(unsigned minSavedStep)
 //----------------------------------------------------------------------------------------------------------------------
 size_t DBChunkData::GetTotalNumberC() const
 {
-	Assert(m_NumCountA);
+	Assert(m_NumCounters);
 
 	size_t totalC = 0;
 	for (unsigned i = 1; i <= m_HighestStep; ++i)
-		totalC += m_NumCountA[i];
+		totalC += m_NumCounters[i];
 	return totalC;
 }
 
@@ -587,7 +595,7 @@ void DBChunkData::SortNumbers()
 //----------------------------------------------------------------------------------------------------------------------
 void DBChunkData::AddPalindrome(const Number& num, unsigned step)
 {
-	Assert(m_NumCountA && m_pData);
+	Assert(m_NumCounters && m_pData);
 	EE::Assert(step && step <= Const::MAX_STEP, "Invalid step value");
 
 	if (num > m_Last)
@@ -610,7 +618,7 @@ void DBChunkData::AddPalindrome(const Number& num, unsigned step)
 		m_AllSavedPalIntC = 0;
 	}
 
-	++m_NumCountA[step];
+	++m_NumCounters[step];
 	if (!m_MinSavedStep || step < m_MinSavedStep)
 		m_MinSavedStep = step;
 	m_HighestStep = (step > m_HighestStep) ? step : m_HighestStep;
@@ -653,7 +661,7 @@ void DBChunkData::AddLychrel(const Number& num, unsigned stepC)
 //----------------------------------------------------------------------------------------------------------------------
 bool DBChunkData::RemovePalindromes(unsigned minStep)
 {
-	Assert(m_NumCountA && m_pData);
+	Assert(m_NumCounters && m_pData);
 	EE::Assert(minStep && minStep <= Const::MAX_STEP && minStep >= m_MinSavedStep,
 		"Invalid minStep value");
 
@@ -679,7 +687,7 @@ bool DBChunkData::RemovePalindromes(unsigned minStep)
 	m_AllSavedPalNumC.SetZero();
 	m_MinSavedStep = minStep;
 
-	AML_FILLA(m_NumCountA, 0, Const::MAX_STEP + 1);
+	AML_FILLA(m_NumCounters, 0, Const::MAX_STEP + 1);
 	m_HighestStep = 0;
 
 	Number num;
@@ -688,7 +696,7 @@ bool DBChunkData::RemovePalindromes(unsigned minStep)
 		num = item.num;
 		m_AllSavedPalNumC += 1 + num.GetKinNumberCount();
 
-		++m_NumCountA[item.step];
+		++m_NumCounters[item.step];
 		m_HighestStep = (item.step > m_HighestStep) ? item.step : m_HighestStep;
 	}
 
@@ -699,8 +707,8 @@ bool DBChunkData::RemovePalindromes(unsigned minStep)
 //----------------------------------------------------------------------------------------------------------------------
 void DBChunkData::Append(const DBChunkData* pOther)
 {
-	Assert(m_NumCountA && m_pData);
-	Assert(pOther && pOther->m_NumCountA && pOther->m_pData);
+	Assert(m_NumCounters && m_pData);
+	Assert(pOther && pOther->m_NumCounters && pOther->m_pData);
 	// Проверим, что между началом второго файла и концом первого нет разрыва, а так же
 	// что второй файл был проинициализирован и содержит как минимум одно проверенное число
 	EE::Assert(m_Last + 1u == pOther->m_Chunk.First() && pOther->m_Chunk.First() <= pOther->m_Last,
@@ -723,7 +731,7 @@ void DBChunkData::Append(const DBChunkData* pOther)
 	if (const size_t count = pOther->m_pData->size())
 	{
 		for (unsigned i = 1; i < Const::MAX_STEP; ++i)
-			m_NumCountA[i] += pOther->m_NumCountA[i];
+			m_NumCounters[i] += pOther->m_NumCounters[i];
 
 		m_pData->reserve(m_pData->size() + count);
 		for (const auto& item : *pOther->m_pData)
@@ -736,7 +744,7 @@ void DBChunkData::Append(const DBChunkData* pOther)
 //----------------------------------------------------------------------------------------------------------------------
 bool DBChunkData::ReloadHeader(util::File& file)
 {
-	// NB: buffer должен быть null-terminated строкой, чтобы при парсинге заголовка мы не вышли за пределы
+	// Массив buffer должен быть null-terminated строкой, чтобы при парсинге заголовка мы не вышли за пределы
 	// массива. Включительно до 3-й версии формата размер заголовка был равен 512 байтам, а начиная с 4-й
 	// версии был уменьшен до 400 байт. Размер буфера должен быть достаточным для всех актуальных версий
 	constexpr size_t MAX_HEADER_SIZE = std::max(size_t(512), FILE_HEADER_SIZE);
@@ -794,8 +802,15 @@ bool DBChunkData::ReloadHeader(util::File& file)
 
 		m_DataSize = header.dataSize;
 		m_DataCRC = header.dataCRC;
-		m_CDataSize = header.zippedSize;
-		m_MaxCompressed = header.maxCompressed;
+		m_CDataSize = header.zippedSize & 0x7fffffff;
+
+		if (header.zippedSize & (1 << 31))
+		{
+			m_Chunk.Flags().Set(Flag::MAX_COMPRESSED);
+		} else
+		{
+			m_Chunk.Flags().Clear(Flag::MAX_COMPRESSED);
+		}
 
 		m_Chunk.SetDataState(State::HEADERONLY);
 	}
@@ -806,10 +821,10 @@ bool DBChunkData::ReloadHeader(util::File& file)
 //----------------------------------------------------------------------------------------------------------------------
 bool DBChunkData::LoadStatBlock(util::File& file)
 {
-	Assert(!m_NumCountA && m_Chunk->GetDataState() == State::HEADERONLY);
+	Assert(!m_NumCounters && m_Chunk->GetDataState() == State::HEADERONLY);
 
-	m_NumCountA = new unsigned[Const::MAX_STEP + 1];
-	AML_FILLA(m_NumCountA, 0, Const::MAX_STEP + 1);
+	m_NumCounters = new unsigned[Const::MAX_STEP + 1];
+	AML_FILLA(m_NumCounters, 0, Const::MAX_STEP + 1);
 	m_HighestStep = 0;
 
 	bool ok = false;
@@ -834,7 +849,7 @@ bool DBChunkData::LoadStatBlock(util::File& file)
 		m_Chunk.SetDataState(State::WITHSTATS);
 		return true;
 	}
-	AML_SAFE_DELETEA(m_NumCountA);
+	AML_SAFE_DELETEA(m_NumCounters);
 	m_HighestStep = 0;
 	return false;
 }
@@ -899,7 +914,7 @@ bool DBChunkData::ParseStats(const char* pData)
 			{
 				return false;
 			}
-			m_NumCountA[step] += count;
+			m_NumCounters[step] += count;
 			if (count && step > m_HighestStep)
 				m_HighestStep = step;
 		}
@@ -1034,7 +1049,8 @@ bool DBChunkData::SaveHeader(util::File& file)
 
 	header += util::Format("SSIZE:%u\nSCRC:%08X\n", m_StatSize, m_StatSize ? m_StatCRC : 0);
 	header += util::Format("DSIZE:%u\nDCRC:%08X\n", m_DataSize, m_DataSize ? m_DataCRC : 0);
-	header += util::Format((m_MaxCompressed || !m_CDataSize) ? "CSIZE:%u\n" : "CSIZE:0%u\n", m_CDataSize);
+	header += util::Format((m_Chunk.Flags().Check(Flag::MAX_COMPRESSED) || !m_CDataSize) ?
+		"CSIZE:%u\n" : "CSIZE:0%u\n", m_CDataSize);
 
 	header += "---\n";
 	while (header.size() < FILE_HEADER_SIZE - 8)
@@ -1055,16 +1071,16 @@ bool DBChunkData::SaveHeader(util::File& file)
 //----------------------------------------------------------------------------------------------------------------------
 void DBChunkData::SaveStats(std::string& out)
 {
-	Assert(m_NumCountA);
+	Assert(m_NumCounters);
 
 	out.reserve(1000);
 	for (unsigned i = 1; i <= Const::MAX_STEP; ++i)
 	{
-		if (m_NumCountA[i])
+		if (m_NumCounters[i])
 		{
 			if (out.empty())
 				out += "---\n";
-			out += util::Format("#%u=%u\n", i, m_NumCountA[i]);
+			out += util::Format("#%u=%u\n", i, m_NumCounters[i]);
 		}
 	}
 	if (!out.empty())
@@ -1274,7 +1290,7 @@ bool DBChunk::Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime, bool m
 		if (maxCompression)
 		{
 			Assert(GetDataState() >= State::FULLDATA, "Data not loaded");
-			if (m_pData->IsMaxCompressed())
+			if (IsMaxCompressed())
 				return true;
 		}
 		return true;
@@ -1288,8 +1304,8 @@ bool DBChunk::Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime, bool m
 
 	// Если изменились данные или файл имеет старую версию, то перезапишем
 	// весь файл целиком. Иначе можно ограничиться лишь сохранением заголовка
-	const bool needFullSave = GetSaveState() >= State::DATACHANGED || HasOldFormat() ||
-		(maxCompression && !m_pData->IsMaxCompressed());
+	const bool needFullSave = GetSaveState() >= State::DATACHANGED ||
+		HasOldFormat() || (maxCompression && !IsMaxCompressed());
 	unsigned openMode = needFullSave ? util::FILE_CREATE_ALWAYS : util::FILE_OPEN_ALWAYS;
 
 	util::BinaryFile file;

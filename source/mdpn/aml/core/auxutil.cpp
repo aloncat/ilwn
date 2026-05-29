@@ -16,32 +16,6 @@ namespace aux {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//   GetBuildDateTime
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//----------------------------------------------------------------------------------------------------------------------
-std::string GetBuildDateTime(const char* pDate, const char* pTime)
-{
-	int day = 1, month = 0, year = 2000;
-	if (pDate && strlen(pDate) > 4)
-	{
-		sscanf_s(pDate + 4, "%d %d", &day, &year);
-		const char* pMonths = "JanFebMarAprMayJunJulAugSepOctNovDec";
-		for (; month < 11 && util::StrNInsCmp(pDate, &pMonths[3 * month], 3); ++month);
-	}
-
-	char dateTimeA[28];
-	// NB: 28 байт - мин. размер, достаточный на случай некорректных входных данных
-	sprintf_s(dateTimeA, sizeof(dateTimeA), "%4d-%02d-%02d ", year, month + 1, day);
-	if (pTime && *pTime)
-		strncpy_s(dateTimeA + 11, sizeof(dateTimeA) - 11, pTime, 5);
-
-	return std::string(dateTimeA, (pTime && *pTime) ? 16 : 10);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
 //   Print
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
