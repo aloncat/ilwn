@@ -1,4 +1,5 @@
 ﻿//∙MDPN
+
 #include "pch.h"
 #include "dbchunklist.h"
 
@@ -6,50 +7,50 @@
 
 #include <core/toggle.h>
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------
 DBChunkList::DBChunkList()
 {
 	m_Chunks.reserve(4096);
 }
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------
 DBChunkList::~DBChunkList()
 {
-	for (auto& p : m_Chunks)
-		AML_SAFE_DELETE(p);
+	for (auto& chunk : m_Chunks)
+		AML_SAFE_DELETE(chunk);
 }
 
-//----------------------------------------------------------------------------------------------------------------------
-void DBChunkList::Insert(DBChunk* pChunk)
+//--------------------------------------------------------------------------------------------------------------------------------
+void DBChunkList::Insert(DBChunk* chunk)
 {
-	EE::Assert(pChunk, "Incorrect value");
+	EE::Assert(chunk, "Incorrect value");
 	EE::Assert(!m_IsIterating, "Can't insert element while in ForEach");
-	EE::Assert(!pChunk->HasOwner(), "Element already has an owner");
+	EE::Assert(!chunk->HasOwner(), "Element already has an owner");
 
 	if (m_IsSorted && !m_Chunks.empty())
 	{
-		if (pChunk->GetDataState() < DBChunkState::DATAUNLOADED || pChunk->GetFirst() < m_Chunks.back()->GetFirst())
+		if (chunk->GetDataState() < DBChunkState::DATAUNLOADED || chunk->GetFirst() < m_Chunks.back()->GetFirst())
 			m_IsSorted = false;
 	}
 
-	m_Chunks.push_back(pChunk);
-	pChunk->SetHasOwner();
+	m_Chunks.push_back(chunk);
+	chunk->SetHasOwner();
 }
 
-//----------------------------------------------------------------------------------------------------------------------
-void DBChunkList::Remove(DBChunk* pChunk)
+//--------------------------------------------------------------------------------------------------------------------------------
+void DBChunkList::Remove(DBChunk* chunk)
 {
-	EE::Assert(pChunk, "Incorrect value");
+	EE::Assert(chunk, "Incorrect value");
 	EE::Assert(!m_IsIterating, "Can't remove element while in ForEach");
 
-	auto it = Find(pChunk);
+	auto it = Find(chunk);
 	EE::Assert(it != m_Chunks.end(), "Element not found");
 
 	m_Chunks.erase(it);
-	delete pChunk;
+	delete chunk;
 }
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------
 void DBChunkList::ForEach(const std::function<bool(DBChunk*)>& fn)
 {
 	if (!m_Chunks.empty() && fn)
@@ -58,41 +59,43 @@ void DBChunkList::ForEach(const std::function<bool(DBChunk*)>& fn)
 		util::Toggle<bool> lock(m_IsIterating, true);
 
 		Sort();
-		for (auto p : m_Chunks)
+		for (auto chunk : m_Chunks)
 		{
-			if (!fn(p))
+			if (!fn(chunk))
 				break;
 		}
 	}
 }
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------
 void DBChunkList::Sort()
 {
 	if (!m_IsSorted)
 	{
-		// NB: в режиме безопасной загрузки БД (при вызове DataBase::SafeInit), некоторые файлы могут быть
+		// В режиме безопасной загрузки БД (при вызове DataBase::SafeInit), некоторые файлы могут быть
 		// незагружены. Такие файлы будут иметь состояние DBChunkState::FILEPATHONLY. Для них будем считать
 		// значение GetFirst() равным 0. Все эти файлы окажутся в начале списка файлов после сортировки
-		std::sort(m_Chunks.begin(), m_Chunks.end(), [](const DBChunk* pLhs, const DBChunk* pRhs) {
-			if (pLhs->GetDataState() < DBChunkState::DATAUNLOADED)
-				return pRhs->GetDataState() >= DBChunkState::DATAUNLOADED;
-			else if (pRhs->GetDataState() >= DBChunkState::DATAUNLOADED)
-				return pLhs->GetFirst() < pRhs->GetFirst();
+		std::sort(m_Chunks.begin(), m_Chunks.end(), [](const DBChunk* lhs, const DBChunk* rhs) {
+			if (lhs->GetDataState() < DBChunkState::DATAUNLOADED)
+				return rhs->GetDataState() >= DBChunkState::DATAUNLOADED;
+			else if (rhs->GetDataState() >= DBChunkState::DATAUNLOADED)
+				return lhs->GetFirst() < rhs->GetFirst();
 			return false;
 		});
 		m_IsSorted = true;
 	}
 }
 
-//----------------------------------------------------------------------------------------------------------------------
-std::vector<DBChunk*>::iterator DBChunkList::Find(const DBChunk* pChunk)
+//--------------------------------------------------------------------------------------------------------------------------------
+std::vector<DBChunk*>::iterator DBChunkList::Find(const DBChunk* chunk)
 {
-	if (const size_t totalC = m_Chunks.size())
+	if (const size_t total = m_Chunks.size())
 	{
 		Sort();
-		auto& first = pChunk->GetFirst();
-		size_t left = 0, right = totalC - 1;
+
+		auto& first = chunk->GetFirst();
+		size_t left = 0, right = total - 1;
+
 		while (left < right)
 		{
 			size_t mid = (left + right) >> 1;
@@ -101,13 +104,15 @@ std::vector<DBChunk*>::iterator DBChunkList::Find(const DBChunk* pChunk)
 			else
 				right = mid;
 		}
-		for (size_t i = left; i < totalC; ++i)
+
+		for (size_t i = left; i < total; ++i)
 		{
-			if (m_Chunks[i] == pChunk)
+			if (m_Chunks[i] == chunk)
 				return m_Chunks.begin() + i;
 			if (m_Chunks[i]->GetFirst() != first)
 				break;
 		}
 	}
+
 	return m_Chunks.end();
 }
