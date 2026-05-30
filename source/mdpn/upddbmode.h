@@ -70,8 +70,8 @@ private:
 	bool NeedsUpdate(const DBChunk* chunk) const;
 	unsigned GetMinSavedStep(const DBChunk* chunk) const;
 
+	bool PrintProgress(size_t done, size_t total);
 	bool PrintProgress(const Number& last, bool always = false);
-	bool PrintProgress(size_t doneCount, size_t total);
 	bool CheckIfCancelled();
 
 private:

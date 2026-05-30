@@ -795,6 +795,32 @@ unsigned UpdateDBMode::GetMinSavedStep(const DBChunk* chunk) const
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+bool UpdateDBMode::PrintProgress(size_t done, size_t total)
+{
+	const uint32_t tick = ::GetTickCount();
+	if (tick - m_Progress.lastTick >= 500)
+	{
+		Assert(m_Events && total);
+		m_Events->PublishAll();
+
+		const uint32_t secElapsed = (tick - m_Progress.startTime) / 1000;
+		m_Progress.startTime += 1000 * secElapsed;
+		m_Progress.totalSeconds += secElapsed;
+		m_Progress.lastTick = tick;
+
+		aux::Printf("\rProcessing file %u of %u...", done, total);
+
+		if (util::SystemConsole::Instance().IsCtrlCPressed())
+		{
+			m_IsCancelled = true;
+			aux::Printc("\b\b\b. #12Stopping...\n");
+		}
+	}
+
+	return m_IsCancelled;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
 bool UpdateDBMode::PrintProgress(const Number& last, bool always)
 {
 	const uint32_t tick = ::GetTickCount();
@@ -824,32 +850,6 @@ bool UpdateDBMode::PrintProgress(const Number& last, bool always)
 		aux::Printf("#8\r[1] #15#%s#7 [%s], %u/%s, %.3f%% done...     \b\b\b\b\b",
 			SeparateWithCommas(last).c_str(), FormatSpeed(speed).c_str(),
 			numberCount, FormatSize(dataSize, true).c_str(), progress);
-
-		if (util::SystemConsole::Instance().IsCtrlCPressed())
-		{
-			m_IsCancelled = true;
-			aux::Printc("\b\b\b. #12Stopping...\n");
-		}
-	}
-
-	return m_IsCancelled;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-bool UpdateDBMode::PrintProgress(size_t doneCount, size_t total)
-{
-	const uint32_t tick = ::GetTickCount();
-	if (tick - m_Progress.lastTick >= 500)
-	{
-		Assert(m_Events && total);
-		m_Events->PublishAll();
-
-		const uint32_t secElapsed = (tick - m_Progress.startTime) / 1000;
-		m_Progress.startTime += 1000 * secElapsed;
-		m_Progress.totalSeconds += secElapsed;
-		m_Progress.lastTick = tick;
-
-		aux::Printf("\rProcessing file %u of %u...", doneCount, total);
 
 		if (util::SystemConsole::Instance().IsCtrlCPressed())
 		{
