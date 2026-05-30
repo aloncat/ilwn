@@ -606,8 +606,7 @@ void UpdateDBMode::MergeChunks()
 		size_t fileCount = m_RemovedFileCount;
 
 		uint32_t lastTick = 0;
-		unsigned dataSize = 0;
-
+		size_t accumulatedSize = 0;
 		DBChunk* activeChunk = nullptr;
 
 		m_Data.ForEachChunk(errorCode, [&](DBChunk* chunk) {
@@ -615,8 +614,8 @@ void UpdateDBMode::MergeChunks()
 			bool canMerge = activeChunk && activeChunk->GetLast() + 1u == chunk->GetFirst() &&
 				activeChunk->GetLast().GetLength() == chunk->GetFirst().GetLength() &&
 				activeChunk->GetMinSavedStep() == chunk->GetMinSavedStep();
-			if (canMerge && (dataSize + chunk->GetDataSize() < 13 * Const::DATA_SAVE_SIZE / 12 ||
-				(isLastInRange && dataSize + chunk->GetDataSize() < 6 * Const::DATA_SAVE_SIZE / 5)))
+			if (canMerge && (accumulatedSize + chunk->GetDataSize() < 13 * Const::DATA_SAVE_SIZE / 12 ||
+				(isLastInRange && accumulatedSize + chunk->GetDataSize() < 6 * Const::DATA_SAVE_SIZE / 5)))
 			{
 				if (!LoadChunkData(activeChunk, DBChunkState::FULLDATA) ||
 					!LoadChunkData(chunk, DBChunkState::FULLDATA))
@@ -628,7 +627,7 @@ void UpdateDBMode::MergeChunks()
 				// Здесь мы не знаем точно, каким получится размер данных в результирующем чанке (он вычисляется только
 				// в момент сохранения чанка). Однако тестирование показало, что при простом сложении ошибка весьма
 				// незначительна и всегда завышает размер (при сохранении объединённый чанк будет меньше)
-				dataSize += chunk->GetDataSize();
+				accumulatedSize += chunk->GetDataSize();
 				lastInRangeMerged = isLastInRange;
 				++mergedCount;
 
@@ -642,7 +641,7 @@ void UpdateDBMode::MergeChunks()
 					activeChunk->UnloadData(DBChunkState::HEADERONLY);
 				}
 
-				dataSize = chunk->GetDataSize();
+				accumulatedSize = chunk->GetDataSize();
 				m_Data.SetActiveChunk(chunk);
 				activeChunk = chunk;
 			}
