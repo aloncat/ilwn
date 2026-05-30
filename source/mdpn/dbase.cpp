@@ -39,6 +39,16 @@ bool DataBase::Init(bool createNewDb, DBChunkState dataState, const std::wstring
 		m_IsInitialized = fileList.empty() && createNewDb;
 	else
 	{
+		// TODO: MODE_BACKGROUND (см. ниже) не помогает отвадить Windows Defender от проверки каждого файла
+		// при открытии, что жутко тормозит инициализацию БД. Нужен иной способ. Есть идея попробовать
+		// многопоточность (это должно ускорить загрузку в случае отсутствия исключений в настройках)
+
+		// TODO: Изменить приоритет на MODE_BACKGROUND очень правильно (особенно для больших БД),
+		// но здесь нужна защита от выброшенных исключений (с последующем rethrow), чтобы вернуть
+		// обычный класс приоритета процесса и обычный приоритет потока
+		//::SetPriorityClass(::GetCurrentProcess(), PROCESS_MODE_BACKGROUND_BEGIN);
+		//::SetThreadPriority(::GetCurrentThread(), THREAD_MODE_BACKGROUND_BEGIN);
+
 		RearrangeInvalidFiles(fileList, "Rearranging files: %.1f%%...");
 		m_Structure.WipeUnusedFolders();
 
@@ -47,6 +57,9 @@ bool DataBase::Init(bool createNewDb, DBChunkState dataState, const std::wstring
 
 		dataState = util::Clamp(dataState, DBChunkState::DATAUNLOADED, DBChunkState::WITHSTATS);
 		LoadStatistics(dataState, "Loading statistics: %1.f%%...");
+
+		//::SetThreadPriority(::GetCurrentThread(), THREAD_MODE_BACKGROUND_END);
+		//::SetPriorityClass(::GetCurrentProcess(), PROCESS_MODE_BACKGROUND_END);
 
 		m_IsInitialized = true;
 	}
@@ -249,8 +262,10 @@ void DataBase::LoadFileHeaders(std::vector<std::wstring>& dbFiles, DBProgress on
 		DBChunk* pChunk = new DBChunk;
 		m_Chunks.Insert(pChunk);
 
-		// TODO: сейчас это самая долгая операция. И проблема, кажется, в том, что задержки при
-		// последовательном открытии файлов заставляют поток простаивать бОльшую часть времени.
+		// TODO: Сейчас это самая долгая операция во время инициализации БД. Проблема в том, что задержки
+		// при последовательном открытии файлов заставляют поток простаивать бОльшую часть времени. Происходит
+		// это из-за штатного Windows Defender (другой антивирус должен вести себя аналогично, разве что может
+		// работать чуть быстрее), который проверяет каждый новый файл перед открытием (см. подробнее в Init())
 		pChunk->SetFilePath(dbFiles[i]);
 		if (!pChunk->LoadData(*this, DBChunkState::HEADERONLY))
 		{
