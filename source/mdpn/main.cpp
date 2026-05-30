@@ -419,7 +419,7 @@ static bool AnalyseDataBase(bool detailsOnNumbers = false)
 		first = pChunk->GetFirst();
 		if (first <= last)
 		{
-			EventManager::PublishEvent("#6Overlapping regions detected. Please, run #14--update#6 first");
+			EventManager::PublishEvent("#6Overlapping regions detected. #7Use '#14--update'#7 first");
 			hasOverlaps = true;
 			return false;
 		}
