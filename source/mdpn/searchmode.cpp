@@ -651,7 +651,7 @@ bool SearchMode::SlowSearch(bool createNewDb, const Number& startFrom)
 		if (pChunk->GetLast().GetLength() == curRange)
 			progress += pChunk->GetIterationC();
 		pChunk->UnloadData(DBChunkState::DATAUNLOADED);
-		return true;
+		return 0;
 	});
 
 	size_t startRange = m_Data.HasFound(1) ? 1 : curRange;

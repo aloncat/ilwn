@@ -200,13 +200,12 @@ static void ListAllPalindromes(std::set<Palindrome>& allPalindromes)
 		size_t newPalCount = 0;
 		uint32_t lastTick = 0;
 
-		static bool error = false;
-		data.ForEachChunk([&](DBChunk* chunk) {
+		int errorCode = 0;
+		data.ForEachChunk(errorCode, [&](DBChunk* chunk) {
 			if (!chunk->LoadData(data, DBChunkState::WITHSTATS))
 			{
-				error = true;
 				aux::Printc("#12\rError loading database chunk\n");
-				return false;
+				return -1;
 			}
 
 			constexpr size_t LOWEST_STEP = STEP_OF_INTEREST - 10;
@@ -214,9 +213,8 @@ static void ListAllPalindromes(std::set<Palindrome>& allPalindromes)
 			{
 				if (!chunk->LoadData(data, DBChunkState::FULLDATA))
 				{
-					error = true;
 					aux::Printc("#12\rError loading database chunk\n");
-					return false;
+					return -1;
 				}
 
 				Number num;
@@ -255,10 +253,10 @@ static void ListAllPalindromes(std::set<Palindrome>& allPalindromes)
 				lastTick = tick;
 			}
 
-			return true;
+			return 0;
 		});
 
-		if (!error)
+		if (!errorCode)
 		{
 			SaveResults(allPalindromes);
 			aux::Printf("\rNew palindromes found: %u, total: %u\n", newPalCount, allPalindromes.size());

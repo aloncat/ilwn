@@ -67,7 +67,7 @@ bool DBFileIndex::Save(const std::wstring& filePath, bool saveUnexistent)
 			pInfo->range = pChunk->GetFirst().GetLength() & 0xff;
 			pInfo->isExistent = true;
 		}
-		return true;
+		return 0;
 	});
 
 	const std::wstring path = m_Data.GetBasePath() + filePath;
@@ -547,7 +547,7 @@ float CheckDBMode::CheckDBChunks(size_t totalChunkC)
 				}
 				if (currentLevel == m_Index.GetLevel(pChunk->GetFilePath()) + 1)
 					++toProcessC;
-				return !m_IsCancelled;
+				return m_IsCancelled ? 1 : 0;
 			});
 		}
 
@@ -610,7 +610,7 @@ float CheckDBMode::CheckDBChunks(size_t totalChunkC)
 						wasAborted = true;
 					}
 				}
-				return !m_IsCancelled;
+				return m_IsCancelled ? 1 : 0;
 			});
 
 			totalFilesProcessedC += chunkC;

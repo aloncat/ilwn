@@ -360,16 +360,19 @@ static bool AnalyseDBChunks(DataBase& data, size_t totalChunkC)
 			if (util::SystemConsole::Instance().IsCtrlCPressed())
 			{
 				aux::Printf("\b\b\b, #12cancelled...\n");
-				return false;
+				return 1;
 			}
 		}
 
 		if (!pChunk->LoadData(data, DBChunkState::HEADERONLY))
-			return OnFileNotLoaded(pChunk);
+		{
+			OnFileNotLoaded(pChunk);
+			return -1;
+		}
 
 		first = pChunk->GetFirst();
 		if (pChunk->GetLast().GetLength() > Const::MAX_DIGIT_C)
-			return false;
+			return 1;
 
 		Number next = last + 1u;
 		if (first > next)
@@ -383,7 +386,7 @@ static bool AnalyseDBChunks(DataBase& data, size_t totalChunkC)
 		curRange = last.GetLength();
 		result = AnalyseDBChunk(data, rangeA[curRange], palindromeA, pChunk);
 		pChunk->UnloadData(DBChunkState::DATAUNLOADED);
-		return result;
+		return result ? 0 : 1;
 	});
 
 	//last = rangeA[curRange].last;
@@ -411,21 +414,20 @@ static bool AnalyseDataBase(bool detailsOnNumbers = false)
 	const uint32_t startTime = ::GetTickCount();
 	EventManager::PublishEvent("Database loaded, starting file analysis...");
 
-	Number last, first;
+	Number last;
 	size_t totalChunkC = 0;
 	bool hasOverlaps = false;
 
 	data.ForEachChunk([&](DBChunk* pChunk) {
-		first = pChunk->GetFirst();
-		if (first <= last)
+		if (pChunk->GetFirst() <= last)
 		{
 			EventManager::PublishEvent("#6Overlapping regions detected. #7Use '#14--update'#7 first");
 			hasOverlaps = true;
-			return false;
+			return 1;
 		}
 		last = pChunk->GetLast();
 		++totalChunkC;
-		return true;
+		return 0;
 	});
 
 	if (!hasOverlaps && totalChunkC && AnalyseDBChunks(data, totalChunkC))

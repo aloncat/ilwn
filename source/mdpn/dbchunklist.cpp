@@ -65,7 +65,7 @@ void DBChunkList::Remove(DBChunk* chunk)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void DBChunkList::ForEach(const std::function<bool(DBChunk*)>& fn)
+int DBChunkList::ForEach(const std::function<int(DBChunk*)>& fn)
 {
 	if (!m_Chunks.empty() && fn)
 	{
@@ -77,10 +77,12 @@ void DBChunkList::ForEach(const std::function<bool(DBChunk*)>& fn)
 
 		for (auto chunk : m_Chunks)
 		{
-			if (!fn(chunk))
-				break;
+			if (int retCode = fn(chunk))
+				return retCode;
 		}
 	}
+
+	return 0;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
