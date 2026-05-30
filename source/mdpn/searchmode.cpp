@@ -642,7 +642,7 @@ bool SearchMode::SlowSearch(bool createNewDb, const Number& startFrom)
 	}
 
 	SystemLog::SetPath(m_Data.GetBasePath() + L"log.txt");
-	PrintDataBasePath(m_Data.GetBasePath(), 46);
+	PrintDatabasePath(m_Data.GetBasePath(), 46);
 	EventManager::PublishEvent(initMsg);
 
 	uint64_t progress = 0;

@@ -409,7 +409,7 @@ static bool AnalyseDataBase(bool detailsOnNumbers = false)
 	}
 
 	SystemLog::SetPath(data.GetBasePath() + L"log.txt");
-	DBMode::PrintDataBasePath(data.GetBasePath(), 46);
+	DBMode::PrintDatabasePath(data.GetBasePath(), 46);
 
 	const uint32_t startTime = ::GetTickCount();
 	EventManager::PublishEvent("Database loaded, starting file analysis...");

@@ -98,6 +98,12 @@ void EventManager::PublishEvent(const std::string& msg, bool logFileOnly)
 	SystemLog::Instance().Print(s);
 }
 
+//--------------------------------------------------------------------------------------------------------------------------------
+void EventManager::PublishEvent(const std::wstring& msg, bool logFileOnly)
+{
+	PublishEvent(util::ToAnsi(msg), logFileOnly);
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 void EventManager::PublishAll()
 {

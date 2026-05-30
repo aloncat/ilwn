@@ -41,6 +41,7 @@ public:
 
 	// Выводит сообщение о событии на экран (опционально) и в файл журнала
 	static void PublishEvent(const std::string& msg, bool logFileOnly = false);
+	static void PublishEvent(const std::wstring& msg, bool logFileOnly = false);
 	// Выводит на экран и в файл журнала все накопленные события
 	void PublishAll();
 
