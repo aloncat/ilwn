@@ -18,10 +18,9 @@
 
 ***
 
-*assert.h   *dbchunklist.h
-            *dbchunklist.cpp
+*assert.h
 
 ===
 
-+const.h   +pch.h        +shrinkdb.cpp   +upddbmode.h     +version.h
-           +prefix.cpp                   +upddbmode.cpp   +version.cpp
++const.h   +pch.h        +shrinkdb.cpp   +upddbmode.h     +version.h     +dbchunklist.h
+           +prefix.cpp                   +upddbmode.cpp   +version.cpp   +dbchunklist.cpp
