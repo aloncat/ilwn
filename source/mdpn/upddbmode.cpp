@@ -230,19 +230,19 @@ float UpdateDBMode::UpdateAllChunks()
 		return true;
 	});
 
-	m_From1stKnown |= m_MaxCompression;
-	if (gapsFound == 1 && m_From1stKnown)
-	{
-		DBChunk* chunk = chunkList.front().first;
-		last = chunk->GetFirst();
-		--last;
-
-		if (last.GetLength() < chunk->GetFirst().GetLength())
-			gapsFound = 0;
-	}
-
 	if (!m_IsCancelled)
 	{
+		m_From1stKnown |= m_MaxCompression;
+		if (gapsFound == 1 && m_From1stKnown)
+		{
+			DBChunk* chunk = chunkList.front().first;
+			last = chunk->GetFirst();
+			--last;
+
+			if (last.GetLength() < chunk->GetFirst().GetLength())
+				gapsFound = 0;
+		}
+
 		if (m_MaxCompression)
 		{
 			return CompressChunks(chunkList);
