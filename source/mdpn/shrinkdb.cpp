@@ -101,10 +101,10 @@ bool DBShrinker::CheckOverlaps()
 		if (chunk->GetFirst() <= last)
 		{
 			hasOverlaps = true;
-			return false;
+			return 1;
 		}
 		last = chunk->GetLast();
-		return true;
+		return 0;
 	});
 
 	return hasOverlaps;
@@ -117,14 +117,13 @@ bool DBShrinker::RemovePalindromes()
 	const size_t totalCount = m_Data.GetChunkC();
 
 	m_LastTick = 0;
-	bool errorFlag = false;
+	int errorCode = 0;
 
-	m_Data.ForEachChunk([&](DBChunk* chunk) {
+	m_Data.ForEachChunk(errorCode, [&](DBChunk* chunk) {
 		if (!chunk->LoadData(m_Data, DBChunkState::FULLDATA))
 		{
-			errorFlag = true;
 			aux::Printc("#12\rError: failed to load DB chunk\n");
-			return false;
+			return -1;
 		}
 
 		const size_t range = chunk->GetLast().GetLength();
@@ -151,11 +150,12 @@ bool DBShrinker::RemovePalindromes()
 		++processedCount;
 		chunk->UnloadData(DBChunkState::HEADERONLY);
 		PrintRemoveProgress(modifiedCount, processedCount, totalCount);
-		return true;
+
+		return 0;
 	});
 
 	PrintRemoveProgress(modifiedCount, processedCount, totalCount, true);
-	return !errorFlag;
+	return !errorCode;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -169,7 +169,7 @@ bool DBShrinker::MergeAndCompress()
 	size_t removedCount = 0;
 
 	m_LastTick = 0;
-	bool errorFlag = false;
+	int errorCode = 0;
 
 	for (;;)
 	{
@@ -178,7 +178,7 @@ bool DBShrinker::MergeAndCompress()
 		size_t totalCount = removedCount;
 		size_t accumulatedSize = 0;
 
-		m_Data.ForEachChunk([&](DBChunk* chunk) {
+		m_Data.ForEachChunk(errorCode, [&](DBChunk* chunk) {
 			bool isLastInRange = chunk->GetLast().GetLength() < (chunk->GetLast() + 1u).GetLength();
 			bool canMerge = activeChunk && activeChunk->GetLast() + 1u == chunk->GetFirst() &&
 				activeChunk->GetLast().GetLength() == chunk->GetFirst().GetLength() &&
@@ -189,9 +189,8 @@ bool DBShrinker::MergeAndCompress()
 				if (!activeChunk->LoadData(m_Data, DBChunkState::FULLDATA) ||
 					!chunk->LoadData(m_Data, DBChunkState::FULLDATA))
 				{
-					errorFlag = true;
 					aux::Printc("#12\rError: failed to load DB chunk\n");
-					return false;
+					return -1;
 				}
 
 				activeChunk->Append(chunk);
@@ -216,10 +215,10 @@ bool DBShrinker::MergeAndCompress()
 
 			++totalCount;
 			PrintMergeProgress(mergedCount, compressedCount, totalCount);
-			return !lastInRangeMerged;
+			return lastInRangeMerged ? 1 : 0;
 		});
 
-		if (errorFlag)
+		if (errorCode < 0)
 			return false;
 
 		if (SaveAndUnload(activeChunk))
@@ -240,14 +239,13 @@ bool DBShrinker::MergeAndCompress()
 	}
 
 	size_t totalFileCount = removedCount;
-	m_Data.ForEachChunk([&](DBChunk* chunk) {
+	m_Data.ForEachChunk(errorCode, [&](DBChunk* chunk) {
 		if (!chunk->IsMaxCompressed())
 		{
 			if (!chunk->LoadData(m_Data, DBChunkState::FULLDATA))
 			{
-				errorFlag = true;
 				aux::Printc("#12\rError: failed to load DB chunk\n");
-				return false;
+				return -1;
 			}
 
 			m_Data.SetActiveChunk(chunk);
@@ -259,16 +257,17 @@ bool DBShrinker::MergeAndCompress()
 
 		++totalFileCount;
 		PrintMergeProgress(mergedCount, compressedCount, totalFileCount);
-		return true;
+		return 0;
 	});
 
-	if (!errorFlag)
+	if (errorCode >= 0)
 	{
 		PrintMergeProgress(mergedCount, compressedCount, totalFileCount, true);
 		aux::Printf("Files removed: %u, remains: %u\n", removedCount, m_Data.GetChunkC());
+		return true;
 	}
 
-	return !errorFlag;
+	return false;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -326,7 +325,7 @@ void DBShrinker::PrintStatistics()
 		lastRange = chunk->GetLast().GetLength();
 		for (; firstRange <= lastRange; ++firstRange)
 			ranges[firstRange] = true;
-		return true;
+		return 0;
 	});
 
 	aux::Printf("Database size: %s\n",

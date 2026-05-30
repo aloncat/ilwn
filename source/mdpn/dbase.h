@@ -85,9 +85,11 @@ public:
 	// Возвращает количество файлов в базе данных
 	size_t GetChunkC() const { return m_Chunks.GetSize(); }
 	// Вызывает пользовательскую функцию fn для каждого файла БД. Гарантируется, что файлы будут
-	// перечисляться по возрастанию их значений GetFirst(). Функция fn должна вернуть false, если
-	// обход файлов нужно прекратить, или вернуть true, если нужно продолжить
-	void ForEachChunk(const std::function<bool(DBChunk*)>& fn);
+	// перечисляться по возрастанию их значений GetFirst(). Функция fn должна вернуть любое число,
+	// кроме 0, если обход файлов нужно прекратить, или вернуть 0, если нужно продолжить. После
+	// завершения ForEachChunk() сохранит в retCode значение, возвращённое функцией fn
+	void ForEachChunk(int& retCode, const std::function<int(DBChunk*)>& fn);
+	int ForEachChunk(const std::function<int(DBChunk*)>& fn);
 
 	// Уничтожает объект pChunk и удаляет соответствующий ему файл
 	bool RemoveChunk(DBChunk* pChunk);

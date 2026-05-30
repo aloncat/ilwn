@@ -102,10 +102,9 @@ bool UpdateDBMode::UpdateDataBase()
 	float timeInWork = 0;
 	if (RemoveOverlaps())
 	{
-		size_t startRange = 0;
-		m_Data.ForEachChunk([&](DBChunk* chunk) {
-			startRange = chunk->GetFirst().GetLength();
-			return false;
+		int startRange = m_Data.ForEachChunk([](DBChunk* chunk) {
+			auto len = chunk->GetFirst().GetLength();
+			return static_cast<int>(len);
 		});
 
 		m_Steps = std::make_unique<StepHelper>(startRange);
@@ -139,12 +138,12 @@ bool UpdateDBMode::RemoveOverlaps()
 			} else
 			{
 				toRemove.push_back(chunk);
-				return true;
+				return 0;
 			}
 		}
 		last = chunk->GetLast();
 		prevChunk = chunk;
-		return true;
+		return 0;
 	});
 
 	if (!toRemove.empty())
@@ -190,19 +189,17 @@ float UpdateDBMode::UpdateAllChunks()
 	DBProgress onProgress("Parsing files: %.1f%%...");
 	AML_FILLA(m_RangeProgress, 0, util::CountOf(m_RangeProgress));
 
-	m_Data.ForEachChunk([&](DBChunk* chunk) {
+	int errorCode = 0;
+	m_Data.ForEachChunk(errorCode, [&](DBChunk* chunk) {
 		if (!(testedCount++ & 0x3f))
 		{
 			onProgress(100.f * (testedCount - 1) / totalChunkCount);
 			if (CheckIfCancelled())
-				return false;
+				return 1;
 		}
 
 		if (!LoadChunkData(chunk, DBChunkState::WITHSTATS))
-		{
-			m_IsCancelled = true;
-			return false;
-		}
+			return -1;
 
 		first = chunk->GetFirst();
 		if (last + 1u < first)
@@ -227,10 +224,10 @@ float UpdateDBMode::UpdateAllChunks()
 		}
 
 		chunk->UnloadData(DBChunkState::HEADERONLY);
-		return true;
+		return 0;
 	});
 
-	if (!m_IsCancelled)
+	if (errorCode >= 0 && !m_IsCancelled)
 	{
 		m_From1stKnown |= m_MaxCompression;
 		if (gapsFound == 1 && m_From1stKnown)
@@ -604,7 +601,7 @@ void UpdateDBMode::MergeChunks()
 
 	for (;;)
 	{
-		bool errorFlag = false;
+		int errorCode = 0;
 		bool lastInRangeMerged = false;
 		size_t fileCount = m_RemovedFileCount;
 
@@ -613,7 +610,7 @@ void UpdateDBMode::MergeChunks()
 
 		DBChunk* activeChunk = nullptr;
 
-		m_Data.ForEachChunk([&](DBChunk* chunk) {
+		m_Data.ForEachChunk(errorCode, [&](DBChunk* chunk) {
 			bool isLastInRange = chunk->GetLast().GetLength() < (chunk->GetLast() + 1u).GetLength();
 			bool canMerge = activeChunk && activeChunk->GetLast() + 1u == chunk->GetFirst() &&
 				activeChunk->GetLast().GetLength() == chunk->GetFirst().GetLength() &&
@@ -621,12 +618,10 @@ void UpdateDBMode::MergeChunks()
 			if (canMerge && (dataSize + chunk->GetDataSize() < 13 * Const::DATA_SAVE_SIZE / 12 ||
 				(isLastInRange && dataSize + chunk->GetDataSize() < 6 * Const::DATA_SAVE_SIZE / 5)))
 			{
-				if ((activeChunk->GetDataState() < DBChunkState::FULLDATA &&
-					!LoadChunkData(activeChunk, DBChunkState::FULLDATA)) ||
+				if (!LoadChunkData(activeChunk, DBChunkState::FULLDATA) ||
 					!LoadChunkData(chunk, DBChunkState::FULLDATA))
 				{
-					errorFlag = true;
-					return false;
+					return -1;
 				}
 
 				activeChunk->Append(chunk);
@@ -660,10 +655,10 @@ void UpdateDBMode::MergeChunks()
 					mergedCount, fileCount, totalCount);
 			}
 
-			return !lastInRangeMerged;
+			return lastInRangeMerged ? 1 : 0;
 		});
 
-		if (errorFlag)
+		if (errorCode < 0)
 			return;
 
 		if (activeChunk)

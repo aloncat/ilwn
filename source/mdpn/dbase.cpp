@@ -156,10 +156,17 @@ void DataBase::Save(const Number& last, unsigned minSavedStep, unsigned timeSpen
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-void DataBase::ForEachChunk(const std::function<bool(DBChunk*)>& fn)
+void DataBase::ForEachChunk(int& retCode, const std::function<int(DBChunk*)>& fn)
 {
 	EE::Assert(m_IsInitialized, "Database not initialized");
-	m_Chunks.ForEach(fn);
+	retCode = m_Chunks.ForEach(fn);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+int DataBase::ForEachChunk(const std::function<int(DBChunk*)>& fn)
+{
+	EE::Assert(m_IsInitialized, "Database not initialized");
+	return m_Chunks.ForEach(fn);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -271,7 +278,7 @@ void DataBase::LoadStatistics(DBChunkState dataState, DBProgress onProgress)
 
 		// В режиме безопасной загрузки пропустим файл, если мы не смогли загрузить заголовок
 		if (m_SafeInitMode && pChunk->GetDataState() < DBChunkState::HEADERONLY)
-			return true;
+			return 0;
 
 		first = pChunk->GetFirst();
 		Number next = last + 1u;
@@ -301,7 +308,9 @@ void DataBase::LoadStatistics(DBChunkState dataState, DBProgress onProgress)
 			if (!pChunk->LoadData(*this, DBChunkState::WITHSTATS))
 			{
 				if (!m_SafeInitMode)
+				{
 					throw util::ERuntime("Failed to load database file");
+				}
 			} else
 			{
 				const unsigned* numCountA = pChunk->GetNumCounters();
@@ -314,6 +323,6 @@ void DataBase::LoadStatistics(DBChunkState dataState, DBProgress onProgress)
 			}
 		}
 		pChunk->UnloadData(dataState);
-		return true;
+		return 0;
 	});
 }
