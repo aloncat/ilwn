@@ -11,8 +11,11 @@
 #include "test.h"
 #include "util.h"
 
+#include <core/array.h>
 #include <core/auxutil.h>
+#include <core/console.h>
 #include <core/strutil.h>
+#include <core/toggle.h>
 #include <core/util.h>
 #include <core/winapi.h>
 
@@ -47,12 +50,14 @@ public:
 private:
 	bool CheckOverlaps();
 	bool RemovePalindromes();
-
 	bool MergeAndCompress();
-	bool SaveAndUnload(DBChunk* chunk);
 
-	void PrintRemoveProgress(size_t modified, size_t processed, size_t total, bool last = false);
-	void PrintMergeProgress(size_t merged, size_t compressed, size_t total, bool last = false);
+	bool LoadFullChunkData(DBChunk* chunk);
+	bool SaveChunkAndUnload(DBChunk* chunk, size_t& compressedCount);
+
+	bool PrintRemoveProgress(size_t modified, size_t processed, size_t total, bool last = false);
+	bool PrintMergeProgress(size_t merged, size_t compressed, size_t total, bool last = false);
+	void PrintProgress(std::string_view fmtMsg, bool last, size_t v1, size_t v2 = 0, size_t v3 = 0);
 
 	void PrintStatistics();
 
@@ -61,7 +66,9 @@ private:
 
 	uint64_t m_BasePalCount[Const::MAX_STEP + 1];
 	uint64_t m_TotalPalCount[Const::MAX_STEP + 1];
+
 	unsigned m_LastTick = 0;
+	bool m_IsCancelled = false;
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -69,6 +76,7 @@ bool DBShrinker::Run()
 {
 	AML_FILLA(m_BasePalCount, 0, util::CountOf(m_BasePalCount));
 	AML_FILLA(m_TotalPalCount, 0, util::CountOf(m_TotalPalCount));
+	m_IsCancelled = false;
 
 	if (!m_Data.Init(false, DBChunkState::HEADERONLY))
 	{
@@ -80,7 +88,9 @@ bool DBShrinker::Run()
 
 	if (CheckOverlaps())
 	{
-		aux::Printc("#12Detected overlapping regions in database. #7Use '#14--update#7' to fix this\n");
+		// TODO: Сейчас сообщение предлагает перезапустить программу с командой 'update', как если бы ShrinkDB
+		// был одним из режимов основной программы. Позже следует интегрировать алгоритм в основную программу
+		aux::Printc("#12Detected overlapping regions in the database. #7Run with '#14update#7' to fix this\n");
 	}
 	else if (RemovePalindromes() && MergeAndCompress())
 	{
@@ -120,6 +130,9 @@ bool DBShrinker::RemovePalindromes()
 	int errorCode = 0;
 
 	m_Data.ForEachChunk(errorCode, [&](DBChunk* chunk) {
+		if (PrintRemoveProgress(modifiedCount, processedCount, totalCount))
+			return 1;
+
 		if (!chunk->LoadData(m_Data, DBChunkState::FULLDATA))
 		{
 			aux::Printc("#12\rError: failed to load DB chunk\n");
@@ -127,7 +140,9 @@ bool DBShrinker::RemovePalindromes()
 		}
 
 		const size_t range = chunk->GetLast().GetLength();
-		if (range > 3 && range <= Const::MAX_DIGIT_C && minSteps[range] > 1 &&
+		// Первые 8 диапазонов умещаются каждый в один файл (кроме диапазонов 1-3,
+		// которые хранятся в одном). Поэтому нет смысла вырезать из них что-либо
+		if (range > 8 && range <= Const::MAX_DIGIT_C && minSteps[range] > 1 &&
 			chunk->GetMinSavedStep() < minSteps[range])
 		{
 			if (chunk->RemovePalindromes(minSteps[range]))
@@ -149,7 +164,6 @@ bool DBShrinker::RemovePalindromes()
 
 		++processedCount;
 		chunk->UnloadData(DBChunkState::HEADERONLY);
-		PrintRemoveProgress(modifiedCount, processedCount, totalCount);
 
 		return 0;
 	});
@@ -167,6 +181,7 @@ bool DBShrinker::MergeAndCompress()
 	size_t mergedCount = 0;
 	size_t compressedCount = 0;
 	size_t removedCount = 0;
+	size_t totalCount = 0;
 
 	m_LastTick = 0;
 	int errorCode = 0;
@@ -175,10 +190,13 @@ bool DBShrinker::MergeAndCompress()
 	{
 		bool lastInRangeMerged = false;
 		DBChunk* activeChunk = nullptr;
-		size_t totalCount = removedCount;
+		totalCount = removedCount;
 		size_t accumulatedSize = 0;
 
 		m_Data.ForEachChunk(errorCode, [&](DBChunk* chunk) {
+			if (PrintMergeProgress(mergedCount, compressedCount, totalCount))
+				return 1;
+
 			bool isLastInRange = chunk->GetLast().GetLength() < (chunk->GetLast() + 1u).GetLength();
 			bool canMerge = activeChunk && activeChunk->GetLast() + 1u == chunk->GetFirst() &&
 				activeChunk->GetLast().GetLength() == chunk->GetFirst().GetLength() &&
@@ -186,12 +204,8 @@ bool DBShrinker::MergeAndCompress()
 			if (canMerge && (accumulatedSize + chunk->GetDataSize() < 13 * DATA_SAVE_SIZE / 12 ||
 				(isLastInRange && accumulatedSize + chunk->GetDataSize() < 6 * DATA_SAVE_SIZE / 5)))
 			{
-				if (!activeChunk->LoadData(m_Data, DBChunkState::FULLDATA) ||
-					!chunk->LoadData(m_Data, DBChunkState::FULLDATA))
-				{
-					aux::Printc("#12\rError: failed to load DB chunk\n");
+				if (!LoadFullChunkData(activeChunk) || !LoadFullChunkData(chunk))
 					return -1;
-				}
 
 				activeChunk->Append(chunk);
 				// Здесь мы не знаем точно, каким получится размер данных в результирующем чанке (он вычисляется только
@@ -205,8 +219,8 @@ bool DBShrinker::MergeAndCompress()
 				removeList.push_back(chunk);
 			} else
 			{
-				if (SaveAndUnload(activeChunk))
-					++compressedCount;
+				if (!SaveChunkAndUnload(activeChunk, compressedCount))
+					return -1;
 
 				activeChunk = chunk;
 				m_Data.SetActiveChunk(chunk);
@@ -214,101 +228,119 @@ bool DBShrinker::MergeAndCompress()
 			}
 
 			++totalCount;
-			PrintMergeProgress(mergedCount, compressedCount, totalCount);
 			return lastInRangeMerged ? 1 : 0;
 		});
 
-		if (errorCode < 0)
-			return false;
+		// Так как ошибка могла случиться только при загрузке чанка, то мы должны сохранить текущий чанк,
+		// а также удалить все чанки, которые мы успели объединить. При m_IsCancelled == true аналогично
+		if (!SaveChunkAndUnload(activeChunk, compressedCount))
+			errorCode = -1;
 
-		if (SaveAndUnload(activeChunk))
-			++compressedCount;
+		{
+			util::FuncToggle tempMsg([errorCode](bool doShow) {
+				if (errorCode < 0)
+					return false;
+				const char* text = ", removing files...";
+				aux::Print(doShow ? text : EraseTextSequence(strlen(text), true));
+				return true;
+			});
 
-		std::string text(", removing files...");
-		aux::Print(text);
+			removedCount += removeList.size();
+			for (DBChunk* chunk : removeList)
+				m_Data.RemoveChunk(chunk);
+			removeList.clear();
+		}
 
-		removedCount += removeList.size();
-		for (DBChunk* chunk : removeList)
-			m_Data.RemoveChunk(chunk);
-		removeList.clear();
-
-		aux::Print(EraseTextSequence(text.size(), true));
-
-		if (!lastInRangeMerged)
+		if (!lastInRangeMerged || errorCode < 0 || m_IsCancelled)
 			break;
 	}
 
-	size_t totalFileCount = removedCount;
-	m_Data.ForEachChunk(errorCode, [&](DBChunk* chunk) {
-		if (!chunk->IsMaxCompressed())
-		{
-			if (!chunk->LoadData(m_Data, DBChunkState::FULLDATA))
-			{
-				aux::Printc("#12\rError: failed to load DB chunk\n");
-				return -1;
-			}
-
-			m_Data.SetActiveChunk(chunk);
-			m_Data.Save(0u, 0, 0, true);
-			++compressedCount;
-
-			chunk->UnloadData(DBChunkState::HEADERONLY);
-		}
-
-		++totalFileCount;
-		PrintMergeProgress(mergedCount, compressedCount, totalFileCount);
-		return 0;
-	});
-
 	if (errorCode >= 0)
 	{
-		PrintMergeProgress(mergedCount, compressedCount, totalFileCount, true);
-		aux::Printf("Files removed: %u, remains: %u\n", removedCount, m_Data.GetChunkC());
-		return true;
-	}
+		PrintMergeProgress(mergedCount, compressedCount, totalCount, true);
 
+		if (!m_IsCancelled)
+		{
+			aux::Printf("Files removed: %u, remains: %u\n",
+				removedCount, m_Data.GetChunkC());
+			return true;
+		}
+	}
 	return false;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-bool DBShrinker::SaveAndUnload(DBChunk* chunk)
+bool DBShrinker::LoadFullChunkData(DBChunk* chunk)
 {
-	bool compressed = false;
+	if (chunk && chunk->LoadData(m_Data, DBChunkState::FULLDATA))
+		return true;
 
+	aux::Printc("#12\rError: failed to load DB chunk\n");
+	return false;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool DBShrinker::SaveChunkAndUnload(DBChunk* chunk, size_t& compressedCount)
+{
 	if (chunk)
 	{
 		if (chunk->GetSaveState() > DBChunkState::UNCHANGED)
 		{
 			m_Data.Save(0u, 0, 0, true);
-			compressed = true;
+			++compressedCount;
+		}
+		else if (!chunk->IsMaxCompressed())
+		{
+			if (!LoadFullChunkData(chunk))
+				return false;
+
+			m_Data.Save(0u, 0, 0, true);
+			++compressedCount;
 		}
 		chunk->UnloadData(DBChunkState::HEADERONLY);
 	}
-
-	return compressed;
+	return true;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void DBShrinker::PrintRemoveProgress(size_t modified, size_t processed, size_t total, bool last)
+bool DBShrinker::PrintRemoveProgress(size_t modified, size_t processed, size_t total, bool last)
+{
+	PrintProgress("\rFiles resized/total: %u/%u of %u",
+		last, modified, processed, total);
+	return m_IsCancelled;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool DBShrinker::PrintMergeProgress(size_t merged, size_t compressed, size_t total, bool last)
+{
+	PrintProgress("\rFiles merged/compressed/total: %u/%u/%u",
+		last, merged, compressed, total);
+	return m_IsCancelled;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void DBShrinker::PrintProgress(std::string_view fmtMsg, bool last, size_t v1, size_t v2, size_t v3)
 {
 	if (auto tick = ::GetTickCount(); last || tick - m_LastTick >= 500)
 	{
 		m_LastTick = tick;
-		char fmt[] = "\rFiles resized/total: %u/%u of %u\n";
-		fmt[util::CountOf(fmt) - 2] = last ? '\n' : 0;
-		aux::Printf(fmt, modified, processed, total);
-	}
-}
 
-//--------------------------------------------------------------------------------------------------------------------------------
-void DBShrinker::PrintMergeProgress(size_t merged, size_t compressed, size_t total, bool last)
-{
-	if (auto tick = ::GetTickCount(); last || tick - m_LastTick >= 500)
-	{
-		m_LastTick = tick;
-		char fmt[] = "\rFiles merged/compressed/total: %u/%u/%u\n";
-		fmt[util::CountOf(fmt) - 2] = last ? '\n' : 0;
-		aux::Printf(fmt, merged, compressed, total);
+		const size_t msgLength = fmtMsg.size();
+		util::SmartArray<char, 512> buffer(msgLength + 2);
+		memcpy(buffer, fmtMsg.data(), msgLength);
+		buffer[msgLength] = last ? '\n' : 0;
+		buffer[msgLength + 1] = 0;
+
+		aux::Printf(buffer, v1, v2, v3);
+
+		if (util::SystemConsole::Instance().IsCtrlCPressed())
+		{
+			if (last)
+			{
+				aux::Printc("#12Process was interrupted by user\n");
+			}
+			m_IsCancelled = true;
+		}
 	}
 }
 
@@ -331,7 +363,7 @@ void DBShrinker::PrintStatistics()
 	aux::Printf("Database size: %s\n",
 		FormatSize(databaseSize).c_str());
 
-	std::string s1, s2 = "---\nRanges:";
+	std::string s1, s2("---\nRanges:");
 	for (size_t i = 1; i <= lastRange; ++i)
 	{
 		if (i > 1 && i % 5 == 1)
