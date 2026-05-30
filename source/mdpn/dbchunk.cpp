@@ -1287,13 +1287,12 @@ bool DBChunk::Save(DataBase& db, unsigned minSavedStep, unsigned cpuTime, bool m
 {
 	if (GetSaveState() == State::UNCHANGED)
 	{
-		if (maxCompression)
-		{
-			Assert(GetDataState() >= State::FULLDATA, "Data not loaded");
-			if (IsMaxCompressed())
-				return true;
-		}
-		return true;
+		if (!maxCompression)
+			return true;
+
+		Assert(GetDataState() >= State::FULLDATA, "Data not loaded");
+		if (IsMaxCompressed())
+			return true;
 	}
 
 	Assert(m_pData && m_pData->GetLast());

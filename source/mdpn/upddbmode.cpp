@@ -125,6 +125,7 @@ bool UpdateDBMode::RemoveOverlaps()
 	Number first, last;
 	DBChunk* prevChunk = nullptr;
 	std::vector<DBChunk*> toRemove;
+	toRemove.reserve(10000);
 
 	m_Data.ForEachChunk([&](DBChunk* chunk) {
 		if (first = chunk->GetFirst(); first <= last)
@@ -229,19 +230,19 @@ float UpdateDBMode::UpdateAllChunks()
 		return true;
 	});
 
-	m_From1stKnown |= m_MaxCompression;
-	if (gapsFound == 1 && m_From1stKnown)
-	{
-		DBChunk* chunk = chunkList.front().first;
-		last = chunk->GetFirst();
-		--last;
-
-		if (last.GetLength() < chunk->GetFirst().GetLength())
-			gapsFound = 0;
-	}
-
 	if (!m_IsCancelled)
 	{
+		m_From1stKnown |= m_MaxCompression;
+		if (gapsFound == 1 && m_From1stKnown)
+		{
+			DBChunk* chunk = chunkList.front().first;
+			last = chunk->GetFirst();
+			--last;
+
+			if (last.GetLength() < chunk->GetFirst().GetLength())
+				gapsFound = 0;
+		}
+
 		if (m_MaxCompression)
 		{
 			return CompressChunks(chunkList);
@@ -680,7 +681,7 @@ void UpdateDBMode::MergeChunks()
 			m_Data.RemoveChunk(chunk);
 		removeList.clear();
 
-		aux::Print(EraseTextSequence(text.length()));
+		aux::Print(EraseTextSequence(text.length(), true));
 
 		if (!lastInRangeMerged)
 		{
