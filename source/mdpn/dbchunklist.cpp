@@ -1,4 +1,6 @@
 ﻿//∙MDPN
+// Copyright (C) 2019-2026 Dmitry Maslov
+// For conditions of distribution and use, see readme.txt
 
 #include "pch.h"
 #include "dbchunklist.h"
@@ -10,7 +12,7 @@
 //--------------------------------------------------------------------------------------------------------------------------------
 DBChunkList::DBChunkList()
 {
-	m_Chunks.reserve(25000);
+	m_Chunks.reserve(30000);
 	m_ToRemove.reserve(PURGE_GAIN);
 }
 
@@ -36,6 +38,7 @@ void DBChunkList::Insert(DBChunk* chunk)
 
 	m_Chunks.push_back(chunk);
 	chunk->SetHasOwner();
+	++m_ChunkCount;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
@@ -53,10 +56,11 @@ void DBChunkList::Remove(DBChunk* chunk)
 	accessor->SetSaveState(DBChunkState::UNCHANGED);
 	chunk->UnloadData(DBChunkState::DATAUNLOADED);
 
-	// Помещаем индекс чанка в список на удаление. Реальное освобождение памяти и удаление указателей
-	// из m_Chunks сделаем при вызове ForEach(), или когда накопится PURGE_GAIN удалённых чанков
+	--m_ChunkCount;
+	// Помещаем индекс чанка в список на удаление. Реальное освобождение памяти и удаление указателей из
+	// m_Chunks сделаем при следующем вызове ForEach(), или когда накопится PURGE_GAIN удалённых чанков
 	m_ToRemove.push_back(static_cast<uint32_t>(index));
-	if (++m_RemovedCount >= PURGE_GAIN)
+	if (m_ToRemove.size() >= PURGE_GAIN)
 		Purge();
 }
 
@@ -101,26 +105,28 @@ void DBChunkList::Sort()
 //--------------------------------------------------------------------------------------------------------------------------------
 void DBChunkList::Purge()
 {
-	if (m_RemovedCount)
+	if (!m_ToRemove.empty())
 	{
 		size_t leftmost = size_t(-1);
+		size_t rightmost = 0;
+
 		auto chunks = m_Chunks.data();
 		for (size_t index : m_ToRemove)
 		{
 			AML_SAFE_DELETE(chunks[index]);
 			leftmost = std::min(leftmost, index);
+			rightmost = std::max(rightmost, index);
 		}
 
-		const size_t total = m_Chunks.size();
-		for (size_t i = leftmost, j = i + 1; j < total; ++j)
+		for (size_t i = leftmost, j = i + 1; j < rightmost; ++j)
 		{
 			if (DBChunk* p = chunks[j])
 				chunks[i++] = p;
 		}
-		m_Chunks.resize(total - m_RemovedCount);
 
+		auto it = m_Chunks.begin() + rightmost + 1;
+		m_Chunks.erase(it - m_ToRemove.size(), it);
 		m_ToRemove.clear();
-		m_RemovedCount = 0;
 	}
 }
 
