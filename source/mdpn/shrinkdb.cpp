@@ -45,6 +45,7 @@ public:
 	bool Run();
 
 private:
+	bool CheckOverlaps();
 	bool RemovePalindromes();
 
 	bool MergeAndCompress();
@@ -71,17 +72,42 @@ bool DBShrinker::Run()
 
 	if (!m_Data.Init(false, DBChunkState::HEADERONLY))
 	{
+		// Здесь, скорее всего, просто отсутствует база данных (то есть это
+		// не ошибка). В случае ошибки загрузки будет выброшено исключение
 		aux::Print("Failed to load database\n");
 		return false;
 	}
 
-	if (RemovePalindromes() && MergeAndCompress())
+	if (CheckOverlaps())
+	{
+		aux::Printc("#12Detected overlapping regions in database. #7Use '#14--update#7' to fix this\n");
+	}
+	else if (RemovePalindromes() && MergeAndCompress())
 	{
 		PrintStatistics();
 		return true;
 	}
 
 	return false;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+bool DBShrinker::CheckOverlaps()
+{
+	Number last;
+	bool hasOverlaps = false;
+
+	m_Data.ForEachChunk([&](DBChunk* chunk) {
+		if (chunk->GetFirst() <= last)
+		{
+			hasOverlaps = true;
+			return false;
+		}
+		last = chunk->GetLast();
+		return true;
+	});
+
+	return hasOverlaps;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
