@@ -7,6 +7,7 @@
 #include "const.h"
 #include "dbase.h"
 #include "dbchunk.h"
+#include "dbmode.h"
 #include "number.h"
 #include "test.h"
 #include "util.h"
@@ -52,12 +53,12 @@ private:
 	bool RemovePalindromes();
 	bool MergeAndCompress();
 
-	bool LoadFullChunkData(DBChunk* chunk);
+	bool LoadChunkFullData(DBChunk* chunk);
 	bool SaveChunkAndUnload(DBChunk* chunk, size_t& compressedCount);
 
 	bool PrintRemoveProgress(size_t modified, size_t processed, size_t total, bool last = false);
 	bool PrintMergeProgress(size_t merged, size_t compressed, size_t total, bool last = false);
-	void PrintProgress(std::string_view fmtMsg, bool last, size_t v1, size_t v2 = 0, size_t v3 = 0);
+	void PrintProgress(std::string_view fmtMsg, bool last, size_t v1, size_t v2, size_t v3);
 
 	void PrintStatistics();
 
@@ -86,10 +87,16 @@ bool DBShrinker::Run()
 		return false;
 	}
 
+	auto path = DBMode::TruncateDatabasePath(m_Data.GetBasePath(), 38);
+	util::SystemConsole::Instance().SetTitle(util::Format(L"{%s} - ShrinkDB", path.c_str()));
+	aux::Printf(L"Database loaded: %s\n", path.c_str());
+
 	if (CheckOverlaps())
 	{
 		// TODO: Сейчас сообщение предлагает перезапустить программу с командой 'update', как если бы ShrinkDB
-		// был одним из режимов основной программы. Позже следует интегрировать алгоритм в основную программу
+		// был одним из режимов работы основной программы. Позже следует интегрировать этот алгоритм в основную
+		// программу. Перед этим нужно добавить возможность задавать minSteps через командную строку или файл.
+		// Также будет неплохо добавить вывод всех установленных значений minSteps перед началом работы
 		aux::Printc("#12Detected overlapping regions in the database. #7Run with '#14update#7' to fix this\n");
 	}
 	else if (RemovePalindromes() && MergeAndCompress())
@@ -133,11 +140,8 @@ bool DBShrinker::RemovePalindromes()
 		if (PrintRemoveProgress(modifiedCount, processedCount, totalCount))
 			return 1;
 
-		if (!chunk->LoadData(m_Data, DBChunkState::FULLDATA))
-		{
-			aux::Printc("#12\rError: failed to load DB chunk\n");
+		if (!LoadChunkFullData(chunk))
 			return -1;
-		}
 
 		const size_t range = chunk->GetLast().GetLength();
 		// Первые 8 диапазонов умещаются каждый в один файл (кроме диапазонов 1-3,
@@ -181,7 +185,7 @@ bool DBShrinker::MergeAndCompress()
 	size_t mergedCount = 0;
 	size_t compressedCount = 0;
 	size_t removedCount = 0;
-	size_t totalCount = 0;
+	size_t totalCount;
 
 	m_LastTick = 0;
 	int errorCode = 0;
@@ -190,8 +194,8 @@ bool DBShrinker::MergeAndCompress()
 	{
 		bool lastInRangeMerged = false;
 		DBChunk* activeChunk = nullptr;
-		totalCount = removedCount;
 		size_t accumulatedSize = 0;
+		totalCount = removedCount;
 
 		m_Data.ForEachChunk(errorCode, [&](DBChunk* chunk) {
 			if (PrintMergeProgress(mergedCount, compressedCount, totalCount))
@@ -204,7 +208,7 @@ bool DBShrinker::MergeAndCompress()
 			if (canMerge && (accumulatedSize + chunk->GetDataSize() < 13 * DATA_SAVE_SIZE / 12 ||
 				(isLastInRange && accumulatedSize + chunk->GetDataSize() < 6 * DATA_SAVE_SIZE / 5)))
 			{
-				if (!LoadFullChunkData(activeChunk) || !LoadFullChunkData(chunk))
+				if (!LoadChunkFullData(activeChunk) || !LoadChunkFullData(chunk))
 					return -1;
 
 				activeChunk->Append(chunk);
@@ -228,6 +232,8 @@ bool DBShrinker::MergeAndCompress()
 			}
 
 			++totalCount;
+			// Если последний чанк диапазона был объединён с предыдущим, то мы должны
+			// повторить цикл, чтобы опять попытаться объединить два последних чанка
 			return lastInRangeMerged ? 1 : 0;
 		});
 
@@ -255,22 +261,17 @@ bool DBShrinker::MergeAndCompress()
 			break;
 	}
 
-	if (errorCode >= 0)
+	if (errorCode >= 0 && !PrintMergeProgress(mergedCount, compressedCount, totalCount, true))
 	{
-		PrintMergeProgress(mergedCount, compressedCount, totalCount, true);
-
-		if (!m_IsCancelled)
-		{
-			aux::Printf("Files removed: %u, remains: %u\n",
-				removedCount, m_Data.GetChunkC());
-			return true;
-		}
+		aux::Printf("Files removed: %u, remains: %u\n",
+			removedCount, m_Data.GetChunkC());
+		return true;
 	}
 	return false;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
-bool DBShrinker::LoadFullChunkData(DBChunk* chunk)
+bool DBShrinker::LoadChunkFullData(DBChunk* chunk)
 {
 	if (chunk && chunk->LoadData(m_Data, DBChunkState::FULLDATA))
 		return true;
@@ -291,7 +292,7 @@ bool DBShrinker::SaveChunkAndUnload(DBChunk* chunk, size_t& compressedCount)
 		}
 		else if (!chunk->IsMaxCompressed())
 		{
-			if (!LoadFullChunkData(chunk))
+			if (!LoadChunkFullData(chunk))
 				return false;
 
 			m_Data.Save(0u, 0, 0, true);
@@ -305,7 +306,7 @@ bool DBShrinker::SaveChunkAndUnload(DBChunk* chunk, size_t& compressedCount)
 //--------------------------------------------------------------------------------------------------------------------------------
 bool DBShrinker::PrintRemoveProgress(size_t modified, size_t processed, size_t total, bool last)
 {
-	PrintProgress("\rFiles resized/total: %u/%u of %u",
+	PrintProgress("\rFiles resized / total: %u/%u of %u",
 		last, modified, processed, total);
 	return m_IsCancelled;
 }
@@ -313,7 +314,7 @@ bool DBShrinker::PrintRemoveProgress(size_t modified, size_t processed, size_t t
 //--------------------------------------------------------------------------------------------------------------------------------
 bool DBShrinker::PrintMergeProgress(size_t merged, size_t compressed, size_t total, bool last)
 {
-	PrintProgress("\rFiles merged/compressed/total: %u/%u/%u",
+	PrintProgress("\rFiles merged / compressed / total: %u/%u/%u",
 		last, merged, compressed, total);
 	return m_IsCancelled;
 }
@@ -355,8 +356,8 @@ void DBShrinker::PrintStatistics()
 		databaseSize += chunk->GetFileSize();
 		auto firstRange = chunk->GetFirst().GetLength();
 		lastRange = chunk->GetLast().GetLength();
-		for (; firstRange <= lastRange; ++firstRange)
-			ranges[firstRange] = true;
+		while (firstRange <= lastRange)
+			ranges[firstRange++] = true;
 		return 0;
 	});
 
