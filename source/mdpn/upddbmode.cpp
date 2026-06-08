@@ -20,15 +20,29 @@
 #include <core/winapi.h>
 
 //--------------------------------------------------------------------------------------------------------------------------------
-void UpdateDBMode::Progress::ResetLastTick()
+void UpdateDBMode::Progress::Reset()
 {
-	lastTick = ::GetTickCount();
+	counter = 0;
+	lastTick = 0;
+	lastSpeed = 0;
+
+	totalSeconds = 0;
+	startTime = ::GetTickCount();
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void UpdateDBMode::Progress::Update(uint32_t tick)
+{
+	auto secElapsed = (tick - startTime) / 1000;
+	startTime += 1000 * secElapsed;
+	totalSeconds += secElapsed;
+	lastTick = tick;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------
 float UpdateDBMode::Progress::GetTotalElapsed() const
 {
-	uint32_t now = ::GetTickCount();
+	auto now = ::GetTickCount();
 	return totalSeconds + .001f * (now - startTime);
 }
 
@@ -38,39 +52,23 @@ UpdateDBMode::UpdateDBMode()
 	AML_FILLA(m_RangeProgress, 0, util::CountOf(m_RangeProgress));
 }
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------
 bool UpdateDBMode::Run()
 {
 	if (!m_IsExecuted)
 	{
-		// Команда "update" - обновление существующих файлов БД и проверка пропущенных интервалов чисел.
-		// Опционально может быть указан один из параметров: "--skipgaps", "--fromknown" или "--compress"
-		if (m_Params.size() >= 1 && m_Params.size() <= 2 && !util::StrInsCmp(m_Params[0], "update"))
+		// Команда "update": обновление существующих файлов БД и проверка пропущенных интервалов чисел
+		if (m_Params.size() >= 1 && !util::StrInsCmp(m_Params[0], "update"))
 		{
-			bool okToGo = true;
-			if (m_Params.size() == 2)
+			// Для этой команды может быть указана только одна необязательная опция
+			if ((m_Params.size() == 2 && !ParseOption(m_Params[1])) || m_Params.size() > 2)
 			{
-				// Параметр "--skipgaps" отключает проверку всех
-				// непроверенных (пропущенных) интервалов чисел
-				if (!util::StrInsCmp(m_Params[1], "--skipgaps"))
-					m_DontFillGaps = true;
-				// Параметр "--fromknown" отключает только проверку пропущенного
-				// интервала перед первым существующим файлом базы данных
-				else if (!util::StrInsCmp(m_Params[1], "--fromknown"))
-					m_From1stKnown = true;
-				// Параметр "--compress" заставляет пересохранить все
-				// файлы БД с максимально возможной степенью сжатия
-				else if (!util::StrInsCmp(m_Params[1], "--compress"))
-					m_MaxCompression = true;
-				else
-					okToGo = false;
+				OnInvalidCmdOptions();
+				return false;
 			}
 
-			if (okToGo)
-			{
-				m_IsExecuted = true;
-				return UpdateDataBase();
-			}
+			m_IsExecuted = true;
+			return UpdateDataBase();
 		}
 
 		OnInvalidCmdLine();
@@ -79,10 +77,40 @@ bool UpdateDBMode::Run()
 	return false;
 }
 
+//--------------------------------------------------------------------------------------------------------------------------------
+bool UpdateDBMode::ParseOption(const std::string& option)
+{
+	// Параметр "--skipgaps" отключает проверку всех
+	// непроверенных (пропущенных) интервалов чисел
+	if (!util::StrInsCmp(option, "--skipgaps"))
+	{
+		m_DontFillGaps = true;
+		return true;
+	}
+
+	// Параметр "--fromknown" отключает только проверку пропущенного
+	// интервала перед первым существующим файлом базы данных
+	if (!util::StrInsCmp(option, "--fromknown"))
+	{
+		m_From1stKnown = true;
+		return true;
+	}
+
+	// Параметр "--compress" заставляет пересохранить все
+	// файлы БД с максимально возможной степенью сжатия
+	if (!util::StrInsCmp(option, "--compress"))
+	{
+		m_MaxCompression = true;
+		return true;
+	}
+
+	return false;
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 bool UpdateDBMode::UpdateDataBase()
 {
-	m_Progress.startTime = ::GetTickCount();
+	m_Progress.Reset();
 	// Так как база данных может содержать очень большое количество файлов,
 	// то загружаем её в состоянии HEADERONLY с целью экономии памяти
 	if (!m_Data.Init(false, DBChunkState::HEADERONLY))
@@ -273,7 +301,7 @@ float UpdateDBMode::UpdateAllChunks()
 //----------------------------------------------------------------------------------------------------------------------
 float UpdateDBMode::UpdateChunks(const std::vector<std::pair<DBChunk*, bool>>& chunks)
 {
-	m_Progress.ResetLastTick();
+	m_Progress.lastTick = 0;
 
 	Number first, last;
 	bool hasGaps = false;
@@ -376,7 +404,7 @@ float UpdateDBMode::CompressChunks(const std::vector<std::pair<DBChunk*, bool>>&
 	uint64_t dataSizeAfter = 0;
 	bool errorFlag = false;
 
-	m_Progress.ResetLastTick();
+	m_Progress.lastTick = 0;
 
 	for (auto& item : chunks)
 	{
@@ -592,7 +620,7 @@ void UpdateDBMode::DoSearch(const Number& startFrom, const Number& target, Known
 void UpdateDBMode::MergeChunks()
 {
 	EventManager::PublishEvent("Checking if database can be consolidated...");
-	m_Progress.ResetLastTick();
+	m_Progress.lastTick = 0;
 
 	std::vector<DBChunk*> removeList;
 	removeList.reserve(65000);
@@ -802,17 +830,14 @@ bool UpdateDBMode::PrintProgress(size_t done, size_t total)
 		Assert(m_Events && total);
 		m_Events->PublishAll();
 
-		const uint32_t secElapsed = (tick - m_Progress.startTime) / 1000;
-		m_Progress.startTime += 1000 * secElapsed;
-		m_Progress.totalSeconds += secElapsed;
-		m_Progress.lastTick = tick;
+		m_Progress.Update(tick);
 
 		aux::Printf("\rProcessing file %u of %u...", done, total);
 
-		if (util::SystemConsole::Instance().IsCtrlCPressed())
+		if (!m_IsCancelled && util::SystemConsole::Instance().IsCtrlCPressed())
 		{
-			m_IsCancelled = true;
 			aux::Printc("\b\b\b. #12Stopping...\n");
+			m_IsCancelled = true;
 		}
 	}
 
@@ -823,23 +848,18 @@ bool UpdateDBMode::PrintProgress(size_t done, size_t total)
 bool UpdateDBMode::PrintProgress(const Number& last, bool always)
 {
 	const uint32_t tick = ::GetTickCount();
-	if (tick - m_Progress.lastTick >= 500)
+	if (const uint32_t elapsed = tick - m_Progress.lastTick; elapsed >= 500)
 	{
 		const size_t numLength = last.GetLength();
 		Assert(m_Events && m_activeChunk && last && numLength <= Const::MAX_DIGIT_C);
 
 		m_Events->PublishAll();
 
-		const uint32_t secElapsed = (tick - m_Progress.startTime) / 1000;
-		m_Progress.startTime += 1000 * secElapsed;
-		m_Progress.totalSeconds += secElapsed;
-
-		const uint32_t elapsed = tick - m_Progress.lastTick;
 		const float newSpeed = (elapsed > 50) ? 1000.f * m_Progress.counter / elapsed : m_Progress.lastSpeed;
 		const float speed = (m_Progress.lastSpeed <= 0) ? newSpeed : .5f * (m_Progress.lastSpeed + newSpeed);
 
 		m_Progress.counter = 0;
-		m_Progress.lastTick = tick;
+		m_Progress.Update(tick);
 		m_Progress.lastSpeed = newSpeed;
 
 		const size_t numberCount = m_activeChunk->GetNumbers().size();
@@ -850,10 +870,10 @@ bool UpdateDBMode::PrintProgress(const Number& last, bool always)
 			SeparateWithCommas(last).c_str(), FormatSpeed(speed).c_str(),
 			numberCount, FormatSize(dataSize, true).c_str(), progress);
 
-		if (util::SystemConsole::Instance().IsCtrlCPressed())
+		if (!m_IsCancelled && util::SystemConsole::Instance().IsCtrlCPressed())
 		{
-			m_IsCancelled = true;
 			aux::Printc("\b\b\b. #12Stopping...\n");
+			m_IsCancelled = true;
 		}
 	}
 
@@ -869,18 +889,15 @@ bool UpdateDBMode::PrintProgress(size_t merged, size_t processed, size_t total)
 		Assert(m_Events && total);
 		m_Events->PublishAll();
 
-		const uint32_t secElapsed = (tick - m_Progress.startTime) / 1000;
-		m_Progress.startTime += 1000 * secElapsed;
-		m_Progress.totalSeconds += secElapsed;
-		m_Progress.lastTick = tick;
+		m_Progress.Update(tick);
 
 		aux::Printf("\rFiles merged/total: %u/%u of %u",
 			merged, processed, total);
 
-		if (util::SystemConsole::Instance().IsCtrlCPressed())
+		if (!m_IsCancelled && util::SystemConsole::Instance().IsCtrlCPressed())
 		{
-			m_IsCancelled = true;
 			aux::Printc(". #12Stopping...\n");
+			m_IsCancelled = true;
 		}
 	}
 

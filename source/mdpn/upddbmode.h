@@ -41,15 +41,20 @@ private:
 	};
 
 	struct Progress {
-		uint64_t counter = 0;		// Количество проверенных чисел
-		unsigned totalSeconds = 0;	// Общее время работы (сек., накопленное значение)
-		uint32_t startTime = 0;		// Тик времени в момент начала работы (периодически обновляется)
+		uint64_t counter = 0;		// Количество проверенных чисел (счётчик обновления прогресса)
 		uint32_t lastTick = 0;		// Тик, в котором прогресс выводился на экран в последний раз
 		float lastSpeed = 0;		// Последнее вычисленное значение скорости проверки чисел
 
-		void ResetLastTick();
+		void Reset();
+		void Update(uint32_t tick);
 		float GetTotalElapsed() const;
+
+	private:
+		unsigned totalSeconds = 0;	// Общее время работы (секунды, накопленное значение)
+		uint32_t startTime = 0;		// Тик времени в момент начала работы (периодически обновляется)
 	};
+
+	bool ParseOption(const std::string& option);
 
 	bool UpdateDataBase();
 	bool RemoveOverlaps();
@@ -79,7 +84,7 @@ private:
 	NumberSet m_LychThreads;
 	DBChunk* m_activeChunk = nullptr;	// Текущий (активный) чанк (файл БД)
 
-	Progress m_Progress;				// Параметры для отслеживания прогресса проверки чисел
+	Progress m_Progress;				// Параметры для отслеживания прогресса
 	RangeProgress m_RangeProgress;		// Количество проверенных чисел в каждом из диапазонов
 	size_t m_SavedFileCount = 0;		// Общее количество добавленных файлов
 	size_t m_RemovedFileCount = 0;		// Общее количество удалённых файлов
@@ -89,6 +94,7 @@ private:
 
 	bool m_IsExecuted = false;			// true, если функция Run была вызвана
 	bool m_IsCancelled = false;			// true, если пользователь отменил операцию
+
 	bool m_DontFillGaps = false;		// true, если не нужно проверять пропущенные интервалы
 	bool m_From1stKnown = false;		// true, если нужно начать с первого проверенного числа в БД
 	bool m_MaxCompression = false;		// true, если нужно максимально сжать файлы БД
