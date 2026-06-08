@@ -1,4 +1,5 @@
 ﻿//∙MDPN
+
 #include "pch.h"
 #include "dbmode.h"
 
@@ -33,27 +34,32 @@ size_t DBMode::GetDataSize(const DBChunk* pChunk, size_t realSize)
 	return static_cast<size_t>(numberC * valueA[0]);
 }
 
-//----------------------------------------------------------------------------------------------------------------------
-void DBMode::PrintDataBasePath(const std::wstring& path, size_t lengthLimit)
+//--------------------------------------------------------------------------------------------------------------------------------
+std::wstring DBMode::TruncateDatabasePath(const std::wstring& path, size_t lengthLimit)
 {
-	std::wstring dbPath = util::FileSystem::RemoveTrailingSlashes(path);
+	std::wstring out = util::FileSystem::RemoveTrailingSlashes(path);
 	lengthLimit = std::max(size_t(10), lengthLimit);
 
-	bool truncated = false;
-	if (dbPath.size() > lengthLimit)
+	if (out.size() > lengthLimit)
 	{
-		truncated = true;
-		size_t removeC = dbPath.size() - lengthLimit + 3;
-		size_t nextSlash = dbPath.find_first_of(L"/\\", 3);
-		while (nextSlash != std::wstring::npos && nextSlash - 3 < removeC)
-			nextSlash = dbPath.find_first_of(L"/\\", nextSlash + 1);
-		dbPath.replace(3, (nextSlash != std::wstring::npos) ? nextSlash - 3 : removeC, L"...");
+		size_t toRemove = out.size() - lengthLimit + 3;
+		size_t nextSlash = out.find_first_of(L"/\\", 3);
+		while (nextSlash != std::wstring::npos && nextSlash - 3 < toRemove)
+			nextSlash = out.find_first_of(L"/\\", nextSlash + 1);
+		out.replace(3, (nextSlash != std::wstring::npos) ? nextSlash - 3 : toRemove, L"...");
 	}
 
+	return out;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------
+void DBMode::PrintDatabasePath(const std::wstring& path, size_t lengthLimit)
+{
+	auto dbPath = TruncateDatabasePath(path, lengthLimit);
 	util::SystemConsole::Instance().SetTitle(util::Format(L"{%s} - MDPN", dbPath.c_str()));
 
-	if (truncated)
+	if (util::StrNCmp(path, dbPath, dbPath.size()))
 		dbPath.replace(3, 3, L"#8...#7#");
 
-	EventManager::PublishEvent(util::Format("#6Path:#7 %s", util::ToAnsi(dbPath).c_str()));
+	EventManager::PublishEvent(L"#6Path:#7 " + dbPath);
 }

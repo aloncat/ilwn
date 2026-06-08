@@ -95,7 +95,7 @@ bool UpdateDBMode::UpdateDataBase()
 	}
 
 	SystemLog::SetPath(m_Data.GetBasePath() + L"log.txt");
-	PrintDataBasePath(m_Data.GetBasePath(), 46);
+	PrintDatabasePath(m_Data.GetBasePath(), 46);
 
 	EventManager::PublishEvent("Database loaded. Analyzing data chunks...");
 
@@ -592,6 +592,7 @@ void UpdateDBMode::DoSearch(const Number& startFrom, const Number& target, Known
 void UpdateDBMode::MergeChunks()
 {
 	EventManager::PublishEvent("Checking if database can be consolidated...");
+	m_Progress.ResetLastTick();
 
 	std::vector<DBChunk*> removeList;
 	removeList.reserve(65000);
@@ -605,7 +606,6 @@ void UpdateDBMode::MergeChunks()
 		bool lastInRangeMerged = false;
 		size_t fileCount = m_RemovedFileCount;
 
-		uint32_t lastTick = 0;
 		size_t accumulatedSize = 0;
 		DBChunk* activeChunk = nullptr;
 
@@ -647,12 +647,8 @@ void UpdateDBMode::MergeChunks()
 			}
 
 			++fileCount;
-			if (auto tick = ::GetTickCount(); tick - lastTick >= 500)
-			{
-				lastTick = tick;
-				aux::Printf("\rFiles merged/total: %u/%u of %u",
-					mergedCount, fileCount, totalCount);
-			}
+			if (PrintProgress(mergedCount, fileCount, totalCount))
+				return 2;
 
 			return lastInRangeMerged ? 1 : 0;
 		});
@@ -668,12 +664,16 @@ void UpdateDBMode::MergeChunks()
 		}
 
 		const std::string text(", removing files...");
-		aux::Print(text);
+		if (!m_IsCancelled)
+			aux::Print(text);
 
 		m_RemovedFileCount += removeList.size();
 		for (DBChunk* chunk : removeList)
 			m_Data.RemoveChunk(chunk);
 		removeList.clear();
+
+		if (m_IsCancelled)
+			break;
 
 		aux::Print(EraseTextSequence(text.length(), true));
 
@@ -854,6 +854,33 @@ bool UpdateDBMode::PrintProgress(const Number& last, bool always)
 		{
 			m_IsCancelled = true;
 			aux::Printc("\b\b\b. #12Stopping...\n");
+		}
+	}
+
+	return m_IsCancelled;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+bool UpdateDBMode::PrintProgress(size_t merged, size_t processed, size_t total)
+{
+	const uint32_t tick = ::GetTickCount();
+	if (tick - m_Progress.lastTick >= 500)
+	{
+		Assert(m_Events && total);
+		m_Events->PublishAll();
+
+		const uint32_t secElapsed = (tick - m_Progress.startTime) / 1000;
+		m_Progress.startTime += 1000 * secElapsed;
+		m_Progress.totalSeconds += secElapsed;
+		m_Progress.lastTick = tick;
+
+		aux::Printf("\rFiles merged/total: %u/%u of %u",
+			merged, processed, total);
+
+		if (util::SystemConsole::Instance().IsCtrlCPressed())
+		{
+			m_IsCancelled = true;
+			aux::Printc(". #12Stopping...\n");
 		}
 	}
 

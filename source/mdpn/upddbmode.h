@@ -72,6 +72,7 @@ private:
 
 	bool PrintProgress(size_t done, size_t total);
 	bool PrintProgress(const Number& last, bool always = false);
+	bool PrintProgress(size_t merged, size_t processed, size_t total);
 	bool CheckIfCancelled();
 
 private:
