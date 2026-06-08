@@ -1,4 +1,6 @@
 ﻿//∙MDPN
+// Copyright (C) 2019-2026 Dmitry Maslov
+// For conditions of distribution and use, see readme.txt
 
 #include "pch.h"
 #include "dbmode.h"
@@ -7,8 +9,8 @@
 #include <core/filesystem.h>
 #include <core/strutil.h>
 
-//----------------------------------------------------------------------------------------------------------------------
-size_t DBMode::GetDataSize(const DBChunk* pChunk, size_t realSize)
+//--------------------------------------------------------------------------------------------------------------------------------
+size_t DBMode::GetDataSize(const DBChunk* chunk, size_t realSize)
 {
 	static size_t valueIdx = 1;
 	// 0-й элемент - усреднённое значение остальных элементов
@@ -17,7 +19,7 @@ size_t DBMode::GetDataSize(const DBChunk* pChunk, size_t realSize)
 
 	if (realSize)
 	{
-		const auto& numbers = pChunk->GetNumbers();
+		const auto& numbers = chunk->GetNumbers();
 		const size_t count = std::max(size_t(1), numbers.size());
 		valueA[valueIdx] = static_cast<float>(realSize) / count;
 		valueIdx = 1 + (valueIdx) % valueC;
@@ -30,7 +32,7 @@ size_t DBMode::GetDataSize(const DBChunk* pChunk, size_t realSize)
 		return realSize;
 	}
 
-	const size_t numberC = pChunk->GetNumbers().size();
+	const size_t numberC = chunk->GetNumbers().size();
 	return static_cast<size_t>(numberC * valueA[0]);
 }
 

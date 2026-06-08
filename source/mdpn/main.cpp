@@ -1115,20 +1115,20 @@ void Problem49Main()
 
 	LargeMemPages::Init();
 
-	auto mode = Mode::Create(argCount, args);
+	Mode::Helper mode(argCount, args);
 
-	if (mode->IsCommand("new", true))
-		mode = mode->Expand<SearchMode>();
-	else if (mode->IsCommand("check"))
-		mode = mode->Expand<CheckDBMode>();
-	else if (mode->IsCommand("update"))
-		mode = mode->Expand<UpdateDBMode>();
-	else if (mode->IsCommand("stats"))
-		mode = mode->Expand<AnalyseDBMode>();
-	else if (mode->IsCommand("help"))
-		mode = mode->Expand<HelpMode>();
+	if (mode.IsCommand("new", true))
+		mode.Expand<SearchMode>();
+	else if (mode.IsCommand("check"))
+		mode.Expand<CheckDBMode>();
+	else if (mode.IsCommand("update"))
+		mode.Expand<UpdateDBMode>();
+	else if (mode.IsCommand("stats"))
+		mode.Expand<AnalyseDBMode>();
+	else if (mode.IsCommand("help"))
+		mode.Expand<HelpMode>();
 
-	return mode->Run() ? 0 : 1;
+	return mode.Run() ? 0 : 1;
 }
 
 extern int ListAllPalindromesMain();
