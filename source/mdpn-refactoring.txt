@@ -17,10 +17,8 @@
 -util.cpp     -ttime.cpp                -numsettest.cpp
 
 ***
-
-*assert.h
-
 ===
 
-+const.h   +pch.h        +shrinkdb.cpp   +upddbmode.h     +version.h     +dbchunklist.h
-           +prefix.cpp                   +upddbmode.cpp   +version.cpp   +dbchunklist.cpp
++const.h    +pch.h        +shrinkdb.cpp   +upddbmode.h     +version.h     +dbchunklist.h
+            +prefix.cpp                   +upddbmode.cpp   +version.cpp   +dbchunklist.cpp
++assert.h

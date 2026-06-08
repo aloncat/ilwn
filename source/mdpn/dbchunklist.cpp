@@ -26,9 +26,9 @@ DBChunkList::~DBChunkList()
 //--------------------------------------------------------------------------------------------------------------------------------
 void DBChunkList::Insert(DBChunk* chunk)
 {
-	EE::Assert(chunk, "Incorrect value");
-	EE::Assert(!m_IsIterating, "Can't insert element while in ForEach");
-	EE::Assert(!chunk->HasOwner(), "Element already has an owner");
+	Assert(chunk, "Incorrect value");
+	Assert(!m_IsIterating, "Can't insert element while in ForEach");
+	Assert(!chunk->HasOwner(), "Element already has an owner");
 
 	if (m_IsSorted && !m_Chunks.empty())
 	{
@@ -44,11 +44,11 @@ void DBChunkList::Insert(DBChunk* chunk)
 //--------------------------------------------------------------------------------------------------------------------------------
 void DBChunkList::Remove(DBChunk* chunk)
 {
-	EE::Assert(chunk, "Incorrect value");
-	EE::Assert(!m_IsIterating, "Can't remove element while in ForEach");
+	Assert(chunk, "Incorrect value");
+	Assert(!m_IsIterating, "Can't remove element while in ForEach");
 
 	const size_t index = Find(chunk);
-	EE::Assert(index != size_t(-1), "Element not found");
+	Assert(index != size_t(-1), "Element not found");
 
 	// Принудительно устанавливаем состояние отсутствия несохранённых изменений, а затем
 	// выгружаем все данные чанка. Так он будет занимать в памяти всего 40 байт (на x64)
@@ -69,7 +69,7 @@ int DBChunkList::ForEach(const std::function<int(DBChunk*)>& fn)
 {
 	if (!m_Chunks.empty() && fn)
 	{
-		EE::Assert(!m_IsIterating, "Recursion detected");
+		Assert(!m_IsIterating, "Recursion detected");
 		util::Toggle<bool> lock(m_IsIterating, true);
 
 		Purge();
