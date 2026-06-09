@@ -29,7 +29,7 @@ std::vector<std::wstring> DBStructure::Reload(DBProgress onProgress)
 	onProgress(0);
 	std::vector<std::wstring> folders, files, dbFiles, dups;
 	folders.push_back(util::FileSystem::RemoveTrailingSlashes(m_Db.GetBasePath()));
-	util::FileSystem::GetDirectoryList(m_Db.GetBasePath() + L"*.*", folders);
+	util::FileSystemEx::GetDirectoryList(m_Db.GetBasePath() + L"*.*", folders);
 
 	size_t counterA[256];
 	AML_FILLA(counterA, 0, 256);
@@ -44,7 +44,7 @@ std::vector<std::wstring> DBStructure::Reload(DBProgress onProgress)
 		onProgress(1.f + 97.f * i / folderC);
 		// NB: самая первая папка списка - корневая папка БД, только её
 		// сканируем нерекурсивно, остальные папки сканируем рекурсивно
-		util::FileSystem::GetFileList(folders[i] + L"/*.*", files, i > 0);
+		util::FileSystemEx::GetFileList(folders[i] + L"/*.*", files, i > 0);
 
 		for (auto& filePath : files)
 		{
@@ -168,7 +168,7 @@ void DBStructure::OnFileRemoved(const std::wstring& path)
 
 		if (folder.fileCount <= 1)
 		{
-			util::FileSystem::RemoveDirectory(m_Db.GetBasePath() + path.substr(0, 2));
+			util::FileSystemEx::RemoveDirectory(m_Db.GetBasePath() + path.substr(0, 2));
 			m_SpareNumbers.push_back(number & 0xff);
 			m_Folders.erase(m_Folders.begin() + i);
 		} else
@@ -199,7 +199,7 @@ void DBStructure::WipeUnusedFolders(bool recursive)
 			path[path.size() - 2] = digitA[(n >> 4) & 0xf];
 			path[path.size() - 1] = digitA[n & 0xf];
 
-			util::FileSystem::RemoveDirectory(path, recursive);
+			util::FileSystemEx::RemoveDirectory(path, recursive);
 		}
 	}
 }

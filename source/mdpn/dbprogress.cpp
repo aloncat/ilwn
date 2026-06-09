@@ -2,9 +2,9 @@
 #include "pch.h"
 #include "dbprogress.h"
 
-#include <core/auxutil.h>
+#include <auxlib/print.h>
 #include <core/platform.h>
-#include <core/strutil.h>
+#include <core/strformat.h>
 #include <core/util.h>
 #include <core/winapi.h>
 

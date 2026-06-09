@@ -6,10 +6,10 @@
 #include "util.h"
 
 #include <core/array.h>
-#include <core/auxutil.h>
+#include <auxlib/print.h>
 #include <core/file.h>
 #include <core/filesystem.h>
-#include <core/strutil.h>
+#include <core/strformat.h>
 #include <core/winapi.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -134,7 +134,7 @@ static bool ParseDataFile(util::MemoryFile& data, uint64_t& totalCPUTime, BigNum
 	uint64_t* counterA, std::vector<BigNumber>& lowestA, std::vector<BigNumber>& highestA)
 {
 	char header[512];
-	if (!data.Read(header, 512))
+	if (auto rr = data.Read(header, 512); !rr.second || rr.first != 512)
 		return false;
 
 	std::string s;
@@ -193,7 +193,8 @@ static bool ParseDataFile(util::MemoryFile& data, uint64_t& totalCPUTime, BigNum
 	uData.SetPosition(0);
 
 	util::DynamicArray<char> buffer(uncompressedSize);
-	if (!uData.Read(buffer, uncompressedSize)) return false;
+	if (auto rr = uData.Read(buffer, uncompressedSize); !rr.second || rr.first != uncompressedSize)
+		return false;
 
 	p = buffer;
 	pEnd = p + uncompressedSize;
@@ -296,8 +297,8 @@ void ParseData(const std::wstring& path, bool primaryNumbersOnly = false, bool g
 
 	std::vector<std::wstring> fileList;
 	const std::wstring dbPath = path.empty() ? L"data/" : path;
-	util::FileSystem::GetFileList(dbPath + L"*.db", fileList, true);
-	util::FileSystem::GetFileList(dbPath + L"*.pal", fileList, true);
+	util::FileSystemEx::GetFileList(dbPath + L"*.db", fileList, true);
+	util::FileSystemEx::GetFileList(dbPath + L"*.pal", fileList, true);
 
 	const size_t fileC = fileList.size();
 	aux::Printf(" %u file(s) found\n", fileC);
@@ -321,7 +322,7 @@ void ParseData(const std::wstring& path, bool primaryNumbersOnly = false, bool g
 	unsigned lastTick = ::GetTickCount();
 	for (size_t i = 0; i < fileC; ++i)
 	{
-		std::wstring filename = util::FileSystem::ExtractFilename(fileList[i]);
+		std::wstring filename = util::FileSystem::ExtractFullName(fileList[i]);
 		unsigned tick = ::GetTickCount();
 		if (tick - lastTick >= 100)
 		{

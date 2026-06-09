@@ -6,10 +6,10 @@
 #include "test.h"
 #include "util.h"
 
-#include <core/auxutil.h>
+#include <auxlib/print.h>
 #include <core/file.h>
 #include <core/filesystem.h>
-#include <core/strutil.h>
+#include <core/strformat.h>
 #include <core/winapi.h>
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -85,7 +85,7 @@ static bool LoadResults(std::set<Palindrome>& allPalindromes)
 			size_t dataSize = static_cast<size_t>(fileSize);
 			char* buffer = new char[dataSize];
 
-			if (f.Read(buffer, dataSize))
+			if (auto rr = f.Read(buffer, dataSize); rr.second && rr.first == dataSize)
 			{
 				isLoaded = true;
 

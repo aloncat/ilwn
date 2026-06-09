@@ -5,7 +5,7 @@
 #include "pch.h"
 #include "mode.h"
 
-#include <core/auxutil.h>
+#include <auxlib/print.h>
 #include <core/platform.h>
 #include <core/strutil.h>
 

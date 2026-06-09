@@ -7,11 +7,11 @@
 #include "log.h"
 #include "util.h"
 
-#include <core/auxutil.h>
+#include <auxlib/print.h>
 #include <core/console.h>
 #include <core/file.h>
 #include <core/filesystem.h>
-#include <core/strutil.h>
+#include <core/strformat.h>
 #include <core/util.h>
 #include <core/winapi.h>
 
@@ -33,16 +33,24 @@ bool DBFileIndex::Load(const std::wstring& filePath)
 	for (int i = 0; i < 256; ++i)
 		m_Index[i].clear();
 
+	// TODO: избавиться от BufferedFile (возможно, заменить на MemoryFile)
 	util::BufferedFile file(64);
 	if (!filePath.empty() && file.Open(m_Data.GetBasePath() + filePath, util::FILE_OPEN_READ))
 	{
-		uint32_t fileCRC, crc;
 		const long long fileSize = file.GetSize();
-		if (fileSize > 8 && file.GetCRC32(fileCRC, 8) && file.SetPosition(0))
+		if (fileSize > 8)
 		{
-			char buffer[8];
-			if (file.Read(buffer, 8) && AToCRC(crc, buffer) && fileCRC == crc)
-				return LoadIndex(file);
+			auto crcResult = file.GetCRC32(8);
+			if (crcResult.second && file.SetPosition(0))
+			{
+				char buffer[8];
+				if (auto res = file.Read(buffer, 8); res.second && res.first == 8)
+				{
+					uint32_t crc;
+					if (AToCRC(crc, buffer) && crcResult.first == crc)
+						return LoadIndex(file);
+				}
+			}
 		}
 	}
 
@@ -74,16 +82,17 @@ bool DBFileIndex::Save(const std::wstring& filePath, bool saveUnexistent)
 	const std::wstring tmpPath = path + L".tmp";
 
 	bool savedOk = false;
+	// TODO: избавиться от BufferedFile (возможно, заменить на MemoryFile)
 	util::BufferedFile file(64);
 	if (file.Open(tmpPath, util::FILE_OPEN_READWRITE | util::FILE_OPEN_ALWAYS))
 	{
 		if (file.Write("12345678\n", 9) && SaveIndex(file))
 		{
-			uint32_t crc = 0;
-			if (file.GetCRC32(crc, 8) && file.SetPosition(0))
+			auto crcResult = file.GetCRC32(8);
+			if (crcResult.second && file.SetPosition(0))
 			{
 				char buffer[12];
-				sprintf_s(buffer, "%08X", crc);
+				sprintf_s(buffer, "%08X", crcResult.first);
 				savedOk = file.Write(buffer, 8);
 			}
 		}
@@ -127,8 +136,8 @@ unsigned DBFileIndex::GetLevel(const std::wstring& filePath)
 					const long long fSize = file.GetSize();
 					if (fSize >= 0 && fSize == pInfo->fileSize)
 					{
-						uint32_t fileCRC = 0;
-						if (file.GetCRC32(fileCRC) && fileCRC == pInfo->fileCRC)
+						auto crcResult = file.GetCRC32();
+						if (crcResult.second && crcResult.first == pInfo->fileCRC)
 						{
 							pInfo->fileTime = fileTime;
 							fileOk = true;
@@ -181,16 +190,19 @@ bool DBFileIndex::SetLevel(const std::wstring& filePath, unsigned level, bool re
 				util::BinaryFile file;
 				if (file.Open(fullPath, util::FILE_OPEN_READ))
 				{
-					uint32_t fileCRC = 0;
 					const long long fSize = file.GetSize();
-					if (fSize >= 0 && fSize <= 100 * 1024 * 1024 && file.GetCRC32(fileCRC))
+					if (fSize >= 0 && fSize <= 100 * 1024 * 1024)
 					{
-						pInfo->fileTime = fileTime;
-						pInfo->fileSize = static_cast<unsigned>(fSize);
-						pInfo->fileCRC = fileCRC;
+						auto crcResult = file.GetCRC32();
+						if (crcResult.second)
+						{
+							pInfo->fileTime = fileTime;
+							pInfo->fileSize = static_cast<unsigned>(fSize);
+							pInfo->fileCRC = crcResult.first;
 
-						pInfo->range = 0;
-						pInfo->isRemoved = false;
+							pInfo->range = 0;
+							pInfo->isRemoved = false;
+						}
 					}
 				}
 				return !pInfo->isRemoved;
@@ -290,13 +302,13 @@ bool DBFileIndex::LoadIndex(util::File& file)
 		{
 			if (!noMoreData)
 			{
-				size_t bytesRead = 0;
 				const size_t bytesToRead = BUF_SIZE - bytesLeft;
 				memmove(dataA, pData, bytesLeft);
-				if (!file.Read(dataA + bytesLeft, bytesToRead, bytesRead))
+				auto readResult = file.Read(dataA + bytesLeft, bytesToRead);
+				if (!readResult.second)
 					return false;
-				bytesLeft += bytesRead;
-				noMoreData = bytesRead < bytesToRead;
+				bytesLeft += readResult.first;
+				noMoreData = readResult.first < bytesToRead;
 				pData = dataA;
 			}
 			else if (!bytesLeft)

@@ -4,8 +4,9 @@
 
 #pragma once
 
-#include "../../../../aml/core/platform.h"
-#include "../../../../aml/core/strutil.h"
+#include "../../../aml/core/strutil.h"
+
+#include <core/platform.h>
 
 namespace util {
 
@@ -15,10 +16,8 @@ namespace util {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern "C" {
-	size_t AML_FASTCALL Strlen(const char* pStr);
-	size_t AML_FASTCALL Wcslen(const wchar_t* pStr);
-}
+size_t AML_FASTCALL Strlen(const char* pStr);
+size_t AML_FASTCALL Wcslen(const wchar_t* pStr);
 
 inline size_t GetLength(const char* pStr) { return Strlen(pStr); }
 inline size_t GetLength(const wchar_t* pStr) { return Wcslen(pStr); }

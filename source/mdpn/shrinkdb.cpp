@@ -12,10 +12,10 @@
 #include "test.h"
 #include "util.h"
 
+#include <auxlib/print.h>
 #include <core/array.h>
-#include <core/auxutil.h>
 #include <core/console.h>
-#include <core/strutil.h>
+#include <core/strformat.h>
 #include <core/toggle.h>
 #include <core/util.h>
 #include <core/winapi.h>

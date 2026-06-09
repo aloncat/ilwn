@@ -56,7 +56,7 @@ private:
 
 	const DataBase& m_Data;
 	std::vector<Event> m_Events;
-	mutable thread::CriticalSection m_CS;
+	mutable thrd::CriticalSection m_CS;
 	std::atomic<size_t> m_EventC = 0;
 	unsigned m_HighestStep = 0;
 };

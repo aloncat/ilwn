@@ -206,7 +206,7 @@ bool DataBase::FindBasePath(const std::wstring& path)
 {
 	std::wstring dbPath(util::TrimRight(path)), dbName;
 	if (!dbPath.empty())
-		dbName = util::FileSystem::ExtractFilename(dbPath);
+		dbName = util::FileSystem::ExtractFullName(dbPath);
 	if (!dbName.empty())
 		dbPath.resize(dbPath.size() - dbName.size());
 	else
@@ -214,7 +214,7 @@ bool DataBase::FindBasePath(const std::wstring& path)
 
 	const bool doSearch = dbPath.empty();
 	dbPath = util::FileSystem::GetFullPath(dbPath.empty() ? L"./" : dbPath);
-	dbName.append(util::FileSystem::DELIMITER);
+	dbName.append(util::FileSystemEx::DELIMITER);
 	if (doSearch)
 	{
 		for (std::wstring p, next = dbPath; p != next;)

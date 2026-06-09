@@ -7,7 +7,7 @@
 #include <core/array.h>
 #include <core/datetime.h>
 #include <core/filesystem.h>
-#include <core/strutil.h>
+#include <core/strformat.h>
 #include <core/winapi.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -54,7 +54,7 @@ void LogFile::Print(const char* pMsg)
 {
 	if (pMsg && *pMsg)
 	{
-		thread::Lock<thread::CriticalSection> lock(m_CS);
+		thrd::Lock<thrd::CriticalSection> lock(m_CS);
 
 		if (m_File.IsOpened())
 		{
@@ -70,7 +70,7 @@ void LogFile::Print(const std::string& msg)
 {
 	if (!msg.empty())
 	{
-		thread::Lock<thread::CriticalSection> lock(m_CS);
+		thrd::Lock<thrd::CriticalSection> lock(m_CS);
 
 		if (m_File.IsOpened())
 		{
@@ -84,7 +84,7 @@ void LogFile::Print(const std::string& msg)
 //----------------------------------------------------------------------------------------------------------------------
 void LogFile::Close()
 {
-	thread::Lock<thread::CriticalSection> lock(m_CS);
+	thrd::Lock<thrd::CriticalSection> lock(m_CS);
 
 	if (m_File.IsOpened())
 	{
@@ -138,7 +138,6 @@ void LogFile::Sanitize(const char* pStr, size_t strLen, const std::function<void
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-AML_SINGLETON(SystemLog)
 wchar_t* SystemLog::s_pFilePath = nullptr;
 
 //----------------------------------------------------------------------------------------------------------------------

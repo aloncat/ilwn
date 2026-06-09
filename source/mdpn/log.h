@@ -34,7 +34,7 @@ protected:
 	static void Sanitize(const char* pStr, size_t strLen, const std::function<void(const char*, size_t)>& cb);
 
 	util::BinaryFile m_File;
-	thread::CriticalSection m_CS;
+	thrd::CriticalSection m_CS;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -55,7 +55,7 @@ protected:
 	SystemLog();
 	virtual ~SystemLog() override = default;
 
-	virtual void OnDestroy() override { Tidy(); }
+	virtual void OnDestroy() noexcept override { Tidy(); }
 
 private:
 	static void Tidy();

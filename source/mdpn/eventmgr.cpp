@@ -7,10 +7,10 @@
 #include "stephlp.h"
 #include "util.h"
 
-#include <core/auxutil.h>
+#include <auxlib/print.h>
 #include <core/datetime.h>
 #include <core/platform.h>
-#include <core/strutil.h>
+#include <core/strformat.h>
 
 //----------------------------------------------------------------------------------------------------------------------
 EventManager::EventManager(const DataBase& data)
@@ -113,7 +113,7 @@ void EventManager::PublishAll()
 		events.reserve(15);
 
 		{
-			thread::Lock<thread::CriticalSection> lock(m_CS);
+			thrd::Lock<thrd::CriticalSection> lock(m_CS);
 			// Внутри критической секции нет необходимости в атомарности,
 			// используем memory_order_relaxed, чтобы не блокировать шину
 			m_EventC.store(0, std::memory_order_relaxed);
@@ -128,7 +128,7 @@ void EventManager::PublishAll()
 //----------------------------------------------------------------------------------------------------------------------
 AML_NOINLINE void EventManager::AddEvent(Event&& event)
 {
-	thread::Lock<thread::CriticalSection> lock(m_CS);
+	thrd::Lock<thrd::CriticalSection> lock(m_CS);
 	m_Events.push_back(std::move(event));
 
 	// Мы всё ещё внутри критической секции, никто не сможет изменить m_EventC в данный
@@ -141,7 +141,7 @@ AML_NOINLINE bool EventManager::HasConsoleEvents() const
 {
 	if (m_EventC)
 	{
-		thread::Lock<thread::CriticalSection> lock(m_CS);
+		thrd::Lock<thrd::CriticalSection> lock(m_CS);
 		for (const auto& e : m_Events)
 		{
 			if (!e.logFileOnly)

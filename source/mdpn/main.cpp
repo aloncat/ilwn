@@ -17,11 +17,11 @@
 #include "util.h"
 #include "version.h"
 
-#include <core/auxutil.h>
+#include <auxlib/print.h>
 #include <core/console.h>
 #include <core/datetime.h>
 #include <core/filesystem.h>
-#include <core/strutil.h>
+#include <core/strformat.h>
 #include <core/util.h>
 #include <core/winapi.h>
 
@@ -243,6 +243,7 @@ static void OutputAnalysisResults(DataBase& data, const RangeInfo* rangeA, const
 			report += "\nSteps for which no delayed palindromes were found:\n  " + notFound + "\n";
 	}
 ////
+	// TODO: избавиться от BufferedFile (возможно, заменить на MemoryFile)
 	util::BufferedFile out;
 	std::wstring filePath = data.GetBasePath() + L"report.txt";
 	if (out.Open(filePath, util::FILE_OPEN_WRITE | util::FILE_CREATE_ALWAYS))
@@ -354,7 +355,7 @@ static bool AnalyseDBChunks(DataBase& data, size_t totalChunkC)
 			lastTick = tick;
 			auto filePath = pChunk->GetFilePath();
 			aux::Printf("\rParsing file #15#%s#7 [%u/%u], %.1f%% done...",
-				util::ToAnsi(util::FileSystem::ExtractFilename(filePath)).c_str(),
+				util::ToAnsi(util::FileSystem::ExtractFullName(filePath)).c_str(),
 				chunkC, totalChunkC, 100.f * (chunkC - 1) / totalChunkC);
 
 			if (util::SystemConsole::Instance().IsCtrlCPressed())
@@ -508,10 +509,9 @@ static bool P196ProblemLoad(P196Progress& data, const std::wstring& filePath)
 		if (fileSize > 0)
 		{
 			char buffer[128];
-			size_t bytesRead = 0;
-			if (f.Read(buffer, 128, bytesRead) && bytesRead > 0)
+			if (auto rr = f.Read(buffer, 128); rr.second && rr.first > 0)
 			{
-				std::string text(buffer, bytesRead);
+				std::string text(buffer, rr.first);
 				auto lines = util::Split(text, ":\n");
 				if (lines.size() >= 8 && lines.size() <= 12 && lines[0] == "NUM" && lines[2] == "CPUTIME" &&
 					lines[4] == "ITERATION" && lines[6] == "LENGTH")
@@ -527,11 +527,15 @@ static bool P196ProblemLoad(P196Progress& data, const std::wstring& filePath)
 						if (start > 4 && numLength > 0 && static_cast<long long>(start + numLength) == fileSize)
 						{
 							char* numBuf = new char[numLength];
-							if (f.SetPosition(start) && f.Read(numBuf, numLength))
+							if (f.SetPosition(start))
 							{
-								data.number.assign(numBuf, numLength);
-								auto hash = hash::GetCRC32(data.number.c_str(), data.number.size());
-								result = util::Format("%08X", hash) == lines[9];
+								rr = f.Read(numBuf, numLength);
+								if (rr.second && rr.first == numLength)
+								{
+									data.number.assign(numBuf, numLength);
+									auto hash = hash::GetCRC32(data.number.c_str(), data.number.size());
+									result = util::Format("%08X", hash) == lines[9];
+								}
 							}
 							delete[] numBuf;
 						}

@@ -12,6 +12,7 @@
 #include <core/datetime.h>
 #include <core/exception.h>
 #include <core/file.h>
+#include <core/strformat.h>
 #include <core/strutil.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -481,13 +482,20 @@ bool DBChunkData::Save(util::File& file, bool forceFullSave, bool maxCompression
 			if (m_DataSize)
 			{
 				util::MemoryFile packedData;
-				if (packedData.Open() && numData.GetCRC32(m_DataCRC) && numData.SetPosition(0) &&
-					CompressFile(numData, packedData, maxCompression ? 9 : 5) && packedData.GetSize() > 0)
+				if (packedData.Open())
 				{
-					m_CDataSize = static_cast<unsigned>(packedData.GetSize());
-					maxCompressed = maxCompression;
-					numData = std::move(packedData);
-					didFullSave = true;
+					if (auto crc = numData.GetCRC32(); crc.second)
+					{
+						m_DataCRC = crc.first;
+						if (numData.SetPosition(0) && CompressFile(numData, packedData, maxCompression ? 9 : 5) &&
+							packedData.GetSize() > 0)
+						{
+							m_CDataSize = static_cast<unsigned>(packedData.GetSize());
+							maxCompressed = maxCompression;
+							numData = std::move(packedData);
+							didFullSave = true;
+						}
+					}
 				}
 			}
 			if (maxCompressed)
@@ -751,9 +759,8 @@ bool DBChunkData::ReloadHeader(util::File& file)
 	char buffer[MAX_HEADER_SIZE + 1];
 	buffer[MAX_HEADER_SIZE] = 0;
 
-	size_t bytesRead;
 	FileHeaderBase ver;
-	if (!file.Read(buffer, MAX_HEADER_SIZE, bytesRead) || bytesRead < FILE_HEADER_SIZE || !ver.Load(buffer))
+	if (auto rr = file.Read(buffer, MAX_HEADER_SIZE); !rr.second || rr.first < FILE_HEADER_SIZE || !ver.Load(buffer))
 		return false;
 
 	// Если объект уже содержит загруженные данные, то сохранённый CRC должен совпадать с
@@ -834,9 +841,10 @@ bool DBChunkData::LoadStatBlock(util::File& file)
 	{
 		util::SmartArray<char, 1024> buffer(m_StatSize + 1);
 		size_t headerSize = (m_FormatVer <= 3) ? 512 : FILE_HEADER_SIZE;
-		if (file.SetPosition(headerSize) && file.Read(buffer, m_StatSize))
+		if (file.SetPosition(headerSize))
 		{
-			if (hash::GetCRC32(buffer, m_StatSize) == m_StatCRC)
+			auto rr = file.Read(buffer, m_StatSize);
+			if (rr.second && rr.first == m_StatSize && hash::GetCRC32(buffer, m_StatSize) == m_StatCRC)
 			{
 				buffer[m_StatSize] = 0;
 				ok = ParseStats(buffer);
@@ -875,13 +883,16 @@ bool DBChunkData::LoadDataBlock(util::File& file)
 				DecompressFile(file, data) && data.GetSize() == m_DataSize)
 			{
 				util::DynamicArray<char> buffer(m_DataSize + 1);
-				if (data.SetPosition(0) && data.Read(buffer, m_DataSize) &&
-					hash::GetCRC32(buffer, m_DataSize) == m_DataCRC)
+				if (data.SetPosition(0))
 				{
-					data.Close();
-					m_pData->reserve(GetTotalNumberC());
-					buffer[m_DataSize] = 0;
-					ok = ParseData(buffer);
+					auto rr = data.Read(buffer, m_DataSize);
+					if (rr.second && rr.first == m_DataSize && hash::GetCRC32(buffer, m_DataSize) == m_DataCRC)
+					{
+						data.Close();
+						m_pData->reserve(GetTotalNumberC());
+						buffer[m_DataSize] = 0;
+						ok = ParseData(buffer);
+					}
 				}
 			}
 		}

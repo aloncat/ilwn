@@ -7,7 +7,7 @@
 
 #include <core/console.h>
 #include <core/filesystem.h>
-#include <core/strutil.h>
+#include <core/strformat.h>
 
 //--------------------------------------------------------------------------------------------------------------------------------
 size_t DBMode::GetDataSize(const DBChunk* chunk, size_t realSize)

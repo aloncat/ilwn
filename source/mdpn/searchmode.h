@@ -220,7 +220,7 @@ private:
 	void WakeOneThread();
 
 	SearchMode& m_Owner;
-	thread::CriticalSection m_CS;
+	thrd::CriticalSection m_CS;
 
 	ThreadFn m_ThreadFn;					// Пользовательская функция рабочих потоков
 	size_t m_MaxThreadC = 0;				// Максимально возможное количество рабочих потоков
@@ -290,7 +290,7 @@ private:
 	std::condition_variable m_SiftSetCV;		// CV пробуждения главного потока при ожидании им записи в m_SiftSet
 	std::mutex m_SiftSetMutex;					// Мьютекс для m_SiftSetCV
 
-	thread::CriticalSection m_DBCS;				// Крит. секция для синхронизации с потоком БД
+	thrd::CriticalSection m_DBCS;				// Крит. секция для синхронизации с потоком БД
 	DBChunk* volatile m_pActiveChunk = nullptr;	// Текущий (активный) файл БД
 	volatile uint32_t m_LastSaveTick = 0;		// Тик последнего сохранения данных в файл БД
 	volatile uint64_t m_CPUTime = 0;			// Затраченное на проверку время CPU (в ms)

@@ -4,8 +4,9 @@
 
 #pragma once
 
-#include "../../../../aml/core/platform.h"
-#include "../../../../aml/core/filesystem.h"
+#include "../../../aml/core/filesystem.h"
+
+#include <core/platform.h>
 
 #include <string>
 #include <vector>

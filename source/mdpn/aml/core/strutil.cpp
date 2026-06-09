@@ -17,8 +17,6 @@ namespace util {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if !AML_USEASM
-
 //----------------------------------------------------------------------------------------------------------------------
 #define STRLEN_RET_LE(VALUE, SHIFT) \
 	if ((VALUE & 0xff) == 0) return p - pStr - sizeof(size_t) + SHIFT;			\
@@ -170,7 +168,5 @@ AML_NOINLINE size_t AML_FASTCALL Wcslen(const wchar_t* pStr)
 		return p - pStr - 1;
 	}
 }
-
-#endif  // AML_USEASM
 
 } // namespace util

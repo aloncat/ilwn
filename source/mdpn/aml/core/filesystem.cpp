@@ -4,10 +4,10 @@
 
 #include "filesystem.h"
 
-#include "../../../../aml/core/array.h"
-#include "../../../../aml/core/platform.h"
-#include "../../../../aml/core/util.h"
-#include "../../../../aml/core/winapi.h"
+#include <core/array.h>
+#include <core/platform.h>
+#include <core/util.h>
+#include <core/winapi.h>
 
 #include <algorithm>
 

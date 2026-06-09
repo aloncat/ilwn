@@ -2,7 +2,7 @@
 #include "pch.h"
 #include "stephlp.h"
 
-#include <core/auxutil.h>
+#include <auxlib/print.h>
 
 bool StepHelper::s_RangeWarningShown = false;
 uint8_t StepHelper::s_MaxLengthA[Const::MAX_STEP + 1];

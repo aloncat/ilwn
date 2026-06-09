@@ -5,9 +5,9 @@
 #include "number.h"
 #include "util.h"
 
-#include <core/auxutil.h>
+#include <auxlib/print.h>
 #include <core/console.h>
-#include <core/strutil.h>
+#include <core/strformat.h>
 #include <core/winapi.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

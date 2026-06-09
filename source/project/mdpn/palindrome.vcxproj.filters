@@ -1,6 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Filter Include="aml-core">
+      <UniqueIdentifier>{9fe26f9d-f580-45a4-bbd5-1fd0ebd2a9cf}</UniqueIdentifier>
+    </Filter>
     <Filter Include="arch">
       <UniqueIdentifier>{fc9b8a4a-6a98-4077-a1b8-719ca0b7f7cc}</UniqueIdentifier>
     </Filter>
@@ -101,6 +104,15 @@
     <ClInclude Include="..\..\mdpn\largemempages.h">
       <Filter>util</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\mdpn\aml\core\file.h">
+      <Filter>aml-core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\aml\core\filesystem.h">
+      <Filter>aml-core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mdpn\aml\core\strutil.h">
+      <Filter>aml-core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\mdpn\prefix.cpp">
@@ -186,6 +198,15 @@
     </ClCompile>
     <ClCompile Include="..\..\mdpn\shrinkdb.cpp">
       <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\aml\core\file.cpp">
+      <Filter>aml-core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\aml\core\filesystem.cpp">
+      <Filter>aml-core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mdpn\aml\core\strutil.cpp">
+      <Filter>aml-core</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

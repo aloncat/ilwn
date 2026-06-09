@@ -2,10 +2,9 @@
 #include "pch.h"
 #include "test.h"
 
-#include <core/auxutil.h>
+#include <auxlib/print.h>
 #include <core/console.h>
-#include <core/platform.h>
-#include <core/strutil.h>
+#include <core/strformat.h>
 
 #include <intrin.h>
 
@@ -55,8 +54,6 @@ void Test::PrintFooter() const
 //   TestFacility
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-AML_SINGLETON(TestFacility)
 
 //----------------------------------------------------------------------------------------------------------------------
 bool TestFacility::Run(const std::string& tests, size_t repeatC)

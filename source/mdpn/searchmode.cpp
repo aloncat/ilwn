@@ -10,9 +10,9 @@
 #include "ttime.h"
 #include "util.h"
 
-#include <core/auxutil.h>
+#include <auxlib/print.h>
 #include <core/console.h>
-#include <core/strutil.h>
+#include <core/strformat.h>
 #include <core/winapi.h>
 
 #include <intrin.h>
@@ -265,7 +265,7 @@ void SearchModeClasses::WorkThreads::AddRemove(int count)
 
 		if (newC > m_TotalThreadC)
 		{
-			thread::CriticalSection::Lock lock(m_CS);
+			thrd::Lock<thrd::CriticalSection> lock(m_CS);
 			for (size_t i = m_TotalThreadC; i < newC; ++i)
 			{
 				m_ThreadTimeA[i] = 0;
@@ -286,7 +286,7 @@ void SearchModeClasses::WorkThreads::AddRemove(int count)
 
 		if (toStopC)
 		{
-			thread::CriticalSection::Lock lock(m_CS);
+			thrd::Lock<thrd::CriticalSection> lock(m_CS);
 			for (size_t i = 0; i < toStopC; ++i)
 			{
 				ThreadInfo& info = m_ThreadA[m_TotalThreadC - i - 1];
@@ -438,7 +438,7 @@ void SearchModeClasses::WorkThreads::CheckThreadLoad(size_t index, ThreadTime& t
 			info.lastCPULoadTick = tick;
 			// Критическая секция захвачена (если бы нам не удалось её захватить, то мы бы пропустили
 			// проверку). Мы не должны выполнять проверку во время уничтожения/создания потоков в AddRemove
-			thread::CriticalSection::Lock lock(m_CS, false);
+			thrd::Lock<thrd::CriticalSection> lock(m_CS, false);
 			if (AreThreadsOverloaded())
 				WakeOneThread();
 		}
@@ -941,7 +941,7 @@ void SearchMode::PrintProgress(uint32_t tick, const Number& lastNum)
 	m_Progress.lastSpeed = newSpeed;
 
 	size_t numberC = 0, dataSize = 0;
-	thread::Lock<thread::CriticalSection> lock(m_DBCS);
+	thrd::Lock<thrd::CriticalSection> lock(m_DBCS);
 	if (const DBChunk* pChunk = m_pActiveChunk)
 	{
 		numberC = pChunk->GetNumbers().size();
@@ -982,11 +982,11 @@ bool SearchMode::UpdateProgress(const Number& lastNum)
 		while (console.GetInputEvent(event))
 		{
 			// Клавиши - и + на малой клавиатуре
-			if (event.isKeyDown && (event.key == VK_SUBTRACT || event.key == VK_ADD))
-				count += (event.key == VK_ADD) ? 1 : -1;
+			if (event.IsKeyDown() && (event.vkey == VK_SUBTRACT || event.vkey == VK_ADD))
+				count += (event.vkey == VK_ADD) ? 1 : -1;
 			// Комбинации клавиш CTRL+[ (уменьшить) и CTRL+] (увеличить)
-			else if (event.isKeyDown && event.isCtrlDown && (event.key == VK_OEM_4 || event.key == VK_OEM_6))
-				count += (event.key == VK_OEM_6) ? 1 : -1;
+			else if (event.IsKeyDown() && event.IsCtrlDown() && (event.vkey == VK_OEM_4 || event.vkey == VK_OEM_6))
+				count += (event.vkey == VK_OEM_6) ? 1 : -1;
 		}
 		if (count && !m_IsCancelled)
 			m_WorkThreads.AddRemove(count);
@@ -1252,7 +1252,7 @@ void SearchMode::DBThreadFN()
 
 				if (allowSave && !m_IsCancelled)
 				{
-					thread::Lock<thread::CriticalSection> lock(m_DBCS);
+					thrd::Lock<thrd::CriticalSection> lock(m_DBCS);
 					// Формируем файлы, содержащие четверть нормального объёма данных. Из-за того, что в старших
 					// диапазонах сохраняется меньше палиндромов, а скорость проверки чисел ниже, часто будет
 					// возникать ситуация, когда за макс. время между сохранениями работы не будет набираться

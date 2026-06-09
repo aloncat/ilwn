@@ -5,11 +5,11 @@
 #include "const.h"
 #include "number.h"
 
+#include <auxlib/print.h>
 #include <core/array.h>
-#include <core/auxutil.h>
 #include <core/exception.h>
 #include <core/file.h>
-#include <core/strutil.h>
+#include <core/strformat.h>
 #include <core/util.h>
 #include <core/winapi.h>
 #include <zlib/zlib.h>
@@ -84,12 +84,12 @@ bool CompressFile(util::File& src, util::File& dst, int level)
 	int flush = Z_NO_FLUSH;
 	do {
 		res = false;
-		size_t bytesRead;
-		if (!src.Read(pSrcBuffer, BUFFER_SIZE, bytesRead))
+		auto readResult = src.Read(pSrcBuffer, BUFFER_SIZE);
+		if (!readResult.second)
 			break;
 		stream.next_in = pSrcBuffer;
-		stream.avail_in = static_cast<unsigned>(bytesRead);
-		if (bytesRead < BUFFER_SIZE)
+		stream.avail_in = static_cast<unsigned>(readResult.first);
+		if (readResult.first < BUFFER_SIZE)
 			flush = Z_FINISH;
 
 		do {
@@ -124,11 +124,11 @@ bool DecompressFile(util::File& src, util::File& dst)
 
 	int res = Z_OK;
 	do {
-		size_t bytesRead;
-		if (!src.Read(pSrcBuffer, BUFFER_SIZE, bytesRead))
+		auto readResult = src.Read(pSrcBuffer, BUFFER_SIZE);
+		if (!readResult.second)
 			break;
 		stream.next_in = pSrcBuffer;
-		stream.avail_in = static_cast<unsigned>(bytesRead);
+		stream.avail_in = static_cast<unsigned>(readResult.first);
 
 		do {
 			stream.next_out = pDstBuffer;
