@@ -1,2 +1,0 @@
-﻿//⬪AML⬪
-#include "pch.h"
