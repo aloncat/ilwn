@@ -13,6 +13,20 @@
 
 using namespace util;
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   FileSystemEx (Windows)
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#if AML_OS_WINDOWS
+	const wchar_t* const FileSystemEx::DELIMITER = L"\\";
+#else
+	const wchar_t* const FileSystemEx::DELIMITER = L"/";
+#endif
+
+#if AML_OS_WINDOWS
+
 //--------------------------------------------------------------------------------------------------------------------------------
 struct FileSystem::Helper final
 {
@@ -24,31 +38,22 @@ private:
 	static size_t CompactPath(const wchar_t* src, wchar_t* out, size_t outPos);
 };
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//   FileSystemEx
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#if AML_OS_WINDOWS
-	const wchar_t* const FileSystemEx::DELIMITER = L"\\";
-#else
-	const wchar_t* const FileSystemEx::DELIMITER = L"/";
-#endif
-
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------
 struct FileSystemEx::FindData
 {
-	std::wstring				mask;
-	WIN32_FIND_DATAW			findData;
-	std::vector<std::wstring>&	fileList;
+	std::wstring fileMask;
+	WIN32_FIND_DATAW findData;
+	std::vector<std::wstring>& fileList;
 
 public:
-	FindData(std::vector<std::wstring>& list, const wchar_t* pMask)
-		: mask(pMask), fileList(list) {}
-	void operator =(const FindData&);
+	FindData(std::vector<std::wstring>& list, const wchar_t* mask)
+		: fileMask(mask), fileList(list)
+	{
+	}
 
-	static AML_NOINLINE uint64_t FileTimeToDateTime(const FILETIME& t)
+	void operator =(const FindData&) = delete;
+
+	static AML_NOINLINE uint64_t FileTimeToDateTime(const FILETIME& t) noexcept
 	{
 		return ((static_cast<uint64_t>(t.dwHighDateTime) << 32) | t.dwLowDateTime) / 10000;
 	}
@@ -57,35 +62,38 @@ public:
 //----------------------------------------------------------------------------------------------------------------------
 std::wstring FileSystemEx::GetCurrentDirectory()
 {
-	const DWORD LOCAL_SIZE = 640;
+	constexpr DWORD LOCAL_SIZE = 640;
 	wchar_t localBuffer[LOCAL_SIZE];
+
 	DWORD len = ::GetCurrentDirectoryW(LOCAL_SIZE, localBuffer);
 	if (len > LOCAL_SIZE)
 	{
 		DynamicArray<wchar_t> buffer(len);
 		DWORD res = ::GetCurrentDirectoryW(len, buffer);
-		if ((res > 0) && (res < len)) return std::wstring(buffer, res);
+		if (res > 0 && res < len)
+			return std::wstring(buffer, res);
 		len = 0;
 	}
+
 	return std::wstring(localBuffer, len);
 }
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------
 void FileSystemEx::MakeDirectoryList(const std::wstring& fullPath, const std::wstring& userPath, FindData& data)
 {
 	// Если маска поиска равна "*.*" или "*" (т.е. если мы ищем все файлы), то мы можем найти
 	// файлы и обойти поддиректории за один проход. Если же маска отличается, то для поиска
-	// поддиректорий нам придется использовать вторую маску и это потребует 2 проходов.
-	unsigned passCount = ((data.mask == L"*.*") || (data.mask == L"*")) ? 1 : 2;
+	// поддиректорий нам придется использовать вторую маску и это потребует 2 проходов
+	unsigned passCount = (data.fileMask == L"*.*" || data.fileMask == L"*") ? 1 : 2;
 
 	std::wstring fileName, tmp;
-	size_t searchPathLen = fullPath.size() + std::max(size_t(4), data.mask.size() + 1);
-	const std::wstring& searchPath = ((searchPathLen > MAX_PATH) && !Helper::IsUNCPath(fullPath)) ?
+	size_t searchPathLen = fullPath.size() + std::max(size_t(4), data.fileMask.size() + 1);
+	const std::wstring& searchPath = (searchPathLen > MAX_PATH && !Helper::IsUNCPath(fullPath)) ?
 		tmp.assign(L"\\\\?\\").append(fullPath) : fullPath;
 
 	for (unsigned pass = 1; pass <= passCount; ++pass)
 	{
-		const wchar_t* mask = (pass == 1) ? data.mask.c_str() : L"*.*";
+		const wchar_t* mask = (pass == 1) ? data.fileMask.c_str() : L"*.*";
 		HANDLE handle = ::FindFirstFileW((searchPath + mask).c_str(), &data.findData);
 		if (handle != INVALID_HANDLE_VALUE)
 		{
@@ -97,8 +105,8 @@ void FileSystemEx::MakeDirectoryList(const std::wstring& fullPath, const std::ws
 					{
 						if (pass == 1) data.fileList.push_back(userPath + fnA);
 					}
-					else if ((pass == passCount) && ((fnA[0] != '.') ||
-						((fnA[1] != 0) && ((fnA[1] != '.') || (fnA[2] != 0)))))
+					else if (pass == passCount && (fnA[0] != '.' ||
+						(fnA[1] != 0 && (fnA[1] != '.' || fnA[2] != 0))))
 					{
 						fileName.assign(fnA).append(1, '\\');
 						MakeDirectoryList(fullPath + fileName, userPath + fileName, data);
@@ -115,54 +123,63 @@ void FileSystemEx::MakeDirectoryList(const std::wstring& fullPath, const std::ws
 	}
 }
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------
 void FileSystemEx::GetFileList(const std::wstring& path, std::vector<std::wstring>& list, bool recursive)
 {
 	// Пользовательский путь userPath: будет началом пути всех найденных файлов.
-	// Полный путь fullPath: используется для получения полного пути при поиске.
+	// Полный путь fullPath: используется для получения полного пути при поиске
 	std::wstring userPath, fullPath;
-	// Маска поиска data.mask используется только для файлов.
+	// Маска поиска data.mask используется только для файлов
 	FindData data(list, L"*.*");
 
 	if (!path.empty())
 	{
 		size_t pos = path.find_last_of(L"\\/:");
-		if (pos == std::wstring::npos) pos = 0; else ++pos;
+		if (pos == std::wstring::npos)
+			pos = 0;
+		else
+			++pos;
+
 		if (path.find_first_of(L"*?", pos) != std::wstring::npos)
 		{
-			if (pos > 0) userPath.assign(path, 0, pos);
-			data.mask.assign(path, pos, std::wstring::npos);
+			if (pos > 0)
+				userPath.assign(path, 0, pos);
+			data.fileMask.assign(path, pos, std::wstring::npos);
 		} else
 		{
 			userPath = path;
 			const wchar_t c = path.back();
-			if ((c != '\\') && (c != '/') && (c != ':'))
+			if (c != '\\' && c != '/' && c != ':')
 				userPath.append(1, '\\');
 		}
 	}
+
 	if (!userPath.empty())
 	{
 		fullPath = GetFullPath(userPath);
-		if (!fullPath.empty() && (fullPath.back() != '\\'))
+		if (!fullPath.empty() && fullPath.back() != '\\')
 			fullPath.append(1, '\\');
 	} else
-		Helper::MakeFullPath(fullPath, L".\\");
-
-	// А теперь, собственно, поиск.
-	if (recursive)
-		MakeDirectoryList(fullPath, userPath, data);
-	else
 	{
-		if ((fullPath.size() + data.mask.size() + 1 > MAX_PATH) && !Helper::IsUNCPath(fullPath))
+		Helper::MakeFullPath(fullPath, L".\\");
+	}
+
+	// А теперь, собственно, поиск
+	if (recursive)
+	{
+		MakeDirectoryList(fullPath, userPath, data);
+	} else
+	{
+		if (fullPath.size() + data.fileMask.size() + 1 > MAX_PATH && !Helper::IsUNCPath(fullPath))
 			fullPath.insert(0, L"\\\\?\\");
 
-		HANDLE handle = ::FindFirstFileW((fullPath + data.mask).c_str(), &data.findData);
+		HANDLE handle = ::FindFirstFileW((fullPath + data.fileMask).c_str(), &data.findData);
 		if (handle != INVALID_HANDLE_VALUE)
 		{
 			try
 			{
 				do {
-					if ((data.findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+					if (data.findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY == 0)
 						list.push_back(userPath + data.findData.cFileName);
 				} while (::FindNextFileW(handle, &data.findData));
 				::FindClose(handle);
@@ -176,44 +193,52 @@ void FileSystemEx::GetFileList(const std::wstring& path, std::vector<std::wstrin
 	}
 }
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------
 void FileSystemEx::GetDirectoryList(const std::wstring& path, std::vector<std::wstring>& list)
 {
 	// Пользовательский путь userPath: будет началом пути всех найденных файлов.
-	// Полный путь fullPath: используется для получения полного пути при поиске.
+	// Полный путь fullPath: используется для получения полного пути при поиске
 	std::wstring userPath, fullPath;
-	// Маска поиска data.mask используется только для файлов.
+	// Маска поиска data.mask используется только для файлов
 	FindData data(list, L"*.*");
 
 	if (!path.empty())
 	{
 		size_t pos = path.find_last_of(L"\\/:");
-		if (pos == std::wstring::npos) pos = 0; else ++pos;
+		if (pos == std::wstring::npos)
+			pos = 0;
+		else
+			++pos;
+
 		if (path.find_first_of(L"*?", pos) != std::wstring::npos)
 		{
-			if (pos > 0) userPath.assign(path, 0, pos);
-			data.mask.assign(path, pos, std::wstring::npos);
+			if (pos > 0)
+				userPath.assign(path, 0, pos);
+			data.fileMask.assign(path, pos, std::wstring::npos);
 		} else
 		{
 			userPath = path;
 			const wchar_t c = path.back();
-			if ((c != '\\') && (c != '/') && (c != ':'))
+			if (c != '\\' && c != '/' && c != ':')
 				userPath.append(1, '\\');
 		}
 	}
+
 	if (!userPath.empty())
 	{
 		fullPath = GetFullPath(userPath);
-		if (!fullPath.empty() && (fullPath.back() != '\\'))
+		if (!fullPath.empty() && fullPath.back() != '\\')
 			fullPath.append(1, '\\');
 	} else
+	{
 		Helper::MakeFullPath(fullPath, L".\\");
+	}
 
-	// А теперь, собственно, поиск.
-	if ((fullPath.size() + data.mask.size() + 1 > MAX_PATH) && !Helper::IsUNCPath(fullPath))
+	// А теперь, собственно, поиск
+	if (fullPath.size() + data.fileMask.size() + 1 > MAX_PATH && !Helper::IsUNCPath(fullPath))
 		fullPath.insert(0, L"\\\\?\\");
 
-	HANDLE handle = ::FindFirstFileW((fullPath + data.mask).c_str(), &data.findData);
+	HANDLE handle = ::FindFirstFileW((fullPath + data.fileMask).c_str(), &data.findData);
 	if (handle != INVALID_HANDLE_VALUE)
 	{
 		try
@@ -236,7 +261,7 @@ void FileSystemEx::GetDirectoryList(const std::wstring& path, std::vector<std::w
 	}
 }
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------
 bool FileSystemEx::GetFileTime(const std::wstring& path, FileTime& time)
 {
 	WIN32_FIND_DATAW findData;
@@ -250,7 +275,7 @@ bool FileSystemEx::GetFileTime(const std::wstring& path, FileTime& time)
 	time.lastWriteTime = FindData::FileTimeToDateTime(findData.ftLastWriteTime);
 	return true;
 }
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------
 bool FileSystemEx::RemoveDirectory(const std::wstring& path, bool recursive)
 {
 	if (path.empty())
@@ -259,9 +284,10 @@ bool FileSystemEx::RemoveDirectory(const std::wstring& path, bool recursive)
 	std::wstring longPath;
 	const wchar_t* pLongPath;
 	const size_t len = path.size();
-	if ((len < 248) || (len > 32767) || Helper::IsUNCPath(path))
+	if (len < 248 || len > 32767 || Helper::IsUNCPath(path))
+	{
 		pLongPath = path.c_str();
-	else
+	} else
 	{
 		longPath.assign(L"\\\\?\\");
 		Helper::MakeFullPath(longPath, path);
@@ -271,3 +297,7 @@ bool FileSystemEx::RemoveDirectory(const std::wstring& path, bool recursive)
 	// TODO: реализовать работу параметра recursive
 	return ::RemoveDirectoryW(pLongPath) != 0;
 }
+
+#else
+	#error Not implemented
+#endif // AML_OS_WINDOWS
