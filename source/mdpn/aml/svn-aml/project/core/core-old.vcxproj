@@ -95,6 +95,8 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <BufferSecurityCheck>true</BufferSecurityCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -107,6 +109,8 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <BufferSecurityCheck>true</BufferSecurityCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -123,6 +127,8 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FunctionLevelLinking>true</FunctionLevelLinking>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -139,43 +145,19 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FunctionLevelLinking>true</FunctionLevelLinking>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\core\console.h" />
-    <ClInclude Include="..\..\core\debug.h" />
-    <ClInclude Include="..\..\core\filedata.h" />
-    <ClInclude Include="..\..\core\datetime.h" />
-    <ClInclude Include="..\..\core\error.h" />
     <ClInclude Include="..\..\core\file.h" />
     <ClInclude Include="..\..\core\filesystem.h" />
-    <ClInclude Include="..\..\core\fileutil.h" />
-    <ClInclude Include="..\..\core\forward.h" />
-    <ClInclude Include="..\..\core\log.h" />
-    <ClInclude Include="..\..\core\membarrier.h" />
-    <ClInclude Include="..\..\core\singleton.h" />
     <ClInclude Include="..\..\core\strutil.h" />
-    <ClInclude Include="..\..\core\sysinfo.h" />
-    <ClInclude Include="..\..\core\thread.h" />
-    <ClInclude Include="..\..\core\threadsync.h" />
-    <ClInclude Include="..\..\core\utfutil.h" />
-    <ClInclude Include="..\..\core\virtkbd.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\core\debug.cpp" />
-    <ClCompile Include="..\..\core\filedata.cpp" />
-    <ClCompile Include="..\..\core\datetime.cpp" />
-    <ClCompile Include="..\..\core\error.cpp" />
     <ClCompile Include="..\..\core\file.cpp" />
     <ClCompile Include="..\..\core\filesystem.cpp" />
-    <ClCompile Include="..\..\core\fileutil.cpp" />
-    <ClCompile Include="..\..\core\log.cpp" />
-    <ClCompile Include="..\..\core\singleton.cpp" />
     <ClCompile Include="..\..\core\strutil.cpp" />
-    <ClCompile Include="..\..\core\sysinfo.cpp" />
-    <ClCompile Include="..\..\core\thread.cpp" />
-    <ClCompile Include="..\..\core\threadsync.cpp" />
-    <ClCompile Include="..\..\core\utfutil.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

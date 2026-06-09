@@ -1,9 +1,5 @@
 ﻿#include "strutil.h"
 
-#include "../../core/array.h"
-#include "../../core/winapi.h"
-#include "utfutil.h"
-
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -172,93 +168,5 @@ AML_NOINLINE size_t AML_FASTCALL Wcslen(const wchar_t* pStr)
 }
 
 #endif  // AML_USEASM
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//   Конвертация строк Ansi/Wide
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//----------------------------------------------------------------------------------------------------------------------
-static std::wstring FromUTF8(const char* pStr, size_t size)
-{
-	const size_t LOCAL_SIZE = 960;
-	wchar_t localBuffer[LOCAL_SIZE];
-
-	size_t (*cvtFn)(void*, size_t, const char*, size_t);
-	cvtFn = (sizeof(wchar_t) == 2) ? UTF8To16 : UTF8To32;
-
-	std::wstring res;
-	if (size_t len = cvtFn(localBuffer, LOCAL_SIZE, pStr, size))
-	{
-		if (len <= LOCAL_SIZE)
-			res.assign(localBuffer, len);
-		else
-		{
-			const size_t bufferSize = len;
-			DynamicArray<wchar_t> buffer(bufferSize);
-			len = cvtFn(buffer, bufferSize, pStr, size);
-			if (len && (len <= bufferSize))
-				res.assign(buffer, len);
-		}
-	}
-	return res;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-std::wstring FromUTF8(const char* pStr)
-{
-	if (!pStr) return std::wstring();
-	return FromUTF8(pStr, Strlen(pStr));
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-std::wstring FromUTF8(const std::string& str)
-{
-	const size_t size = str.size();
-	if (size == 0) return std::wstring();
-	return FromUTF8(str.c_str(), size);
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-static std::string ToUTF8(const wchar_t* pStr, size_t size)
-{
-	const size_t LOCAL_SIZE = 960;
-	char localBuffer[LOCAL_SIZE];
-
-	size_t (*cvtFn)(char*, size_t, const void*, size_t) = UTF16To8;
-	if (sizeof(wchar_t) != 2) cvtFn = UTF32To8;
-
-	std::string res;
-	if (size_t len = cvtFn(localBuffer, LOCAL_SIZE, pStr, size))
-	{
-		if (len <= LOCAL_SIZE)
-			res.assign(localBuffer, len);
-		else
-		{
-			const size_t bufferSize = len;
-			DynamicArray<char> buffer(bufferSize);
-			len = cvtFn(buffer, bufferSize, pStr, size);
-			if (len && (len <= bufferSize))
-				res.assign(buffer, len);
-		}
-	}
-	return res;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-std::string ToUTF8(const wchar_t* pStr)
-{
-	if (!pStr) return std::string();
-	return ToUTF8(pStr, Wcslen(pStr));
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-std::string ToUTF8(const std::wstring& str)
-{
-	const size_t size = str.size();
-	if (size == 0) return std::string();
-	return ToUTF8(str.c_str(), size);
-}
 
 } // namespace util

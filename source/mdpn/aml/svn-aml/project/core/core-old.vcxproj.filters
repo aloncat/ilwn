@@ -4,114 +4,29 @@
     <Filter Include="file">
       <UniqueIdentifier>{505427df-de1f-4080-ac69-dfa35c4fadb7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="platform">
-      <UniqueIdentifier>{5f10ea14-01f3-4fe4-a2db-363d621aad24}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="thread">
-      <UniqueIdentifier>{c8f05f53-09e1-4291-aab3-69418e5e4838}</UniqueIdentifier>
-    </Filter>
     <Filter Include="util">
       <UniqueIdentifier>{1cdf1d3c-aa69-4fc6-b82b-9b9d97ae8773}</UniqueIdentifier>
     </Filter>
-    <Filter Include="sandbox">
-      <UniqueIdentifier>{702b9db5-e31a-4e0f-b731-847c5d32425d}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\core\forward.h" />
-    <ClInclude Include="..\..\core\membarrier.h">
-      <Filter>thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\sysinfo.h">
-      <Filter>util</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\threadsync.h">
-      <Filter>thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\error.h">
-      <Filter>util</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\thread.h">
-      <Filter>thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\datetime.h">
-      <Filter>util</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\log.h">
-      <Filter>sandbox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\utfutil.h">
-      <Filter>sandbox</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\core\filesystem.h">
-      <Filter>file</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\filedata.h">
       <Filter>file</Filter>
     </ClInclude>
     <ClInclude Include="..\..\core\file.h">
       <Filter>file</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\fileutil.h">
-      <Filter>sandbox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\debug.h">
-      <Filter>util</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\core\strutil.h">
-      <Filter>util</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\console.h">
-      <Filter>util</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\virtkbd.h">
-      <Filter>sandbox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\singleton.h">
       <Filter>util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\core\sysinfo.cpp">
-      <Filter>util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\error.cpp">
-      <Filter>util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\datetime.cpp">
-      <Filter>util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\log.cpp">
-      <Filter>sandbox</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\utfutil.cpp">
-      <Filter>sandbox</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\core\filesystem.cpp">
-      <Filter>file</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\filedata.cpp">
       <Filter>file</Filter>
     </ClCompile>
     <ClCompile Include="..\..\core\file.cpp">
       <Filter>file</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\fileutil.cpp">
-      <Filter>sandbox</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\debug.cpp">
-      <Filter>util</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\core\strutil.cpp">
-      <Filter>util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\threadsync.cpp">
-      <Filter>thread</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\thread.cpp">
-      <Filter>thread</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\singleton.cpp">
       <Filter>util</Filter>
     </ClCompile>
   </ItemGroup>
