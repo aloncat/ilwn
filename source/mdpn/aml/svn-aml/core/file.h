@@ -1,4 +1,8 @@
-﻿#pragma once
+﻿//∙AML
+// Copyright (C) 2017-2021 Dmitry Maslov
+// For conditions of distribution and use, see readme.txt
+
+#pragma once
 
 #include "../../../../aml/core/file.h"
 #include "../../../../aml/core/platform.h"

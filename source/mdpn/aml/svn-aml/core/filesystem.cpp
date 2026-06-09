@@ -1,4 +1,8 @@
-﻿#include "filesystem.h"
+﻿//∙AML
+// Copyright (C) 2017-2021 Dmitry Maslov
+// For conditions of distribution and use, see readme.txt
+
+#include "filesystem.h"
 
 #include "../../../../aml/core/array.h"
 #include "../../../../aml/core/platform.h"
